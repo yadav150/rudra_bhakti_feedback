@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — ADMIN PANEL
-   Phase 2 — Firebase Auth + Realtime Database
+   Phase 3 — Firebase Auth + Realtime Database + expanded feedback
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -123,7 +123,7 @@ function showDash() {
 }
 
 /* ============================================================
-   AUTH STATE — MAIN ENTRY POINT
+   AUTH STATE
    ============================================================ */
 onAuthStateChanged(auth, (user) => {
     if (!user) {
@@ -223,7 +223,7 @@ forgotForm.addEventListener('submit', async (e) => {
 });
 
 /* ============================================================
-   LOGOUT — with confirmation
+   LOGOUT
    ============================================================ */
 function openLogoutModal() {
     logoutModal.hidden = false;
@@ -386,7 +386,7 @@ function renderStats() {
 }
 
 /* ============================================================
-   RATING DISTRIBUTION
+   ANALYTICS — rating distribution
    ============================================================ */
 function renderAnalytics() {
     if (!ratingDist) return;
@@ -590,7 +590,7 @@ function renderRow(f) {
                 ${item('Reel', f.reelId ? f.reelId + ' — ' + (f.reelTitle || '') : null)}
                 ${item('Feeling', f.feeling)}
                 ${item('Would watch more', f.wouldWatchMore)}
-                                ${item('Connected with', f.connectedWith)}
+                ${item('Connected with', f.connectedWith)}
                 ${item('Stood out', f.stoodOut)}
                 ${item('Held interest', f.heldInterest)}
                 ${item('Presentation', f.presentation)}
@@ -671,7 +671,6 @@ async function handleFetchReel() {
     reelPreview.hidden = true;
     reelManual.hidden = true;
 
-    // Attempt real metadata fetch — will fail from browser due to CORS.
     let fetched = null;
     try {
         const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
