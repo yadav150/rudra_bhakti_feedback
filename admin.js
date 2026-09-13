@@ -1806,6 +1806,9 @@ function closeReelModal() {
 async function handleFetchReel() {
     const url = reelUrl.value.trim();
     reelUrlError.textContent = '';
+    reelManual.hidden = true;
+    reelPreview.hidden = true;
+
     if (!url) {
         reelUrlError.textContent = 'Please enter a Facebook Reel URL.';
         return;
@@ -1814,47 +1817,72 @@ async function handleFetchReel() {
         reelUrlError.textContent = 'Please enter a valid URL starting with http:// or https://';
         return;
     }
+
     const card = document.querySelector('.modal-card');
     card.classList.add('is-processing');
     fetchReel.classList.add('is-loading');
     fetchReel.disabled = true;
     fetchLabel.textContent = 'Fetching…';
-    reelPreview.hidden = true;
-    reelManual.hidden = true;
 
-    let fetched = null;
     try {
-        const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
-        if (res.ok) {
-            const text = await res.text();
-            const titleMatch = text.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
-            const thumbMatch = text.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-            if (titleMatch) {
-                fetched = {
-                    title: decodeHtml(titleMatch[1]),
-                    thumbnail: thumbMatch ? thumbMatch[1] : ''
-                };
+        const res = await fetch('/api/reel-metadata', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+
+        if (!res.ok || !data.ok) {
+            const code = data.error || 'unknown';
+            if (code === 'invalid_url') {
+                reelUrlError.textContent = data.message || 'This is not a valid Facebook Reel URL.';
+            } else if (code === 'server_config') {
+                reelUrlError.textContent = 'Server is not configured with a Facebook access token. The administrator must set FB_ACCESS_TOKEN.';
+            } else if (code === 'meta_unavailable') {
+                reelUrlError.textContent = data.message
+                    ? 'Facebook did not return metadata: ' + data.message
+                    : 'Facebook did not return metadata for this Reel. This may be a private or restricted Reel.';
+            } else if (code === 'network') {
+                reelUrlError.textContent = 'Network error while contacting the server. Please try again.';
+            } else {
+                reelUrlError.textContent = data.message || 'Unable to fetch metadata.';
             }
+            reelManual.hidden = false;
+            reelTitleInput.focus();
+            return;
         }
-    } catch (_) {}
 
-    card.classList.remove('is-processing');
-    fetchReel.classList.remove('is-loading');
-    fetchReel.disabled = false;
-    fetchLabel.textContent = 'Fetch Details';
+        reelTitleInput.value = data.title || '';
+        reelThumbInput.value = data.thumbnail || '';
 
-    if (fetched) {
-        reelTitleInput.value = fetched.title;
-        reelThumbInput.value = fetched.thumbnail;
+        if (!data.title) {
+            reelUrlError.textContent = 'Title could not be retrieved. Please enter one manually.';
+            reelManual.hidden = false;
+            reelTitleInput.focus();
+            return;
+        }
+
+        pendingReel = {
+            url: data.url || url,
+            title: data.title,
+            thumbnail: data.thumbnail || ''
+        };
+
         reelManual.hidden = false;
-        buildPreviewFromManual(url);
-    } else {
-        reelUrlError.textContent = 'Automatic metadata fetch is blocked by Facebook. Please fill in the details below.';
+        renderPreview(pendingReel);
+    } catch (err) {
+        console.error('Fetch error:', err);
+        reelUrlError.textContent = 'Could not reach the metadata service. Check your connection.';
         reelManual.hidden = false;
-        reelTitleInput.focus();
+    } finally {
+        card.classList.remove('is-processing');
+        fetchReel.classList.remove('is-loading');
+        fetchReel.disabled = false;
+        fetchLabel.textContent = 'Fetch Details';
     }
 }
-
 function buildPreviewFromManual(url) {
     const title = reelTitleInput.value.trim();
     if (!title) { reelPreview.hidden = true; return; }
