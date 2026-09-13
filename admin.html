@@ -1,1368 +1,203 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
-
->
-
-<meta
-name="description"
-content="Rudra Bhakti Feedback Admin Dashboard"
-
->
-
-  <title>Rudra Bhakti — Admin Dashboard</title>
-
-  <link
-    rel="stylesheet"
-    href="css/admin.css"
-  >
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#202020" />
+<title>Admin — Rudra Bhakti Feedback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css" />
 </head>
-
 <body>
 
-  <!-- =====================================================
-       ADMIN APP
-  ====================================================== -->
+<!-- ===== LOGIN ===== -->
+<div class="auth-wrap" id="loginWrap">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="logo" aria-hidden="true">ॐ</div>
+            <div class="brand">Admin Panel</div>
+            <div class="subtitle">Rudra Bhakti · Reel Feedback</div>
+        </div>
 
-  <div class="admin-app">
+        <form id="loginForm" class="auth-form" novalidate>
+            <div class="field">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
+            </div>
+            <div class="field">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
+            </div>
 
-```
-<!-- ===================================================
-     SIDEBAR
-==================================================== -->
+            <p class="form-error" id="loginError" role="alert"></p>
 
-<aside class="sidebar">
+            <button type="submit" class="btn btn-primary">
+                <span id="loginLabel">Sign In</span>
+            </button>
 
-  <div class="sidebar-brand">
+            <button type="button" class="link-btn" id="forgotLink">Forgot password?</button>
+        </form>
 
-    <div class="sidebar-logo">
-      RB
+        <p class="auth-note">Phase 1 preview — sign in with any demo credentials.</p>
     </div>
+</div>
 
-    <div>
-      <div class="sidebar-title">
-        RUDRA BHAKTI
-      </div>
+<!-- ===== FORGOT ===== -->
+<div class="auth-wrap" id="forgotWrap" hidden>
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+            </div>
+            <div class="brand">Reset Password</div>
+            <div class="subtitle">Enter your admin email</div>
+        </div>
 
-      <div class="sidebar-subtitle">
-        Admin Console
-      </div>
+        <form id="forgotForm" class="auth-form" novalidate>
+            <div class="field">
+                <label for="forgotEmail">Email</label>
+                <input type="email" id="forgotEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
+            </div>
+
+            <p class="form-error" id="forgotError"></p>
+            <p class="form-success" id="forgotSuccess"></p>
+
+            <button type="submit" class="btn btn-primary">
+                <span id="forgotLabel">Send Reset Link</span>
+            </button>
+
+            <button type="button" class="link-btn" id="forgotBack">Back to Sign In</button>
+        </form>
     </div>
+</div>
 
-  </div>
+<!-- ===== DASHBOARD ===== -->
+<div class="dash" id="dash" hidden>
 
-
-  <!-- Navigation -->
-
-  <nav class="admin-nav">
-
-    <button
-      class="nav-item active"
-      data-section="overview"
-      type="button"
-    >
-      <span class="nav-icon">01</span>
-      <span>Overview</span>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-section="reels"
-      type="button"
-    >
-      <span class="nav-icon">02</span>
-      <span>Reel Manager</span>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-section="responses"
-      type="button"
-    >
-      <span class="nav-icon">03</span>
-      <span>Responses</span>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-section="psychology"
-      type="button"
-    >
-      <span class="nav-icon">04</span>
-      <span>Psychology</span>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-section="ux"
-      type="button"
-    >
-      <span class="nav-icon">05</span>
-      <span>UI / UX</span>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-section="timing"
-      type="button"
-    >
-      <span class="nav-icon">06</span>
-      <span>Response Timing</span>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-section="typing"
-      type="button"
-    >
-      <span class="nav-icon">07</span>
-      <span>Typing Analytics</span>
-    </button>
-
-  </nav>
-
-
-  <div class="sidebar-bottom">
-
-    <div class="connection-status">
-      <span class="status-dot"></span>
-
-      <div>
-        <strong>System</strong>
-        <small id="connectionText">
-          Firebase pending
-        </small>
-      </div>
-    </div>
-
-  </div>
-
-</aside>
-
-
-<!-- ===================================================
-     MAIN CONTENT
-==================================================== -->
-
-<main class="admin-main">
-
-  <!-- ================================================
-       TOP BAR
-  ================================================= -->
-
-  <header class="admin-topbar">
-
-    <div>
-
-      <div class="topbar-label">
-        RUDRA BHAKTI
-      </div>
-
-      <h1 id="pageTitle">
-        Analytics Overview
-      </h1>
-
-    </div>
-
-
-    <div class="topbar-actions">
-
-      <div class="admin-user">
-
-        <div class="admin-avatar">
-          A
+    <header class="dash-header">
+        <div class="dash-header-inner">
+            <div class="brand-block">
+                <div class="logo logo--sm" aria-hidden="true">ॐ</div>
+                <div class="brand-text">
+                    <strong>Admin</strong>
+                    <small>Reel Feedback</small>
+                </div>
+            </div>
+            <div class="dash-user">
+                <span class="dash-user-email" id="dashUserEmail">admin@rudrabhakti.com</span>
+                <button type="button" class="btn-logout" id="logoutBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </div>
         </div>
-
-        <div>
-          <strong>Administrator</strong>
-          <span>Authorized Access</span>
-        </div>
-
-      </div>
-
-    </div>
-
-  </header>
-
-
-  <!-- =================================================
-       OVERVIEW
-  ================================================== -->
-
-  <section
-    class="dashboard-section active"
-    id="section-overview"
-  >
-
-    <div class="section-heading">
-
-      <div>
-        <span class="eyebrow">
-          GENERAL ANALYTICS
-        </span>
-
-        <h2>
-          Feedback Performance
-        </h2>
-
-        <p>
-          Monitor how your audience interacts
-          with Rudra Bhakti feedback forms.
-        </p>
-      </div>
-
-
-      <div class="filter-group">
-
-        <label for="overviewReelFilter">
-          Reel
-        </label>
-
-        <select id="overviewReelFilter">
-          <option value="all">
-            All Reels
-          </option>
-        </select>
-
-      </div>
-
-    </div>
-
-
-    <!-- KPI CARDS -->
-
-    <div class="metric-grid">
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Total Responses
-        </span>
-
-        <strong
-          class="metric-value"
-          id="metricResponses"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          All submitted feedback
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Completion Rate
-        </span>
-
-        <strong
-          class="metric-value"
-          id="metricCompletion"
-        >
-          0%
-        </strong>
-
-        <span class="metric-meta">
-          Started → submitted
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Average Rating
-        </span>
-
-        <strong
-          class="metric-value"
-          id="metricRating"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Out of 5
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Avg. Form Time
-        </span>
-
-        <strong
-          class="metric-value"
-          id="metricFormTime"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Completed sessions
-        </span>
-
-      </article>
-
-    </div>
-
-
-    <!-- ANALYTICS CARDS -->
-
-    <div class="analytics-grid">
-
-      <article class="panel">
-
-        <div class="panel-header">
-
-          <div>
-            <span class="eyebrow">
-              AUDIENCE
-            </span>
-
-            <h3>
-              Audience Sentiment
-            </h3>
-          </div>
-
-        </div>
-
-        <div
-          class="chart-placeholder"
-          id="sentimentChart"
-        >
-          <span>
-            Analytics data will appear here
-          </span>
-        </div>
-
-      </article>
-
-
-      <article class="panel">
-
-        <div class="panel-header">
-
-          <div>
-            <span class="eyebrow">
-              ENGAGEMENT
-            </span>
-
-            <h3>
-              Question Performance
-            </h3>
-          </div>
-
-        </div>
-
-        <div
-          class="chart-placeholder"
-          id="questionChart"
-        >
-          <span>
-            Analytics data will appear here
-          </span>
-        </div>
-
-      </article>
-
-    </div>
-
-
-    <!-- RECENT ACTIVITY -->
-
-    <article class="panel">
-
-      <div class="panel-header">
-
-        <div>
-          <span class="eyebrow">
-            LIVE FEED
-          </span>
-
-          <h3>
-            Latest Responses
-          </h3>
-        </div>
-
-        <button
-          class="secondary-btn"
-          type="button"
-          data-section-link="responses"
-        >
-          View all
-        </button>
-
-      </div>
-
-
-      <div
-        class="table-wrap"
-        id="latestResponsesTable"
-      >
-
-        <div class="empty-state">
-          <strong>
-            No responses yet
-          </strong>
-
-          <span>
-            Firebase responses will appear here.
-          </span>
-        </div>
-
-      </div>
-
-    </article>
-
-  </section>
-
-
-  <!-- =================================================
-       REEL MANAGER
-  ================================================== -->
-
-  <section
-    class="dashboard-section"
-    id="section-reels"
-  >
-
-    <div class="section-heading">
-
-      <div>
-
-        <span class="eyebrow">
-          CONTENT MANAGEMENT
-        </span>
-
-        <h2>
-          Reel Manager
-        </h2>
-
-        <p>
-          Add and manage the Reels connected
-          to your feedback forms.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <!-- ADD REEL -->
-
-    <article class="panel">
-
-      <div class="panel-header">
-
-        <div>
-
-          <span class="eyebrow">
-            NEW REEL
-          </span>
-
-          <h3>
-            Add Reel
-          </h3>
-
-        </div>
-
-      </div>
-
-
-      <form id="addReelForm">
-
-        <div class="form-grid">
-
-          <div class="form-field full">
-
-            <label for="reelUrl">
-              Facebook Reel URL
-            </label>
-
-            <input
-              type="url"
-              id="reelUrl"
-              name="reelUrl"
-              placeholder="https://www.facebook.com/reel/..."
-              autocomplete="off"
-              required
-            >
-
-          </div>
-
-
-          <div class="form-field">
-
-            <label for="reelTitle">
-              Reel Title
-            </label>
-
-            <input
-              type="text"
-              id="reelTitle"
-              name="reelTitle"
-              placeholder="Enter Reel title"
-              autocomplete="off"
-            >
-
-          </div>
-
-
-          <div class="form-field">
-
-            <label for="reelThumbnail">
-              Thumbnail URL
-            </label>
-
-            <input
-              type="url"
-              id="reelThumbnail"
-              name="reelThumbnail"
-              placeholder="Auto-fetch / optional"
-              autocomplete="off"
-            >
-
-          </div>
-
-        </div>
-
-
-        <div class="form-actions">
-
-          <button
-            type="submit"
-            class="primary-btn"
-          >
-            Save Reel
-          </button>
-
-          <span
-            class="form-status"
-            id="reelFormStatus"
-          ></span>
-
-        </div>
-
-      </form>
-
-    </article>
-
-
-    <!-- REEL LIST -->
-
-    <article class="panel">
-
-      <div class="panel-header">
-
-        <div>
-
-          <span class="eyebrow">
-            REEL LIBRARY
-          </span>
-
-          <h3>
-            Managed Reels
-          </h3>
-
-        </div>
-
-        <span
-          class="record-count"
-          id="reelCount"
-        >
-          0 reels
-        </span>
-
-      </div>
-
-
-      <div
-        class="table-wrap"
-        id="reelTable"
-      >
-
-        <div class="empty-state">
-
-          <strong>
-            No reels added
-          </strong>
-
-          <span>
-            Add your first Facebook Reel above.
-          </span>
-
-        </div>
-
-      </div>
-
-    </article>
-
-  </section>
-
-
-  <!-- =================================================
-       RESPONSES
-  ================================================== -->
-
-  <section
-    class="dashboard-section"
-    id="section-responses"
-  >
-
-    <div class="section-heading">
-
-      <div>
-
-        <span class="eyebrow">
-          RESPONSE ANALYSIS
-        </span>
-
-        <h2>
-          Audience Responses
-        </h2>
-
-        <p>
-          Explore individual feedback and
-          written audience thoughts.
-        </p>
-
-      </div>
-
-
-      <div class="filter-group">
-
-        <label for="responseReelFilter">
-          Reel
-        </label>
-
-        <select id="responseReelFilter">
-          <option value="all">
-            All Reels
-          </option>
-        </select>
-
-      </div>
-
-    </div>
-
-
-    <article class="panel">
-
-      <div class="panel-header">
-
-        <div>
-          <span class="eyebrow">
-            SUBMISSIONS
-          </span>
-
-          <h3>
-            Feedback Responses
-          </h3>
-        </div>
-
-      </div>
-
-
-      <div
-        class="table-wrap"
-        id="responsesTable"
-      >
-
-        <div class="empty-state">
-
-          <strong>
-            No feedback available
-          </strong>
-
-          <span>
-            Submitted responses will appear here.
-          </span>
-
-        </div>
-
-      </div>
-
-    </article>
-
-  </section>
-
-
-  <!-- =================================================
-       PSYCHOLOGY
-  ================================================== -->
-
-  <section
-    class="dashboard-section"
-    id="section-psychology"
-  >
-
-    <div class="section-heading">
-
-      <div>
-
-        <span class="eyebrow">
-          PSYCHOLOGY ANALYTICS
-        </span>
-
-        <h2>
-          Audience Psychology
-        </h2>
-
-        <p>
-          Understand emotional reactions,
-          preferences and audience connection.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <div class="metric-grid">
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Top Emotion
-        </span>
-
-        <strong
-          class="metric-value"
-          id="psychTopEmotion"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Based on Q001
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Content Preference
-        </span>
-
-        <strong
-          class="metric-value"
-          id="psychPreference"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Based on Q002
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Strongest Connection
-        </span>
-
-        <strong
-          class="metric-value"
-          id="psychConnection"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Based on Q003
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Deep Response Rate
-        </span>
-
-        <strong
-          class="metric-value"
-          id="psychDeepRate"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Emotional engagement
-        </span>
-
-      </article>
-
-    </div>
-
-
-    <div class="analytics-grid">
-
-      <article class="panel">
-
-        <div class="panel-header">
-
-          <div>
-
-            <span class="eyebrow">
-              EMOTIONAL RESPONSE
-            </span>
-
-            <h3>
-              Feeling Distribution
-            </h3>
-
-          </div>
-
-        </div>
-
-        <div
-          class="chart-placeholder"
-          id="emotionChart"
-        >
-          <span>
-            Psychology analytics will appear here
-          </span>
-        </div>
-
-      </article>
-
-
-      <article class="panel">
-
-        <div class="panel-header">
-
-          <div>
-
-            <span class="eyebrow">
-              CONNECTION
-            </span>
-
-            <h3>
-              Content Connection
-            </h3>
-
-          </div>
-
-        </div>
-
-        <div
-          class="chart-placeholder"
-          id="connectionChart"
-        >
-          <span>
-            Connection analytics will appear here
-          </span>
-        </div>
-
-      </article>
-
-    </div>
-
-  </section>
-
-
-  <!-- =================================================
-       UI / UX
-  ================================================== -->
-
-  <section
-    class="dashboard-section"
-    id="section-ux"
-  >
-
-    <div class="section-heading">
-
-      <div>
-
-        <span class="eyebrow">
-          UI / UX ANALYTICS
-        </span>
-
-        <h2>
-          Form Experience
-        </h2>
-
-        <p>
-          Measure how users interact with the
-          feedback interface.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <div class="metric-grid">
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Next Clicks
-        </span>
-
-        <strong
-          class="metric-value"
-          id="uxNextClicks"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          Navigation activity
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Back Clicks
-        </span>
-
-        <strong
-          class="metric-value"
-          id="uxBackClicks"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          Revision behaviour
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Option Changes
-        </span>
-
-        <strong
-          class="metric-value"
-          id="uxOptionChanges"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          Answer changes
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Question Views
-        </span>
-
-        <strong
-          class="metric-value"
-          id="uxQuestionViews"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          Total question views
-        </span>
-
-      </article>
-
-    </div>
-
-
-    <article class="panel">
-
-      <div class="panel-header">
-
-        <div>
-
-          <span class="eyebrow">
-            USER FLOW
-          </span>
-
-          <h3>
-            Interaction Behaviour
-          </h3>
-
-        </div>
-
-      </div>
-
-
-      <div
-        class="chart-placeholder"
-        id="uxChart"
-      >
-        <span>
-          UI / UX analytics will appear here
-        </span>
-      </div>
-
-    </article>
-
-  </section>
-
-
-  <!-- =================================================
-       RESPONSE TIMING
-  ================================================== -->
-
-  <section
-    class="dashboard-section"
-    id="section-timing"
-  >
-
-    <div class="section-heading">
-
-      <div>
-
-        <span class="eyebrow">
-          RESPONSE TIMING
-        </span>
-
-        <h2>
-          Timing Analytics
-        </h2>
-
-        <p>
-          Understand how much time users spend
-          reading and answering each question.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <div class="metric-grid">
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Avg. Session Time
-        </span>
-
-        <strong
-          class="metric-value"
-          id="timingSession"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Complete form
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Fastest Question
-        </span>
-
-        <strong
-          class="metric-value"
-          id="timingFastest"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Average response time
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Slowest Question
-        </span>
-
-        <strong
-          class="metric-value"
-          id="timingSlowest"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Average response time
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Abandonment
-        </span>
-
-        <strong
-          class="metric-value"
-          id="timingAbandonment"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Started but not submitted
-        </span>
-
-      </article>
-
-    </div>
-
-
-    <article class="panel">
-
-      <div class="panel-header">
-
-        <div>
-
-          <span class="eyebrow">
-            QUESTION TIMING
-          </span>
-
-          <h3>
-            Time Per Question
-          </h3>
-
-        </div>
-
-      </div>
-
-
-      <div
-        class="table-wrap"
-        id="timingTable"
-      >
-
-        <div class="empty-state">
-
-          <strong>
-            No timing data
-          </strong>
-
-          <span>
-            Timing analytics will appear after
-            feedback submissions.
-          </span>
-
-        </div>
-
-      </div>
-
-    </article>
-
-  </section>
-
-
-  <!-- =================================================
-       TYPING ANALYTICS
-  ================================================== -->
-
-  <section
-    class="dashboard-section"
-    id="section-typing"
-  >
-
-    <div class="section-heading">
-
-      <div>
-
-        <span class="eyebrow">
-          TYPING ANALYTICS
-        </span>
-
-        <h2>
-          Written Feedback
-        </h2>
-
-        <p>
-          Analyse written responses without
-          storing raw keystroke histories.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <div class="metric-grid">
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Written Responses
-        </span>
-
-        <strong
-          class="metric-value"
-          id="typingResponses"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          Q005 responses
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Avg. Characters
-        </span>
-
-        <strong
-          class="metric-value"
-          id="typingCharacters"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          Per written response
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Avg. Words
-        </span>
-
-        <strong
-          class="metric-value"
-          id="typingWords"
-        >
-          0
-        </strong>
-
-        <span class="metric-meta">
-          Per written response
-        </span>
-
-      </article>
-
-
-      <article class="metric-card">
-
-        <span class="metric-label">
-          Avg. Writing Time
-        </span>
-
-        <strong
-          class="metric-value"
-          id="typingTime"
-        >
-          —
-        </strong>
-
-        <span class="metric-meta">
-          Estimated interaction time
-        </span>
-
-      </article>
-
-    </div>
-
-
-    <article class="panel">
-
-      <div class="panel-header">
-
-        <div>
-
-          <span class="eyebrow">
-            WRITTEN FEEDBACK
-          </span>
-
-          <h3>
-            Audience Thoughts
-          </h3>
-
-        </div>
-
-      </div>
-
-
-      <div
-        class="table-wrap"
-        id="writtenResponsesTable"
-      >
-
-        <div class="empty-state">
-
-          <strong>
-            No written responses
-          </strong>
-
-          <span>
-            Audience thoughts will appear here.
-          </span>
-
-        </div>
-
-      </div>
-
-    </article>
-
-  </section>
-
-</main>
-```
-
-  </div>
-
-  <!-- =====================================================
-       ADMIN JAVASCRIPT
-  ====================================================== -->
-
-  <script type="module" src="js/admin.js"></script>
-
+    </header>
+
+    <main class="dash-main">
+
+        <section class="stats">
+            <div class="stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Total Feedback</span>
+                    <span class="stat-value" id="statTotal">0</span>
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Average Rating</span>
+                    <span class="stat-value" id="statAvg">0.0</span>
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">5-Rating Count</span>
+                    <span class="stat-value" id="statFive">0</span>
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Today's Feedback</span>
+                    <span class="stat-value" id="statToday">0</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="toolbar">
+            <div class="search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="search" id="searchInput" placeholder="Search by name, email, or message…" />
+            </div>
+
+            <select id="filterRating" class="select">
+                <option value="all">All Ratings</option>
+                <option value="5">5 only</option>
+                <option value="4">4 only</option>
+                <option value="3">3 only</option>
+                <option value="2">2 only</option>
+                <option value="1">1 only</option>
+                <option value="4plus">4 and above</option>
+            </select>
+
+            <select id="filterDate" class="select">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+            </select>
+
+            <select id="sortBy" class="select">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="highest">Highest rating</option>
+                <option value="lowest">Lowest rating</option>
+            </select>
+        </section>
+
+        <section class="list-wrap">
+            <div class="list-head">
+                <span id="resultCount">0 results</span>
+            </div>
+            <div class="list" id="feedbackList"></div>
+        </section>
+
+    </main>
+</div>
+
+<script src="admin.js"></script>
 </body>
 </html>
