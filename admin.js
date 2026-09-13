@@ -1,6 +1,8 @@
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+// admin.js
+// Rudra Bhakti — Secure Admin Dashboard
+// Firebase Realtime Database only
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
 import {
   getAuth,
@@ -13,1522 +15,1181 @@ import {
   getDatabase,
   ref,
   get,
+  push,
   set,
-  update,
-  remove,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
 
-/* =====================================================
-   FIREBASE CONFIG
-===================================================== */
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAoSVklKARDfdDoSm6L2zkj1kabJVpsw",
+  apiKey: "AIzaSyAoPVLSklKARDfdDoSm6Lzkj1kabJVpsw",
   authDomain: "rudrabhakti-a1d3e.firebaseapp.com",
-  databaseURL: "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com",
   projectId: "rudrabhakti-a1d3e",
   storageBucket: "rudrabhakti-a1d3e.firebasestorage.app",
   messagingSenderId: "96491326088",
-  appId: "1:96491326088:web:593b15e565a12f57936d3d",
-  measurementId: "G-DF9MKJ113R"
+  appId: "1:96491326088:web:16b33c95f6aa67b5936d3d",
+  measurementId: "G-RYKGBGSLVB"
+};
+
+const DATABASE_URL =
+  "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com/";
+
+const AUTHORIZED_ADMIN_UID =
+  "YW8S06sHcMYtLNPHjO9otYNc2U13";
+
+const SCHEMA_VERSION = "1.1";
+
+// Leave blank until a server-side metadata endpoint is available.
+// The browser must NOT attempt to scrape arbitrary Facebook pages.
+const METADATA_ENDPOINT = "";
+
+
+// ============================================================
+// FIREBASE INITIALIZATION
+// ============================================================
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const db = getDatabase(app, DATABASE_URL);
+
+
+// ============================================================
+// DOM HELPERS
+// ============================================================
+
+const $ = (selector) => document.querySelector(selector);
+
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+
+// ============================================================
+// APPLICATION STATE
+// ============================================================
+
+const state = {
+  user: null,
+
+  reels: {},
+  responses: {},
+
+  activeSection: "analytics",
+
+  selectedReel: "all",
+  selectedRating: "all",
+  selectedPeriod: "all",
+
+  filteredResponses: [],
+
+  currentGeneratedReelId: "",
+  currentFeedbackUrl: ""
 };
 
 
-const ADMIN_UID =
-  "y7u3uoHSiycapycRb2z12Hk0F1E2";
+// ============================================================
+// QUESTION LABELS
+// ============================================================
+
+const FEELING_LABELS = {
+  FEEL_PEACEFUL: "Peaceful",
+  FEEL_DEVOTIONAL: "Devotional",
+  FEEL_EMOTIONAL: "Emotional",
+  FEEL_INSPIRED: "Inspired",
+  FEEL_CALM: "Calm",
+  FEEL_DEEPLY_MOVED: "Deeply Moved"
+};
+
+const MORE_CONTENT_LABELS = {
+  MORE_DEFINITELY: "Definitely",
+  MORE_SOMETIMES: "Sometimes",
+  MORE_UNSURE: "Not Sure",
+  MORE_NOT_REALLY: "Not Really"
+};
+
+const CONNECTION_LABELS = {
+  CONNECT_SHIVA_PARVATI: "Shiva & Parvati",
+  CONNECT_DEVOTIONAL_FEELING: "Devotional Feeling",
+  CONNECT_ARTWORK: "Artwork",
+  CONNECT_MUSIC: "Music",
+  CONNECT_EVERYTHING: "Everything"
+};
+
+const RATING_LABELS = {
+  RATING_1: "1",
+  RATING_2: "2",
+  RATING_3: "3",
+  RATING_4: "4",
+  RATING_5: "5"
+};
 
 
-const app =
-  initializeApp(firebaseConfig);
+// ============================================================
+// INITIALIZATION
+// ============================================================
 
-const auth =
-  getAuth(app);
-
-const db =
-  getDatabase(app);
-
-
-/* =====================================================
-   DOM
-===================================================== */
-
-const loginScreen =
-  document.getElementById("loginScreen");
-
-const dashboardScreen =
-  document.getElementById("dashboardScreen");
-
-const loginForm =
-  document.getElementById("loginForm");
-
-const emailInput =
-  document.getElementById("emailInput");
-
-const passwordInput =
-  document.getElementById("passwordInput");
-
-const loginError =
-  document.getElementById("loginError");
-
-const logoutBtn =
-  document.getElementById("logoutBtn");
-
-const navButtons =
-  document.querySelectorAll(".nav-btn");
-
-const reelFilter =
-  document.getElementById("reelFilter");
-
-const reelForm =
-  document.getElementById("reelForm");
-
-const facebookUrlInput =
-  document.getElementById("facebookUrl");
-
-const generatedReelId =
-  document.getElementById("generatedReelId");
-
-const generatedTitle =
-  document.getElementById("generatedTitle");
-
-const metadataStatus =
-  document.getElementById("metadataStatus");
-
-const fetchMetadataBtn =
-  document.getElementById("fetchMetadataBtn");
-
-const saveReelBtn =
-  document.getElementById("saveReelBtn");
-
-const reelFormMessage =
-  document.getElementById("reelFormMessage");
-
-const reelList =
-  document.getElementById("reelList");
+document.addEventListener("DOMContentLoaded", () => {
+  initializeUI();
+  initializeAuth();
+});
 
 
-/* =====================================================
-   STATE
-===================================================== */
+// ============================================================
+// UI INITIALIZATION
+// ============================================================
 
-let reelsData = {};
-let feedbackData = {};
+function initializeUI() {
+  bindLoginEvents();
+  bindDashboardEvents();
+  bindNavigation();
+  bindFilters();
+  bindReelManagement();
+  bindPasswordToggle();
+}
 
-let editingReelId = null;
-let fetchedMetadata = null;
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+function initializeAuth() {
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      state.user = null;
+      showLoginScreen();
+      return;
+    }
+
+    if (user.uid !== AUTHORIZED_ADMIN_UID) {
+      showLoginError("This account is not authorized to access the admin dashboard.");
+
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Unauthorized sign-out error:", error);
+      }
+
+      return;
+    }
+
+    state.user = user;
+
+    showDashboard();
+
+    await loadAdminData();
+  });
+}
 
 
-/* =====================================================
-   AUTH — LOGIN
-===================================================== */
+function bindLoginEvents() {
+  const form = $("#loginForm");
 
-loginForm.addEventListener(
-  "submit",
-  async (event) => {
+  if (!form) return;
 
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    loginError.textContent = "";
+    const email = $("#adminEmail")?.value.trim();
+    const password = $("#adminPassword")?.value;
 
-    const email =
-      emailInput.value.trim();
+    if (!email || !password) {
+      showLoginError("Enter your email and password.");
+      return;
+    }
 
-    const password =
-      passwordInput.value;
-
+    clearLoginError();
+    setButtonLoading("#loginButton", true);
 
     try {
-
-      await signInWithEmailAndPassword(
+      const credential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
 
-    } catch (error) {
-
-      console.error(
-        "Login error:",
-        error
-      );
-
-      loginError.textContent =
-        getAuthErrorMessage(
-          error.code
-        );
-    }
-  }
-);
-
-
-/* =====================================================
-   AUTH STATE
-===================================================== */
-
-onAuthStateChanged(
-  auth,
-  async (user) => {
-
-    if (!user) {
-
-      loginScreen.classList.remove(
-        "hidden"
-      );
-
-      dashboardScreen.classList.add(
-        "hidden"
-      );
-
-      return;
-    }
-
-
-    if (user.uid !== ADMIN_UID) {
-
-      await signOut(auth);
-
-      loginScreen.classList.remove(
-        "hidden"
-      );
-
-      dashboardScreen.classList.add(
-        "hidden"
-      );
-
-      loginError.textContent =
-        "This account is not authorized.";
-
-      return;
-    }
-
-
-    loginScreen.classList.add(
-      "hidden"
-    );
-
-    dashboardScreen.classList.remove(
-      "hidden"
-    );
-
-
-    await loadDashboard();
-  }
-);
-
-
-/* =====================================================
-   LOGOUT
-===================================================== */
-
-logoutBtn.addEventListener(
-  "click",
-  async () => {
-
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to logout?"
-      );
-
-
-    if (!confirmed) {
-      return;
-    }
-
-
-    try {
-
-      await signOut(auth);
-
-    } catch (error) {
-
-      console.error(
-        "Logout error:",
-        error
-      );
-
-      window.alert(
-        "Logout failed. Please try again."
-      );
-    }
-  }
-);
-
-
-/* =====================================================
-   AUTH ERROR
-===================================================== */
-
-function getAuthErrorMessage(code) {
-
-  switch (code) {
-
-    case "auth/invalid-credential":
-      return "Invalid email or password.";
-
-    case "auth/invalid-email":
-      return "Please enter a valid email.";
-
-    case "auth/user-disabled":
-      return "This account has been disabled.";
-
-    case "auth/too-many-requests":
-      return "Too many login attempts. Try again later.";
-
-    case "auth/network-request-failed":
-      return "Network error. Check your internet connection.";
-
-    default:
-      return "Login failed. Please check your details.";
-  }
-}
-
-
-/* =====================================================
-   NAVIGATION
-===================================================== */
-
-navButtons.forEach(
-  (button) => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        navButtons.forEach(
-          (btn) =>
-            btn.classList.remove(
-              "active"
-            )
-        );
-
-
-        button.classList.add(
-          "active"
-        );
-
-
-        document
-          .querySelectorAll(".admin-view")
-          .forEach(
-            (view) =>
-              view.classList.add(
-                "hidden"
-              )
-          );
-
-
-        const target =
-          document.getElementById(
-            button.dataset.view
-          );
-
-
-        if (target) {
-          target.classList.remove(
-            "hidden"
-          );
-        }
-      }
-    );
-  }
-);
-
-
-/* =====================================================
-   DASHBOARD LOAD
-===================================================== */
-
-async function loadDashboard() {
-
-  try {
-
-    await loadReels();
-
-    await loadFeedback();
-
-    populateReelFilter();
-
-    renderAnalytics();
-
-  } catch (error) {
-
-    console.error(
-      "Dashboard loading error:",
-      error
-    );
-
-    window.alert(
-      "Unable to load feedback. Check Firebase Rules."
-    );
-  }
-}
-
-
-/* =====================================================
-   LOAD REELS
-===================================================== */
-
-async function loadReels() {
-
-  const snapshot =
-    await get(
-      ref(db, "reels")
-    );
-
-
-  reelsData =
-    snapshot.exists()
-      ? snapshot.val()
-      : {};
-
-
-  populateReelFilter();
-
-  renderReelList();
-
-  updateGeneratedReelId();
-}
-
-
-/* =====================================================
-   LOAD ALL FEEDBACK
-   NOTE:
-   Firebase Rules must allow admin read at
-   feedback_responses root.
-===================================================== */
-
-async function loadFeedback() {
-
-  try {
-
-    const snapshot =
-      await get(
-        ref(
-          db,
-          "feedback_responses"
-        )
-      );
-
-
-    feedbackData =
-      snapshot.exists()
-        ? snapshot.val()
-        : {};
-
-  } catch (error) {
-
-    console.error(
-      "Feedback read error:",
-      error
-    );
-
-    throw error;
-  }
-}
-
-
-/* =====================================================
-   AUTO REEL ID
-===================================================== */
-
-function getNextReelId() {
-
-  const usedNumbers =
-    Object.keys(reelsData)
-      .map(
-        (id) => {
-
-          const match =
-            /^RB(\d+)$/.exec(id);
-
-          return match
-            ? Number(match[1])
-            : 0;
-        }
-      )
-      .filter(
-        (number) => number > 0
-      );
-
-
-  let nextNumber =
-    usedNumbers.length
-      ? Math.max(...usedNumbers) + 1
-      : 1;
-
-
-  let candidate;
-
-
-  do {
-
-    candidate =
-      `RB${String(nextNumber).padStart(3, "0")}`;
-
-    nextNumber++;
-
-  } while (
-    reelsData[candidate]
-  );
-
-
-  return candidate;
-}
-
-
-function updateGeneratedReelId() {
-
-  generatedReelId.textContent =
-    editingReelId ||
-    getNextReelId();
-}
-
-
-/* =====================================================
-   FACEBOOK URL VALIDATION
-===================================================== */
-
-function isFacebookUrl(url) {
-
-  try {
-
-    const parsed =
-      new URL(url);
-
-    const host =
-      parsed.hostname.toLowerCase();
-
-
-    return (
-      host === "facebook.com" ||
-      host === "www.facebook.com" ||
-      host.endsWith(".facebook.com")
-    );
-
-  } catch {
-
-    return false;
-  }
-}
-
-
-/* =====================================================
-   METADATA
-===================================================== */
-
-async function fetchReelMetadata(url) {
-
-  metadataStatus.textContent =
-    "Fetching Reel information…";
-
-
-  metadataStatus.style.color =
-    "#555";
-
-
-  fetchedMetadata = null;
-
-
-  const endpoints = [
-
-    `https://www.facebook.com/plugins/post/oembed.json?url=${encodeURIComponent(url)}`,
-
-    `https://www.facebook.com/plugins/video/oembed.json?url=${encodeURIComponent(url)}`
-  ];
-
-
-  for (const endpoint of endpoints) {
-
-    try {
-
-      const response =
-        await fetch(
-          endpoint
-        );
-
-
-      if (!response.ok) {
-        continue;
-      }
-
-
-      const data =
-        await response.json();
-
-
-      if (!data) {
-        continue;
-      }
-
-
-      const title =
-        data.title ||
-        data.author_name ||
-        null;
-
-
-      const thumbnail =
-        data.thumbnail_url ||
-        "";
-
-
-      if (title) {
-
-        fetchedMetadata = {
-          title,
-          thumbnail
-        };
-
-
-        generatedTitle.textContent =
-          title;
-
-
-        metadataStatus.textContent =
-          "Reel information detected.";
-
-        metadataStatus.style.color =
-          "#287a3e";
-
-
-        return fetchedMetadata;
+      if (credential.user.uid !== AUTHORIZED_ADMIN_UID) {
+        await signOut(auth);
+        throw new Error("UNAUTHORIZED_ADMIN");
       }
 
     } catch (error) {
+      console.error("Login error:", error);
 
-      console.warn(
-        "Facebook metadata request failed:",
-        error
-      );
-    }
-  }
-
-
-  /*
-    Facebook may block browser-side metadata requests.
-    We never invent a Facebook title.
-  */
-
-  const fallbackId =
-    editingReelId ||
-    getNextReelId();
-
-
-  const fallbackTitle =
-    `Rudra Bhakti Reel ${fallbackId}`;
-
-
-  fetchedMetadata = {
-    title: fallbackTitle,
-    thumbnail: ""
-  };
-
-
-  generatedTitle.textContent =
-    fallbackTitle;
-
-
-  metadataStatus.textContent =
-    "Facebook title could not be fetched automatically. A fallback title will be used.";
-
-  metadataStatus.style.color =
-    "#777";
-
-
-  return fetchedMetadata;
-}
-
-
-/* =====================================================
-   FETCH INFO BUTTON
-===================================================== */
-
-fetchMetadataBtn.addEventListener(
-  "click",
-  async () => {
-
-    const url =
-      facebookUrlInput.value.trim();
-
-
-    if (!url) {
-
-      metadataStatus.textContent =
-        "Paste the Facebook Reel URL first.";
-
-      return;
-    }
-
-
-    if (!isFacebookUrl(url)) {
-
-      metadataStatus.textContent =
-        "Please enter a valid Facebook URL.";
-
-      return;
-    }
-
-
-    fetchMetadataBtn.disabled =
-      true;
-
-
-    try {
-
-      await fetchReelMetadata(
-        url
-      );
-
-    } finally {
-
-      fetchMetadataBtn.disabled =
-        false;
-    }
-  }
-);
-
-
-/* =====================================================
-   URL INPUT
-===================================================== */
-
-facebookUrlInput.addEventListener(
-  "input",
-  () => {
-
-    fetchedMetadata = null;
-
-    generatedTitle.textContent =
-      "Waiting for URL…";
-
-    metadataStatus.textContent =
-      "";
-
-    updateGeneratedReelId();
-  }
-);
-
-
-/* =====================================================
-   ADD / UPDATE REEL
-===================================================== */
-
-reelForm.addEventListener(
-  "submit",
-  async (event) => {
-
-    event.preventDefault();
-
-
-    reelFormMessage.textContent =
-      "";
-
-
-    const url =
-      facebookUrlInput.value.trim();
-
-
-    if (!isFacebookUrl(url)) {
-
-      reelFormMessage.textContent =
-        "Please enter a valid Facebook Reel URL.";
-
-      reelFormMessage.style.color =
-        "#c62828";
-
-      return;
-    }
-
-
-    saveReelBtn.disabled =
-      true;
-
-
-    try {
-
-      const reelId =
-        editingReelId ||
-        getNextReelId();
-
-
-      /*
-        Automatically attempt metadata
-        if the admin didn't press Fetch.
-      */
-
-      if (!fetchedMetadata) {
-
-        await fetchReelMetadata(
-          url
+      if (error.message === "UNAUTHORIZED_ADMIN") {
+        showLoginError(
+          "This Firebase account is not authorized for this dashboard."
         );
-      }
-
-
-      const title =
-        fetchedMetadata?.title ||
-        `Rudra Bhakti Reel ${reelId}`;
-
-
-      const thumbnail =
-        fetchedMetadata?.thumbnail ||
-        "";
-
-
-      const reelRef =
-        ref(
-          db,
-          `reels/${reelId}`
+      } else if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found"
+      ) {
+        showLoginError("Incorrect email or password.");
+      } else if (error.code === "auth/too-many-requests") {
+        showLoginError(
+          "Too many unsuccessful attempts. Please try again later."
         );
-
-
-      const existingReel =
-        reelsData[reelId];
-
-
-      if (existingReel) {
-
-        await update(
-          reelRef,
-          {
-            title,
-            facebookUrl: url,
-            thumbnail,
-            updated_at:
-              serverTimestamp()
-          }
-        );
-
       } else {
-
-        await set(
-          reelRef,
-          {
-            title,
-            facebookUrl: url,
-            thumbnail,
-
-            created_at:
-              serverTimestamp(),
-
-            updated_at:
-              serverTimestamp()
-          }
-        );
+        showLoginError("Unable to sign in. Please check your credentials.");
       }
-
-
-      reelFormMessage.textContent =
-        editingReelId
-          ? `${reelId} updated successfully.`
-          : `${reelId} added successfully.`;
-
-
-      reelFormMessage.style.color =
-        "#287a3e";
-
-
-      await loadReels();
-
-
-      resetReelForm();
-
-
-    } catch (error) {
-
-      console.error(
-        "Reel save error:",
-        error
-      );
-
-
-      reelFormMessage.textContent =
-        "Could not save Reel. Check Firebase Rules.";
-
-      reelFormMessage.style.color =
-        "#c62828";
-
     } finally {
-
-      saveReelBtn.disabled =
-        false;
+      setButtonLoading("#loginButton", false);
     }
-  }
-);
-
-
-/* =====================================================
-   RESET REEL FORM
-===================================================== */
-
-function resetReelForm() {
-
-  editingReelId = null;
-
-  fetchedMetadata = null;
-
-  reelForm.reset();
-
-
-  generatedTitle.textContent =
-    "Waiting for URL…";
-
-
-  metadataStatus.textContent =
-    "";
-
-
-  saveReelBtn.textContent =
-    "Add Reel";
-
-
-  updateGeneratedReelId();
-}
-
-
-/* =====================================================
-   REEL FILTER
-===================================================== */
-
-reelFilter.addEventListener(
-  "change",
-  () => {
-
-    renderAnalytics();
-  }
-);
-
-
-function populateReelFilter() {
-
-  const previous =
-    reelFilter.value;
-
-
-  reelFilter.innerHTML =
-    `<option value="ALL">All Reels</option>`;
-
-
-  Object.keys(reelsData)
-    .sort()
-    .forEach(
-      (id) => {
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-
-        option.value =
-          id;
-
-
-        option.textContent =
-          `${id} — ${
-            reelsData[id].title ||
-            "Untitled"
-          }`;
-
-
-        reelFilter.appendChild(
-          option
-        );
-      }
-    );
-
-
-  if (
-    previous === "ALL" ||
-    reelsData[previous]
-  ) {
-
-    reelFilter.value =
-      previous;
-  }
-}
-
-
-/* =====================================================
-   REEL LIST
-===================================================== */
-
-function renderReelList() {
-
-  const ids =
-    Object.keys(
-      reelsData
-    ).sort();
-
-
-  if (!ids.length) {
-
-    reelList.innerHTML =
-      `<p class="empty-state">
-        No Reels added yet.
-      </p>`;
-
-    return;
-  }
-
-
-  reelList.innerHTML =
-    ids
-      .map(
-        (id) => {
-
-          const reel =
-            reelsData[id];
-
-
-          const feedbackLink =
-            `${window.location.origin}${window.location.pathname.replace(
-              /admin\.html$/,
-              ""
-            )}?reel=${encodeURIComponent(id)}`;
-
-
-          return `
-            <div class="reel-item">
-
-              <div class="reel-info">
-
-                <strong>
-                  ${escapeHTML(id)}
-                  —
-                  ${escapeHTML(
-                    reel.title ||
-                    "Untitled"
-                  )}
-                </strong>
-
-                <small>
-                  ${escapeHTML(
-                    reel.facebookUrl ||
-                    ""
-                  )}
-                </small>
-
-              </div>
-
-
-              <div class="reel-actions">
-
-                <button
-                  type="button"
-                  class="small-btn"
-                  data-action="copy"
-                  data-id="${escapeHTML(id)}"
-                  data-link="${escapeHTML(feedbackLink)}"
-                >
-                  Copy Link
-                </button>
-
-
-                <button
-                  type="button"
-                  class="small-btn"
-                  data-action="edit"
-                  data-id="${escapeHTML(id)}"
-                >
-                  Edit
-                </button>
-
-
-                <button
-                  type="button"
-                  class="small-btn"
-                  data-action="delete"
-                  data-id="${escapeHTML(id)}"
-                >
-                  Delete
-                </button>
-
-              </div>
-
-            </div>
-          `;
-        }
-      )
-      .join("");
-
-
-  reelList
-    .querySelectorAll("button")
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          async () => {
-
-            const action =
-              button.dataset.action;
-
-            const id =
-              button.dataset.id;
-
-
-            if (
-              action === "copy"
-            ) {
-
-              await copyFeedbackLink(
-                button,
-                button.dataset.link
-              );
-
-              return;
-            }
-
-
-            if (
-              action === "edit"
-            ) {
-
-              editReel(id);
-
-              return;
-            }
-
-
-            if (
-              action === "delete"
-            ) {
-
-              await deleteReel(id);
-            }
-          }
-        );
-      }
-    );
-}
-
-
-/* =====================================================
-   COPY FEEDBACK LINK
-===================================================== */
-
-async function copyFeedbackLink(
-  button,
-  link
-) {
-
-  try {
-
-    await navigator.clipboard.writeText(
-      link
-    );
-
-
-    const oldText =
-      button.textContent;
-
-
-    button.textContent =
-      "Copied!";
-
-
-    setTimeout(
-      () => {
-        button.textContent =
-          oldText;
-      },
-      1500
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Copy failed:",
-      error
-    );
-
-
-    window.prompt(
-      "Copy this feedback link:",
-      link
-    );
-  }
-}
-
-
-/* =====================================================
-   EDIT REEL
-===================================================== */
-
-function editReel(id) {
-
-  const reel =
-    reelsData[id];
-
-
-  if (!reel) {
-    return;
-  }
-
-
-  editingReelId =
-    id;
-
-
-  facebookUrlInput.value =
-    reel.facebookUrl ||
-    "";
-
-
-  generatedReelId.textContent =
-    id;
-
-
-  generatedTitle.textContent =
-    reel.title ||
-    "Untitled";
-
-
-  fetchedMetadata = {
-    title:
-      reel.title ||
-      `Rudra Bhakti Reel ${id}`,
-
-    thumbnail:
-      reel.thumbnail ||
-      ""
-  };
-
-
-  saveReelBtn.textContent =
-    "Update Reel";
-
-
-  metadataStatus.textContent =
-    "Editing existing Reel.";
-
-
-  metadataStatus.style.color =
-    "#666";
-
-
-  navButtons.forEach(
-    (button) =>
-      button.classList.remove(
-        "active"
-      )
-  );
-
-
-  const addButton =
-    document.querySelector(
-      '[data-view="addReelView"]'
-    );
-
-
-  if (addButton) {
-    addButton.classList.add(
-      "active"
-    );
-  }
-
-
-  document
-    .querySelectorAll(".admin-view")
-    .forEach(
-      (view) =>
-        view.classList.add(
-          "hidden"
-        )
-    );
-
-
-  document
-    .getElementById(
-      "addReelView"
-    )
-    .classList.remove(
-      "hidden"
-    );
-
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
   });
 }
 
 
-/* =====================================================
-   DELETE REEL
-===================================================== */
+function showLoginScreen() {
+  $("#loginScreen")?.classList.remove("hidden");
+  $("#adminApp")?.classList.add("hidden");
+}
 
-async function deleteReel(id) {
 
-  const confirmed =
-    window.confirm(
-      `Delete ${id} from the Reel list?\n\nExisting feedback responses will NOT be deleted.`
+function showDashboard() {
+  $("#loginScreen")?.classList.add("hidden");
+  $("#adminApp")?.classList.remove("hidden");
+}
+
+
+function showLoginError(message) {
+  const element = $("#loginError");
+
+  if (!element) return;
+
+  element.textContent = message;
+  element.classList.remove("hidden");
+}
+
+
+function clearLoginError() {
+  $("#loginError")?.classList.add("hidden");
+}
+
+
+// ============================================================
+// PASSWORD TOGGLE
+// ============================================================
+
+function bindPasswordToggle() {
+  const button = $("#togglePassword");
+
+  if (!button) return;
+
+  button.addEventListener("click", () => {
+    const input = $("#adminPassword");
+
+    if (!input) return;
+
+    const isPassword = input.type === "password";
+
+    input.type = isPassword ? "text" : "password";
+
+    button.setAttribute(
+      "aria-label",
+      isPassword ? "Hide password" : "Show password"
     );
 
+    button.innerHTML = isPassword
+      ? eyeOffIcon()
+      : eyeIcon();
+  });
+}
 
-  if (!confirmed) {
-    return;
+
+// ============================================================
+// DASHBOARD EVENTS
+// ============================================================
+
+function bindDashboardEvents() {
+  $("#logoutButton")?.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout error:", error);
+      showToast("Unable to sign out.", "error");
+    }
+  });
+
+  $("#refreshAnalytics")?.addEventListener("click", async () => {
+    await loadAdminData();
+  });
+}
+
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function bindNavigation() {
+  $$(".nav-item").forEach((button) => {
+    button.addEventListener("click", () => {
+      const section = button.dataset.section;
+
+      if (!section) return;
+
+      switchSection(section);
+    });
+  });
+}
+
+
+function switchSection(section) {
+  state.activeSection = section;
+
+  $$(".nav-item").forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.section === section
+    );
+  });
+
+  $$(".admin-section").forEach((element) => {
+    element.classList.toggle(
+      "active",
+      element.id === `${section}Section`
+    );
+  });
+
+  if (section === "analytics") {
+    applyFiltersAndRender();
   }
 
-
-  try {
-
-    await remove(
-      ref(
-        db,
-        `reels/${id}`
-      )
-    );
-
-
-    delete reelsData[id];
-
-
-    populateReelFilter();
-
+  if (section === "reels") {
     renderReelList();
-
-    renderAnalytics();
-
-    updateGeneratedReelId();
-
-
-  } catch (error) {
-
-    console.error(
-      "Delete error:",
-      error
-    );
-
-
-    window.alert(
-      "Could not delete Reel."
-    );
   }
 }
 
 
-/* =====================================================
-   ANALYTICS
-===================================================== */
+// ============================================================
+// LOAD ADMIN DATA
+// ============================================================
 
-function getFilteredResponses() {
+async function loadAdminData() {
+  showLoading(true);
 
-  const selected =
-    reelFilter.value;
+  try {
+    await Promise.all([
+      loadReels(),
+      loadResponses()
+    ]);
+
+    populateReelFilters();
+    applyFiltersAndRender();
+    renderReelList();
+
+  } catch (error) {
+    console.error("Admin data loading error:", error);
+
+    showToast(
+      "Unable to load dashboard data. Check Firebase rules and connection.",
+      "error"
+    );
+  } finally {
+    showLoading(false);
+  }
+}
 
 
-  const responses = [];
+// ============================================================
+// LOAD REELS
+// ============================================================
+
+async function loadReels() {
+  const reelsSnapshot = await get(ref(db, "reels"));
+
+  state.reels = reelsSnapshot.exists()
+    ? reelsSnapshot.val()
+    : {};
+}
 
 
-  Object.entries(
-    feedbackData
-  ).forEach(
+// ============================================================
+// LOAD RESPONSES
+// ============================================================
+
+async function loadResponses() {
+  const snapshot = await get(ref(db, "feedback_responses"));
+
+  state.responses = snapshot.exists()
+    ? snapshot.val()
+    : {};
+}
+
+
+// ============================================================
+// FLATTEN RESPONSES
+// ============================================================
+
+function flattenResponses() {
+  const result = [];
+
+  Object.entries(state.responses || {}).forEach(
     ([reelId, reelResponses]) => {
 
-      if (
-        selected !== "ALL" &&
-        reelId !== selected
-      ) {
+      if (!reelResponses || typeof reelResponses !== "object") {
         return;
       }
 
+      Object.entries(reelResponses).forEach(
+        ([responseId, response]) => {
 
-      Object.values(
-        reelResponses || {}
-      ).forEach(
-        (response) => {
+          if (!response || typeof response !== "object") {
+            return;
+          }
 
-          responses.push({
+          result.push({
+            ...response,
             reelId,
-            ...response
+            responseId
           });
         }
       );
     }
   );
 
-
-  return responses;
+  return result;
 }
 
+
+// ============================================================
+// FILTERS
+// ============================================================
+
+function bindFilters() {
+  $("#reelFilter")?.addEventListener("change", (event) => {
+    state.selectedReel = event.target.value;
+    applyFiltersAndRender();
+  });
+
+  $("#ratingFilter")?.addEventListener("change", (event) => {
+    state.selectedRating = event.target.value;
+    applyFiltersAndRender();
+  });
+
+  $("#periodFilter")?.addEventListener("change", (event) => {
+    state.selectedPeriod = event.target.value;
+    applyFiltersAndRender();
+  });
+}
+
+
+function populateReelFilters() {
+  const select = $("#reelFilter");
+
+  if (!select) return;
+
+  const previous = state.selectedReel;
+
+  select.innerHTML = `
+    <option value="all">All Reels</option>
+  `;
+
+  Object.entries(state.reels || {})
+    .sort((a, b) => {
+      return reelNumber(a[0]) - reelNumber(b[0]);
+    })
+    .forEach(([reelId, reel]) => {
+
+      const option = document.createElement("option");
+
+      option.value = reelId;
+
+      option.textContent =
+        `${reelId} — ${reel?.title || "Untitled Reel"}`;
+
+      select.appendChild(option);
+    });
+
+  if (
+    previous === "all" ||
+    state.reels[previous]
+  ) {
+    select.value = previous;
+  } else {
+    select.value = "all";
+    state.selectedReel = "all";
+  }
+}
+
+
+function applyFiltersAndRender() {
+  const responses = flattenResponses();
+
+  state.filteredResponses = responses.filter((response) => {
+
+    if (
+      state.selectedReel !== "all" &&
+      response.reelId !== state.selectedReel
+    ) {
+      return false;
+    }
+
+    if (
+      state.selectedRating !== "all" &&
+      response.answers?.Q_RATING !== state.selectedRating
+    ) {
+      return false;
+    }
+
+    if (
+      !passesPeriodFilter(
+        response.submitted_at,
+        state.selectedPeriod
+      )
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  renderAnalytics();
+}
+
+
+// ============================================================
+// DATE FILTER
+// ============================================================
+
+function passesPeriodFilter(timestamp, period) {
+  if (period === "all") return true;
+
+  if (!timestamp) return false;
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+
+  if (period === "today") {
+    return date.toDateString() === now.toDateString();
+  }
+
+  if (period === "7") {
+    return date >= subtractDays(now, 7);
+  }
+
+  if (period === "30") {
+    return date >= subtractDays(now, 30);
+  }
+
+  if (period === "90") {
+    return date >= subtractDays(now, 90);
+  }
+
+  return true;
+}
+
+
+function subtractDays(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() - days);
+  return result;
+}
+
+
+// ============================================================
+// ANALYTICS
+// ============================================================
 
 function renderAnalytics() {
+  const responses = state.filteredResponses;
 
-  const responses =
-    getFilteredResponses();
-
-
-  document.getElementById(
-    "totalResponses"
-  ).textContent =
-    responses.length;
-
-
-  renderAverageRating(
-    responses
-  );
+  renderKPIs(responses);
+  renderFeelingChart(responses);
+  renderMoreContentChart(responses);
+  renderConnectionChart(responses);
+  renderRatingChart(responses);
+  renderReelComparison();
+  renderWrittenFeedback(responses);
+}
 
 
-  renderWantMore(
-    responses
-  );
+// ============================================================
+// KPI CARDS
+// ============================================================
 
+function renderKPIs(responses) {
+  const total = responses.length;
 
-  renderTopFeeling(
-    responses
-  );
+  const ratings = responses
+    .map((response) => ratingNumber(response.answers?.Q_RATING))
+    .filter(Boolean);
 
+  const averageRating = ratings.length
+    ? ratings.reduce((sum, value) => sum + value, 0) / ratings.length
+    : 0;
 
-  renderDistribution(
+  const feelingCounts = countValues(
     responses,
-    "Q_FEELING",
-    "feelingDistribution",
-    {
-      FEEL_PEACEFUL:
-        "Peaceful",
-
-      FEEL_DEVOTIONAL:
-        "Devotional",
-
-      FEEL_EMOTIONAL:
-        "Emotional",
-
-      FEEL_INSPIRED:
-        "Inspired",
-
-      FEEL_CALM:
-        "Calm",
-
-      FEEL_DEEPLY_MOVED:
-        "Deeply Moved"
-    }
+    (response) => response.answers?.Q_FEELING
   );
 
+  const topFeelingId = getTopKey(feelingCounts);
 
-  renderDistribution(
-    responses,
-    "Q_MORE_CONTENT",
-    "moreDistribution",
-    {
-      MORE_DEFINITELY:
-        "Definitely",
+  const positiveMoreContent = responses.filter(
+    (response) =>
+      response.answers?.Q_MORE_CONTENT === "MORE_DEFINITELY"
+  ).length;
 
-      MORE_SOMETIMES:
-        "Sometimes",
+  const moreContentPercentage = total
+    ? (positiveMoreContent / total) * 100
+    : 0;
 
-      MORE_UNSURE:
-        "Unsure",
-
-      MORE_NOT_REALLY:
-        "Not Really"
-    }
+  setText(
+    "#totalResponses",
+    formatNumber(total)
   );
 
-
-  renderDistribution(
-    responses,
-    "Q_CONNECTION",
-    "connectionDistribution",
-    {
-      CONNECT_SHIVA_PARVATI:
-        "Shiva & Parvati",
-
-      CONNECT_DEVOTIONAL_FEELING:
-        "Devotional Feeling",
-
-      CONNECT_ARTWORK:
-        "Artwork",
-
-      CONNECT_MUSIC:
-        "Music",
-
-      CONNECT_EVERYTHING:
-        "Everything"
-    }
+  setText(
+    "#averageRating",
+    averageRating ? averageRating.toFixed(1) : "—"
   );
 
-
-  renderDistribution(
-    responses,
-    "Q_RATING",
-    "ratingDistribution",
-    {
-      RATING_1:
-        "1 Star",
-
-      RATING_2:
-        "2 Stars",
-
-      RATING_3:
-        "3 Stars",
-
-      RATING_4:
-        "4 Stars",
-
-      RATING_5:
-        "5 Stars"
-    }
+  setText(
+    "#topFeeling",
+    topFeelingId
+      ? FEELING_LABELS[topFeelingId] || topFeelingId
+      : "—"
   );
 
-
-  renderWrittenFeedback(
-    responses
+  setText(
+    "#moreContentPercentage",
+    `${Math.round(moreContentPercentage)}%`
   );
 }
 
 
-/* =====================================================
-   AVERAGE RATING
-===================================================== */
+// ============================================================
+// FEELING CHART
+// ============================================================
 
-function renderAverageRating(
-  responses
+function renderFeelingChart(responses) {
+  const counts = countValues(
+    responses,
+    (response) => response.answers?.Q_FEELING
+  );
+
+  renderBarChart(
+    "#feelingChart",
+    counts,
+    FEELING_LABELS
+  );
+}
+
+
+// ============================================================
+// MORE CONTENT CHART
+// ============================================================
+
+function renderMoreContentChart(responses) {
+  const counts = countValues(
+    responses,
+    (response) => response.answers?.Q_MORE_CONTENT
+  );
+
+  renderBarChart(
+    "#moreContentChart",
+    counts,
+    MORE_CONTENT_LABELS
+  );
+}
+
+
+// ============================================================
+// CONNECTION CHART
+// ============================================================
+
+function renderConnectionChart(responses) {
+  const counts = countValues(
+    responses,
+    (response) => response.answers?.Q_CONNECTION
+  );
+
+  renderBarChart(
+    "#connectionChart",
+    counts,
+    CONNECTION_LABELS
+  );
+}
+
+
+// ============================================================
+// RATING CHART
+// ============================================================
+
+function renderRatingChart(responses) {
+  const counts = countValues(
+    responses,
+    (response) => response.answers?.Q_RATING
+  );
+
+  renderBarChart(
+    "#ratingChart",
+    counts,
+    RATING_LABELS
+  );
+}
+
+
+// ============================================================
+// GENERIC BAR CHART
+// ============================================================
+
+function renderBarChart(
+  selector,
+  counts,
+  labels = {}
 ) {
+  const container = $(selector);
 
-  const ratings =
-    responses
-      .map(
-        (response) =>
-          ratingNumber(
-            response.answers?.Q_RATING
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const entries = Object.entries(counts);
+
+  if (!entries.length) {
+    container.innerHTML = emptyState("No data available");
+    return;
+  }
+
+  const max = Math.max(
+    ...entries.map(([, value]) => value),
+    1
+  );
+
+  entries.forEach(([key, count]) => {
+
+    const row = document.createElement("div");
+    row.className = "chart-row";
+
+    const label = document.createElement("div");
+    label.className = "chart-label";
+    label.textContent = labels[key] || key;
+
+    const track = document.createElement("div");
+    track.className = "chart-track";
+
+    const bar = document.createElement("div");
+    bar.className = "chart-bar";
+
+    bar.style.width =
+      `${Math.max((count / max) * 100, 2)}%`;
+
+    const value = document.createElement("span");
+    value.className = "chart-value";
+    value.textContent = count;
+
+    track.appendChild(bar);
+
+    row.appendChild(label);
+    row.appendChild(track);
+    row.appendChild(value);
+
+    container.appendChild(row);
+  });
+}
+
+
+// ============================================================
+// REEL COMPARISON
+// ============================================================
+
+function renderReelComparison() {
+  const container = $("#reelComparisonBody");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const responses = flattenResponses();
+
+  const grouped = {};
+
+  responses.forEach((response) => {
+
+    if (!grouped[response.reelId]) {
+      grouped[response.reelId] = [];
+    }
+
+    grouped[response.reelId].push(response);
+  });
+
+  const reelIds = Object.keys(state.reels || {});
+
+  if (!reelIds.length) {
+    container.innerHTML = `
+      <tr>
+        <td colspan="5">
+          No reels have been added yet.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  reelIds
+    .sort((a, b) => reelNumber(a) - reelNumber(b))
+    .forEach((reelId) => {
+
+      const reelResponses = grouped[reelId] || [];
+
+      const ratings = reelResponses
+        .map((response) =>
+          ratingNumber(response.answers?.Q_RATING)
+        )
+        .filter(Boolean);
+
+      const average =
+        ratings.length
+          ? ratings.reduce((a, b) => a + b, 0) /
+            ratings.length
+          : 0;
+
+      const topFeeling =
+        getTopKey(
+          countValues(
+            reelResponses,
+            (response) =>
+              response.answers?.Q_FEELING
           )
-      )
-      .filter(
-        (number) =>
-          number > 0
-      );
+        );
 
+      const positive =
+        reelResponses.filter(
+          (response) =>
+            response.answers?.Q_MORE_CONTENT ===
+            "MORE_DEFINITELY"
+        ).length;
 
-  const average =
-    ratings.length
-      ? ratings.reduce(
-          (sum, value) =>
-            sum + value,
-          0
-        ) / ratings.length
-      : 0;
+      const percentage =
+        reelResponses.length
+          ? Math.round(
+              (positive / reelResponses.length) * 100
+            )
+          : 0;
 
+      const reel = state.reels[reelId];
 
-  document.getElementById(
-    "averageRating"
-  ).textContent =
-    average.toFixed(1);
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>
+          <strong>${escapeHtml(reelId)}</strong>
+        </td>
+
+        <td>
+          ${escapeHtml(
+            reel?.title || "Untitled Reel"
+          )}
+        </td>
+
+        <td>
+          ${reelResponses.length}
+        </td>
+
+        <td>
+          ${average ? average.toFixed(1) : "—"}
+        </td>
+
+        <td>
+          ${
+            topFeeling
+              ? escapeHtml(
+                  FEELING_LABELS[topFeeling] ||
+                  topFeeling
+                )
+              : "—"
+          }
+        </td>
+
+        <td>
+          ${percentage}%
+        </td>
+      `;
+
+      container.appendChild(row);
+    });
 }
 
 
-function ratingNumber(
-  value
-) {
+// ============================================================
+// WRITTEN FEEDBACK
+// ============================================================
 
-  const match =
-    /^RATING_(\d)$/.exec(
-      value || ""
+function renderWrittenFeedback(responses) {
+  const container = $("#writtenFeedbackList");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const feedback = responses
+    .filter(
+      (response) =>
+        response.answers?.Q_OPEN_FEEDBACK &&
+        String(
+          response.answers.Q_OPEN_FEEDBACK
+        ).trim()
+    )
+    .sort(
+      (a, b) =>
+        Number(b.submitted_at || 0) -
+        Number(a.submitted_at || 0)
     );
 
+  if (!feedback.length) {
+    container.innerHTML =
+      emptyState("No written feedback available.");
+    return;
+  }
+
+  feedback.forEach((response) => {
+
+    const item = document.createElement("article");
+    item.className = "feedback-item";
+
+    const reel = state.reels[response.reelId];
+
+    const date = formatDate(
+      response.submitted_at
+    );
+
+    item.innerHTML = `
+      <div class="feedback-item-header">
+
+        <div>
+          <strong>
+            ${escapeHtml(
+              response.user?.name ||
+              "Anonymous"
+            )}
+          </strong>
+
+          <span>
+            ${escapeHtml(response.reelId)}
+            ${
+              reel?.title
+                ? ` — ${escapeHtml(reel.title)}`
+                : ""
+            }
+          </span>
+        </div>
+
+        <time>
+          ${escapeHtml(date)}
+        </time>
+
+      </div>
+
+      <p>
+        ${escapeHtml(
+          response.answers.Q_OPEN_FEEDBACK
+        )}
+      </p>
+    `;
+
+    container.appendChild(item);
+  });
+}
+
+
+// ============================================================
+// REEL MANAGEMENT
+// ============================================================
+
+function bindReelManagement() {
+  $("#reelUrlForm")?.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+
+      await createReel();
+    }
+  );
+
+  $("#copyFeedbackUrl")?.addEventListener(
+    "click",
+    async () => {
+      const url = state.currentFeedbackUrl;
+
+      if (!url) {
+        showToast(
+          "Generate a Reel first.",
+          "error"
+        );
+        return;
+      }
+
+      const copied = await copyToClipboard(url);
+
+      if (copied) {
+        showToast(
+          "Feedback URL copied.",
+          "success"
+        );
+      } else {
+        showToast(
+          "Unable to copy the URL.",
+          "error"
+        );
+      }
+    }
+  );
+}
+
+
+async function createReel() {
+  const input = $("#facebookReelUrl");
+
+  if (!input) return;
+
+  const facebookUrl = input.value.trim();
+
+  if (!isValidFacebookUrl(facebookUrl)) {
+    showToast(
+      "Enter a valid Facebook Reel URL.",
+      "error"
+    );
+    return;
+  }
+
+  setButtonLoading("#createReelButton", true);
+  showLoading(true);
+
+  try {
+
+    const reelId =
+      await generateNextReelId();
+
+    const feedbackUrl =
+      buildFeedbackUrl(reelId);
+
+    let metadata = {
+      title: "",
+      thumbnail: ""
+    };
+
+    if (METADATA_ENDPOINT) {
+      metadata =
+        await fetchReelMetadata(
+          facebookUrl
+        );
+    }
+
+    const reelData = {
+      title:
+        metadata.title ||
+        "",
+
+      facebookUrl,
+
+      thumbnail:
+        metadata.thumbnail ||
+        "",
+
+      feedbackUrl,
+
+      createdAt:
+        serverTimestamp()
+    };
+
+    await set(
+      ref(db, `reels/${reelId}`),
+      reelData
+    );
+
+    state.reels[reelId] = {
+      ...reelData,
+      createdAt: Date.now()
+    };
+
+    state.currentGeneratedReelId =
+      reelId;
+
+    state.currentFeedbackUrl =
+      feedbackUrl;
+
+    displayGeneratedReel(
+      reelId,
+      reelData
+    );
+
+    input.value = "";
+
+    populateReelFilters();
+    renderReelList();
+
+    showToast(
+      `${reelId} created successfully.`,
+      "success"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Create reel error:",
+      error
+    );
+
+    showToast(
+      "Unable to create the Reel.",
+      "error"
+    );
+
+  } finally {
+    setButtonLoading(
+      "#createReelButton",
+      false
+    );
+
+    showLoading(false);
+  }
+}
+
+
+// ============================================================
+// REEL ID GENERATION
+// ============================================================
+
+async function generateNextReelId() {
+  // Re-read the reels node so the ID is based on
+  // the latest database state.
+
+  const snapshot =
+    await get(ref(db, "reels"));
+
+  const reels =
+    snapshot.exists()
+      ? snapshot.val()
+      : {};
+
+  let highestNumber = 0;
+
+  Object.keys(reels).forEach((id) => {
+    const number = reelNumber(id);
+
+    if (number > highestNumber) {
+      highestNumber = number;
+    }
+  });
+
+  return `RB${String(highestNumber + 1).padStart(3, "0")}`;
+}
+
+
+function reelNumber(id) {
+  if (!id) return 0;
+
+  const match =
+    String(id).match(/^RB(\d+)$/i);
 
   return match
     ? Number(match[1])
@@ -1536,323 +1197,660 @@ function ratingNumber(
 }
 
 
-/* =====================================================
-   WANT MORE
-===================================================== */
+// ============================================================
+// FACEBOOK URL VALIDATION
+// ============================================================
 
-function renderWantMore(
-  responses
-) {
+function isValidFacebookUrl(value) {
+  try {
+    const url = new URL(value);
 
-  const total =
-    responses.length;
+    const hostname =
+      url.hostname.toLowerCase();
 
+    return (
+      hostname === "facebook.com" ||
+      hostname === "www.facebook.com" ||
+      hostname === "m.facebook.com" ||
+      hostname === "fb.watch" ||
+      hostname.endsWith(".facebook.com")
+    );
 
-  if (!total) {
-
-    document.getElementById(
-      "wantMore"
-    ).textContent =
-      "0%";
-
-    return;
+  } catch {
+    return false;
   }
-
-
-  const definitely =
-    responses.filter(
-      (response) =>
-        response.answers?.Q_MORE_CONTENT ===
-        "MORE_DEFINITELY"
-    ).length;
-
-
-  const percentage =
-    (definitely / total) * 100;
-
-
-  document.getElementById(
-    "wantMore"
-  ).textContent =
-    `${percentage.toFixed(0)}%`;
 }
 
 
-/* =====================================================
-   TOP FEELING
-===================================================== */
+// ============================================================
+// OPTIONAL METADATA ENDPOINT
+// ============================================================
 
-function renderTopFeeling(
-  responses
+async function fetchReelMetadata(
+  facebookUrl
 ) {
+  if (!METADATA_ENDPOINT) {
+    return {
+      title: "",
+      thumbnail: ""
+    };
+  }
 
-  const counts = {};
+  const response =
+    await fetch(
+      `${METADATA_ENDPOINT}?url=${encodeURIComponent(
+        facebookUrl
+      )}`
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      "Metadata request failed."
+    );
+  }
+
+  const data =
+    await response.json();
+
+  return {
+    title:
+      typeof data.title === "string"
+        ? data.title.trim()
+        : "",
+
+    thumbnail:
+      typeof data.thumbnail === "string"
+        ? data.thumbnail.trim()
+        : ""
+  };
+}
 
 
-  responses.forEach(
-    (response) => {
+// ============================================================
+// DISPLAY GENERATED REEL
+// ============================================================
 
-      const value =
-        response.answers?.Q_FEELING;
-
-
-      if (value) {
-
-        counts[value] =
-          (counts[value] || 0) + 1;
-      }
-    }
+function displayGeneratedReel(
+  reelId,
+  reel
+) {
+  setText(
+    "#generatedReelId",
+    reelId
   );
 
+  setInputValue(
+    "#generatedFeedbackUrl",
+    reel.feedbackUrl
+  );
 
-  const labels = {
-    FEEL_PEACEFUL:
-      "Peaceful",
+  setText(
+    "#metadataTitle",
+    reel.title || "Not available"
+  );
 
-    FEEL_DEVOTIONAL:
-      "Devotional",
+  const thumbnail =
+    $("#metadataThumbnail");
 
-    FEEL_EMOTIONAL:
-      "Emotional",
+  if (thumbnail) {
 
-    FEEL_INSPIRED:
-      "Inspired",
+    if (reel.thumbnail) {
+      thumbnail.src =
+        reel.thumbnail;
 
-    FEEL_CALM:
-      "Calm",
+      thumbnail.classList.remove(
+        "hidden"
+      );
+    } else {
+      thumbnail.removeAttribute(
+        "src"
+      );
 
-    FEEL_DEEPLY_MOVED:
-      "Deeply Moved"
-  };
+      thumbnail.classList.add(
+        "hidden"
+      );
+    }
+  }
+
+  $("#generatedReelPreview")
+    ?.classList.remove("hidden");
+}
 
 
-  const top =
-    Object.entries(counts)
+// ============================================================
+// REEL LIST
+// ============================================================
+
+function renderReelList() {
+  const container =
+    $("#managedReelsList");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const entries =
+    Object.entries(state.reels || {})
       .sort(
         (a, b) =>
-          b[1] - a[1]
-      )[0];
+          reelNumber(a[0]) -
+          reelNumber(b[0])
+      );
 
-
-  document.getElementById(
-    "topFeeling"
-  ).textContent =
-    top
-      ? labels[top[0]] ||
-        top[0]
-      : "—";
-}
-
-
-/* =====================================================
-   DISTRIBUTION
-===================================================== */
-
-function renderDistribution(
-  responses,
-  answerKey,
-  elementId,
-  labels
-) {
-
-  const container =
-    document.getElementById(
-      elementId
-    );
-
-
-  const counts = {};
-
-
-  Object.keys(labels)
-    .forEach(
-      (id) => {
-        counts[id] = 0;
-      }
-    );
-
-
-  responses.forEach(
-    (response) => {
-
-      const value =
-        response.answers?.[
-          answerKey
-        ];
-
-
-      if (
-        value &&
-        Object.prototype.hasOwnProperty.call(
-          counts,
-          value
-        )
-      ) {
-
-        counts[value]++;
-      }
-    }
-  );
-
-
-  const total =
-    responses.length;
-
-
-  container.innerHTML =
-    Object.entries(labels)
-      .map(
-        ([id, label]) => {
-
-          const count =
-            counts[id] || 0;
-
-
-          const percentage =
-            total
-              ? (count / total) * 100
-              : 0;
-
-
-          return `
-            <div class="distribution-row">
-
-              <div class="distribution-label">
-
-                <span>
-                  ${escapeHTML(label)}
-                </span>
-
-                <span>
-                  ${count}
-                  ·
-                  ${percentage.toFixed(0)}%
-                </span>
-
-              </div>
-
-
-              <div class="bar">
-
-                <div
-                  class="bar-fill"
-                  style="width:${percentage}%"
-                ></div>
-
-              </div>
-
-            </div>
-          `;
-        }
-      )
-      .join("");
-}
-
-
-/* =====================================================
-   WRITTEN FEEDBACK
-===================================================== */
-
-function renderWrittenFeedback(
-  responses
-) {
-
-  const container =
-    document.getElementById(
-      "writtenFeedback"
-    );
-
-
-  const written =
-    responses.filter(
-      (response) =>
-        response.answers?.Q_OPEN_FEEDBACK &&
-        response.answers.Q_OPEN_FEEDBACK.trim()
-    );
-
-
-  if (!written.length) {
-
+  if (!entries.length) {
     container.innerHTML =
-      `<p class="empty-state">
-        No written feedback yet.
-      </p>`;
+      emptyState(
+        "No Reels have been added yet."
+      );
 
     return;
   }
 
+  entries.forEach(
+    ([reelId, reel]) => {
 
-  container.innerHTML =
-    written
-      .slice()
-      .reverse()
-      .map(
-        (response) => {
+      const item =
+        document.createElement(
+          "article"
+        );
 
-          const reelTitle =
-            reelsData[
-              response.reelId
-            ]?.title ||
-            response.reelId;
+      item.className =
+        "managed-reel-item";
 
+      const feedbackUrl =
+        reel.feedbackUrl ||
+        buildFeedbackUrl(reelId);
 
-          return `
-            <div class="feedback-item">
+      item.innerHTML = `
+        <div class="managed-reel-main">
 
-              <p>
-                ${escapeHTML(
-                  response.answers
-                    .Q_OPEN_FEEDBACK
-                )}
-              </p>
+          <div class="managed-reel-id">
+            ${escapeHtml(reelId)}
+          </div>
 
-              <small>
-                ${escapeHTML(
-                  response.reelId
-                )}
-                —
-                ${escapeHTML(
-                  reelTitle
-                )}
-              </small>
+          <div class="managed-reel-info">
 
+            <h3>
+              ${escapeHtml(
+                reel.title ||
+                "Untitled Facebook Reel"
+              )}
+            </h3>
+
+            <p>
+              ${escapeHtml(
+                reel.facebookUrl ||
+                ""
+              )}
+            </p>
+
+            <div class="feedback-url">
+              ${escapeHtml(
+                feedbackUrl
+              )}
             </div>
-          `;
+
+          </div>
+
+        </div>
+
+        <div class="managed-reel-actions">
+
+          <button
+            type="button"
+            class="secondary-button copy-reel-url"
+            data-url="${escapeHtml(
+              feedbackUrl
+            )}"
+          >
+            ${copyIcon()}
+            <span>Copy Feedback URL</span>
+          </button>
+
+          <a
+            class="secondary-button"
+            href="${escapeHtml(
+              reel.facebookUrl || "#"
+            )}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ${externalLinkIcon()}
+            <span>Open Reel</span>
+          </a>
+
+        </div>
+      `;
+
+      container.appendChild(item);
+    }
+  );
+
+  $$(".copy-reel-url").forEach(
+    (button) => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const url =
+            button.dataset.url;
+
+          if (!url) return;
+
+          const copied =
+            await copyToClipboard(url);
+
+          showToast(
+            copied
+              ? "Feedback URL copied."
+              : "Unable to copy URL.",
+            copied
+              ? "success"
+              : "error"
+          );
         }
-      )
-      .join("");
+      );
+    }
+  );
 }
 
 
-/* =====================================================
-   HTML ESCAPE
-===================================================== */
+// ============================================================
+// FEEDBACK URL
+// ============================================================
 
-function escapeHTML(
+function buildFeedbackUrl(reelId) {
+  const url =
+    new URL(
+      window.location.href
+    );
+
+  url.search = "";
+  url.hash = "";
+
+  url.searchParams.set(
+    "reel",
+    reelId
+  );
+
+  // The feedback page is the public index page.
+  url.pathname =
+    url.pathname
+      .replace(
+        /\/admin\.html$/i,
+        "/index.html"
+      )
+      .replace(
+        /\/admin\/?$/i,
+        "/"
+      );
+
+  return url.toString();
+}
+
+
+// ============================================================
+// COUNT HELPERS
+// ============================================================
+
+function countValues(
+  responses,
+  getter
+) {
+  const counts = {};
+
+  responses.forEach((response) => {
+
+    const value =
+      getter(response);
+
+    if (!value) return;
+
+    counts[value] =
+      (counts[value] || 0) + 1;
+  });
+
+  return counts;
+}
+
+
+function getTopKey(counts) {
+  const entries =
+    Object.entries(counts);
+
+  if (!entries.length) {
+    return null;
+  }
+
+  entries.sort(
+    (a, b) => b[1] - a[1]
+  );
+
+  return entries[0][0];
+}
+
+
+// ============================================================
+// RATING HELPERS
+// ============================================================
+
+function ratingNumber(value) {
+  const match =
+    String(value || "").match(
+      /^RATING_(\d)$/
+    );
+
+  return match
+    ? Number(match[1])
+    : 0;
+}
+
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+
+function setText(
+  selector,
   value
 ) {
+  const element = $(selector);
 
+  if (element) {
+    element.textContent =
+      value ?? "";
+  }
+}
+
+
+function setInputValue(
+  selector,
+  value
+) {
+  const element = $(selector);
+
+  if (element) {
+    element.value =
+      value ?? "";
+  }
+}
+
+
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString(
+    "en-IN"
+  );
+}
+
+
+function formatDate(timestamp) {
+  if (!timestamp) {
+    return "Unknown date";
+  }
+
+  const date =
+    new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+
+  return date.toLocaleString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  );
+}
+
+
+function emptyState(message) {
+  return `
+    <div class="empty-state">
+      ${escapeHtml(message)}
+    </div>
+  `;
+}
+
+
+// ============================================================
+// LOADING
+// ============================================================
+
+function showLoading(show) {
+  const overlay =
+    $("#loadingOverlay");
+
+  if (!overlay) return;
+
+  overlay.classList.toggle(
+    "hidden",
+    !show
+  );
+}
+
+
+function setButtonLoading(
+  selector,
+  loading
+) {
+  const button =
+    $(selector);
+
+  if (!button) return;
+
+  button.disabled =
+    loading;
+
+  button.classList.toggle(
+    "loading",
+    loading
+  );
+}
+
+
+// ============================================================
+// TOAST
+// ============================================================
+
+let toastTimer = null;
+
+function showToast(
+  message,
+  type = "info"
+) {
+  const toast =
+    $("#toast");
+
+  if (!toast) return;
+
+  toast.textContent =
+    message;
+
+  toast.dataset.type =
+    type;
+
+  toast.classList.add(
+    "show"
+  );
+
+  clearTimeout(
+    toastTimer
+  );
+
+  toastTimer =
+    setTimeout(() => {
+      toast.classList.remove(
+        "show"
+      );
+    }, 3000);
+}
+
+
+// ============================================================
+// CLIPBOARD
+// ============================================================
+
+async function copyToClipboard(
+  text
+) {
+  try {
+
+    if (
+      navigator.clipboard &&
+      window.isSecureContext
+    ) {
+      await navigator.clipboard.writeText(
+        text
+      );
+
+      return true;
+    }
+
+    const textarea =
+      document.createElement(
+        "textarea"
+      );
+
+    textarea.value =
+      text;
+
+    textarea.style.position =
+      "fixed";
+
+    textarea.style.opacity =
+      "0";
+
+    document.body.appendChild(
+      textarea
+    );
+
+    textarea.focus();
+    textarea.select();
+
+    const success =
+      document.execCommand(
+        "copy"
+      );
+
+    textarea.remove();
+
+    return success;
+
+  } catch (error) {
+    console.error(
+      "Clipboard error:",
+      error
+    );
+
+    return false;
+  }
+}
+
+
+// ============================================================
+// HTML ESCAPING
+// ============================================================
+
+function escapeHtml(value) {
   return String(
     value ?? ""
   )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+// ============================================================
+// SVG ICONS
+// ============================================================
+
+function eyeIcon() {
+  return `
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
+      <circle cx="12" cy="12" r="2.5"/>
+    </svg>
+  `;
+}
+
+
+function eyeOffIcon() {
+  return `
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m3 3 18 18"/>
+      <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.5 0 10 6 10 6a17.5 17.5 0 0 1-3.1 3.5"/>
+      <path d="M6.1 6.1C3.5 8.1 2 12 2 12s3.5 6 10 6c1.4 0 2.7-.3 3.9-.8"/>
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+    </svg>
+  `;
+}
+
+
+function copyIcon() {
+  return `
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="9" width="11" height="11" rx="2"/>
+      <path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/>
+    </svg>
+  `;
+}
+
+
+function externalLinkIcon() {
+  return `
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M14 4h6v6"/>
+      <path d="M10 14 20 4"/>
+      <path d="M20 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5"/>
+    </svg>
+  `;
 }
