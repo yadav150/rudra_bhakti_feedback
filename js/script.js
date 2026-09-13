@@ -1,1169 +1,1547 @@
 /* =========================================================
-RUDRA BHAKTI — FEEDBACK FORM
-Frontend Controller
-========================================================= */
+   RUDRA BHAKTI — PUBLIC FEEDBACK CONTROLLER
+   js/script.js
+   ========================================================= */
 
-(() => {
-"use strict";
+import {
+  getReel,
+  getActiveQuestions,
+  submitFeedback
+} from "./firebase-service.js";
 
-/* =======================================================
-CONFIGURATION
-======================================================= */
 
-const CONFIG = {
-reelId: "RB001",
-reelTitle: "Shiva & Parvati — Eternal Love",
-totalQuestions: 5,
+/* =========================================================
+   STATE
+   ========================================================= */
 
-```
-// Future Firebase integration can use this object.
-firebaseReady: false
-```
+const state = {
+  reelId: null,
+  reel: null,
+  questions: [],
 
+  currentQuestion: 0,
+
+  answers: {},
+
+  questionTiming: {},
+
+  engagement: {
+    nextClicks: 0,
+    backClicks: 0,
+    optionChanges: 0,
+    questionViews: 0
+  },
+
+  startedAt: null,
+  completedAt: null,
+
+  questionEnteredAt: null,
+
+  sessionId: getSessionId(),
+
+  submitted: false
 };
 
-/* =======================================================
-DOM REFERENCES
-======================================================= */
 
-const questionPages = Array.from(
-document.querySelectorAll(".question-page")
+/* =========================================================
+   DOM HELPERS
+   ========================================================= */
+
+const $ = (selector) =>
+  document.querySelector(selector);
+
+const $$ = (selector) =>
+  [...document.querySelectorAll(selector)];
+
+
+/* =========================================================
+   SESSION ID
+   ========================================================= */
+
+function getSessionId() {
+  const key =
+    "rudraBhaktiFeedbackSession";
+
+  let sessionId =
+    sessionStorage.getItem(key);
+
+  if (!sessionId) {
+    sessionId =
+      crypto.randomUUID
+        ? crypto.randomUUID()
+        : createFallbackId();
+
+    sessionStorage.setItem(
+      key,
+      sessionId
+    );
+  }
+
+  return sessionId;
+}
+
+
+function createFallbackId() {
+  return (
+    "RB-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 10)
+  );
+}
+
+
+/* =========================================================
+   REEL ID FROM URL
+   ========================================================= */
+
+function getReelIdFromURL() {
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  return (
+    params.get("r") ||
+    params.get("reel") ||
+    params.get("reelId") ||
+    "RB001"
+  );
+}
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  init
 );
 
-const progressLabel =
-document.querySelector(".progress-label");
 
-const progressPercent =
-document.querySelector(".progress-percent");
+async function init() {
+  try {
+    state.reelId =
+      getReelIdFromURL();
 
-const progressBar =
-document.querySelector(".progress-bar");
+    state.startedAt =
+      new Date().toISOString();
 
-const successScreen =
-document.querySelector(".success-screen");
+    await loadFirebaseData();
 
-const questionCard =
-document.querySelector(".question-card");
+    setupExistingUI();
 
-const backButton =
-document.querySelector(".back-btn");
+    setupQuestionFlow();
 
-const nextButton =
-document.querySelector(".next-btn");
+    updateReelInformation();
 
-const submitButton =
-document.querySelector(".submit-btn");
+    showQuestion(0);
 
-const validationMessage =
-document.querySelector(".validation-message");
+  } catch (error) {
+    console.error(
+      "Rudra Bhakti initialization failed:",
+      error
+    );
 
-/* =======================================================
-STATE
-======================================================= */
-
-let currentStep = 0;
-
-const answers = {};
-
-const questionTiming = {};
-
-const engagement = {
-nextClicks: 0,
-backClicks: 0,
-optionChanges: 0,
-questionViews: 0,
-startedAt: null,
-completedAt: null,
-totalDurationMs: 0
-};
-
-let sessionId = createSessionId();
-
-let currentQuestionStartedAt = null;
-
-/* =======================================================
-SESSION ID
-======================================================= */
-
-function createSessionId() {
-const timestamp = Date.now().toString(36);
-
-```
-const randomPart =
-  Math.random().toString(36).substring(2, 10);
-
-return `RB_SESSION_${timestamp}_${randomPart}`;
-```
-
+    showLoadingError(error);
+  }
 }
 
-/* =======================================================
-TIME HELPERS
-======================================================= */
 
-function now() {
-return Date.now();
+/* =========================================================
+   FIREBASE DATA
+   ========================================================= */
+
+async function loadFirebaseData() {
+  /*
+   * Load Reel information.
+   */
+  try {
+    state.reel =
+      await getReel(
+        state.reelId
+      );
+  } catch (error) {
+    console.warn(
+      "Unable to load Reel:",
+      error
+    );
+  }
+
+
+  /*
+   * Load active questions.
+   *
+   * If Firebase questions are not available yet,
+   * the local questions below keep the current
+   * frontend functional.
+   */
+  try {
+    state.questions =
+      await getActiveQuestions();
+  } catch (error) {
+    console.warn(
+      "Unable to load Firebase questions:",
+      error
+    );
+  }
+
+
+  /*
+   * Do not leave the public form empty if
+   * Firebase questions have not been created yet.
+   */
+  if (
+    !Array.isArray(state.questions) ||
+    state.questions.length === 0
+  ) {
+    state.questions =
+      getDefaultQuestions();
+  }
 }
 
-function startQuestionTimer(questionId) {
-currentQuestionStartedAt = now();
 
-```
-if (!questionTiming[questionId]) {
-  questionTiming[questionId] = {
-    questionId,
-    viewedAt: new Date().toISOString(),
-    answeredAt: null,
-    durationMs: 0
-  };
+/* =========================================================
+   DEFAULT QUESTIONS
+   ========================================================= */
+
+function getDefaultQuestions() {
+  return [
+    {
+      questionId: "Q001",
+
+      questionText:
+        "How did this Reel make you feel?",
+
+      hindiText:
+        "इस रील को देखकर आपको कैसा महसूस हुआ?",
+
+      type: "single",
+
+      required: true,
+
+      order: 1,
+
+      active: true,
+
+      options: [
+        {
+          optionId: "Q001_O01",
+          text: "Peaceful"
+        },
+        {
+          optionId: "Q001_O02",
+          text: "Devotional"
+        },
+        {
+          optionId: "Q001_O03",
+          text: "Emotional"
+        },
+        {
+          optionId: "Q001_O04",
+          text: "Inspired"
+        },
+        {
+          optionId: "Q001_O05",
+          text: "Calm"
+        },
+        {
+          optionId: "Q001_O06",
+          text: "Deeply moved"
+        }
+      ]
+    },
+
+    {
+      questionId: "Q002",
+
+      questionText:
+        "Would you like to see more Reels like this?",
+
+      hindiText:
+        "क्या आप इस तरह की और रील देखना चाहेंगे?",
+
+      type: "single",
+
+      required: true,
+
+      order: 2,
+
+      active: true,
+
+      options: [
+        {
+          optionId: "Q002_O01",
+          text:
+            "Definitely — I love this type of content"
+        },
+        {
+          optionId: "Q002_O02",
+          text: "Yes, sometimes"
+        },
+        {
+          optionId: "Q002_O03",
+          text: "I'm not sure"
+        },
+        {
+          optionId: "Q002_O04",
+          text: "Not really"
+        }
+      ]
+    },
+
+    {
+      questionId: "Q003",
+
+      questionText:
+        "What did you connect with the most?",
+
+      hindiText:
+        "इस रील में आपको सबसे ज्यादा किस चीज़ से जुड़ाव महसूस हुआ?",
+
+      type: "single",
+
+      required: true,
+
+      order: 3,
+
+      active: true,
+
+      options: [
+        {
+          optionId: "Q003_O01",
+          text:
+            "The Shiva & Parvati emotion"
+        },
+        {
+          optionId: "Q003_O02",
+          text:
+            "The devotional feeling"
+        },
+        {
+          optionId: "Q003_O03",
+          text:
+            "The artwork / visuals"
+        },
+        {
+          optionId: "Q003_O04",
+          text:
+            "The music"
+        },
+        {
+          optionId: "Q003_O05",
+          text:
+            "Everything together"
+        }
+      ]
+    },
+
+    {
+      questionId: "Q004",
+
+      questionText:
+        "How would you rate this Reel?",
+
+      hindiText:
+        "आप इस रील को कितने अंक देना चाहेंगे?",
+
+      type: "rating",
+
+      required: true,
+
+      order: 4,
+
+      active: true
+    },
+
+    {
+      questionId: "Q005",
+
+      questionText:
+        "Tell us what you felt",
+
+      hindiText:
+        "आपने क्या महसूस किया, हमें बताइए।",
+
+      type: "text",
+
+      required: false,
+
+      order: 5,
+
+      active: true,
+
+      placeholder:
+        "Share your thoughts, emotions or suggestions..."
+    }
+  ];
 }
 
-engagement.questionViews += 1;
-```
 
+/* =========================================================
+   EXISTING UI
+   ========================================================= */
+
+function setupExistingUI() {
+  setupOptionSelection();
+
+  setupRating();
+
+  setupVoiceButtons();
+
+  setupSubmitButton();
+
+  setupBackButton();
+
+  setupNextButton();
 }
 
-function stopQuestionTimer() {
-if (
-!questionPages[currentStep] ||
-!currentQuestionStartedAt
+
+/* =========================================================
+   QUESTION FLOW
+   ========================================================= */
+
+function setupQuestionFlow() {
+  /*
+   * If the existing HTML already contains
+   * question cards, keep them and control visibility.
+   */
+  const cards =
+    $$(".question-card");
+
+  if (!cards.length) {
+    return;
+  }
+
+  cards.forEach((card, index) => {
+    card.dataset.questionIndex =
+      String(index);
+  });
+}
+
+
+function showQuestion(index) {
+  const cards =
+    $$(".question-card");
+
+  if (!cards.length) {
+    return;
+  }
+
+  if (
+    index < 0 ||
+    index >= cards.length
+  ) {
+    return;
+  }
+
+  /*
+   * Record timing for previous question.
+   */
+  if (
+    state.questionEnteredAt !== null &&
+    state.currentQuestion !== index
+  ) {
+    recordQuestionTiming(
+      state.currentQuestion
+    );
+  }
+
+  state.currentQuestion =
+    index;
+
+  state.questionEnteredAt =
+    performance.now();
+
+  state.engagement.questionViews++;
+
+  cards.forEach(
+    (card, cardIndex) => {
+      const visible =
+        cardIndex === index;
+
+      card.hidden =
+        !visible;
+
+      card.classList.toggle(
+        "active",
+        visible
+      );
+    }
+  );
+
+  updateNavigation(index);
+
+  restoreAnswerForQuestion(index);
+}
+
+
+function updateNavigation(index) {
+  const backButton =
+    $(
+      "[data-action='back'], #backButton"
+    );
+
+  const nextButton =
+    $(
+      "[data-action='next'], #nextButton"
+    );
+
+  const submitButton =
+    $(
+      "[data-action='submit'], #submitButton"
+    );
+
+  if (backButton) {
+    backButton.disabled =
+      index === 0;
+  }
+
+  const last =
+    index ===
+    $$(".question-card").length - 1;
+
+  if (nextButton) {
+    nextButton.hidden =
+      last;
+  }
+
+  if (submitButton) {
+    submitButton.hidden =
+      !last;
+  }
+}
+
+
+/* =========================================================
+   NEXT / BACK
+   ========================================================= */
+
+function setupNextButton() {
+  const buttons =
+    $$(
+      "[data-action='next'], #nextButton"
+    );
+
+  buttons.forEach((button) => {
+    button.addEventListener(
+      "click",
+      () => {
+
+        if (
+          !validateCurrentQuestion()
+        ) {
+          return;
+        }
+
+        state.engagement.nextClicks++;
+
+        showQuestion(
+          state.currentQuestion + 1
+        );
+      }
+    );
+  });
+}
+
+
+function setupBackButton() {
+  const buttons =
+    $$(
+      "[data-action='back'], #backButton"
+    );
+
+  buttons.forEach((button) => {
+    button.addEventListener(
+      "click",
+      () => {
+
+        if (
+          state.currentQuestion <= 0
+        ) {
+          return;
+        }
+
+        state.engagement.backClicks++;
+
+        showQuestion(
+          state.currentQuestion - 1
+        );
+      }
+    );
+  });
+}
+
+
+/* =========================================================
+   OPTION SELECTION
+   ========================================================= */
+
+function setupOptionSelection() {
+  const optionElements =
+    $$(
+      "input[type='radio'], input[type='checkbox']"
+    );
+
+  optionElements.forEach((input) => {
+
+    input.addEventListener(
+      "change",
+      () => {
+
+        const questionId =
+          getQuestionIdFromElement(
+            input
+          );
+
+        if (!questionId) {
+          return;
+        }
+
+        const previous =
+          state.answers[
+            questionId
+          ];
+
+        const value =
+          input.value ||
+          input.dataset.optionId ||
+          getOptionId(input);
+
+        state.answers[
+          questionId
+        ] = value;
+
+        if (
+          previous !== undefined &&
+          previous !== value
+        ) {
+          state.engagement.optionChanges++;
+        }
+
+        /*
+         * Store stable option ID whenever available.
+         */
+        const optionId =
+          input.dataset.optionId ||
+          getOptionId(input);
+
+        if (optionId) {
+          state.answers[
+            questionId
+          ] = {
+            optionId,
+            value
+          };
+        }
+      }
+    );
+  });
+}
+
+
+function getQuestionIdFromElement(
+  element
 ) {
-return;
+  const explicit =
+    element.dataset.questionId;
+
+  if (explicit) {
+    return explicit;
+  }
+
+  const group =
+    element.name;
+
+  if (group) {
+    const match =
+      group.match(
+        /Q\d+/i
+      );
+
+    if (match) {
+      return match[0].toUpperCase();
+    }
+  }
+
+  const card =
+    element.closest(
+      ".question-card"
+    );
+
+  if (card?.dataset.questionId) {
+    return card.dataset.questionId;
+  }
+
+  return null;
 }
 
-```
-const questionId =
-  questionPages[currentStep].dataset.questionId;
 
-if (!questionId) {
-  return;
-}
-
-const duration =
-  Math.max(0, now() - currentQuestionStartedAt);
-
-if (!questionTiming[questionId]) {
-  questionTiming[questionId] = {
-    questionId,
-    viewedAt: new Date().toISOString(),
-    answeredAt: null,
-    durationMs: 0
-  };
-}
-
-questionTiming[questionId].durationMs += duration;
-
-currentQuestionStartedAt = null;
-```
-
-}
-
-function markQuestionAnswered(questionId) {
-if (!questionTiming[questionId]) {
-questionTiming[questionId] = {
-questionId,
-viewedAt: new Date().toISOString(),
-answeredAt: null,
-durationMs: 0
-};
-}
-
-```
-if (!questionTiming[questionId].answeredAt) {
-  questionTiming[questionId].answeredAt =
-    new Date().toISOString();
-}
-```
-
-}
-
-/* =======================================================
-FORM START
-======================================================= */
-
-function startForm() {
-engagement.startedAt = new Date().toISOString();
-
-```
-currentQuestionStartedAt = now();
-
-if (questionPages.length > 0) {
-  const firstQuestionId =
-    questionPages[0].dataset.questionId;
-
-  questionTiming[firstQuestionId] = {
-    questionId: firstQuestionId,
-    viewedAt: new Date().toISOString(),
-    answeredAt: null,
-    durationMs: 0
-  };
-
-  engagement.questionViews = 1;
-}
-```
-
-}
-
-/* =======================================================
-PROGRESS
-======================================================= */
-
-function updateProgress() {
-const currentNumber = currentStep + 1;
-const total = questionPages.length;
-
-```
-const percentage =
-  Math.round((currentNumber / total) * 100);
-
-if (progressLabel) {
-  progressLabel.textContent =
-    `Question ${currentNumber} of ${total}`;
-}
-
-if (progressPercent) {
-  progressPercent.textContent =
-    `${percentage}%`;
-}
-
-if (progressBar) {
-  progressBar.style.width =
-    `${percentage}%`;
-}
-```
-
-}
-
-/* =======================================================
-BUTTON STATE
-======================================================= */
-
-function updateNavigation() {
-const isFirst =
-currentStep === 0;
-
-```
-const isLast =
-  currentStep === questionPages.length - 1;
-
-if (backButton) {
-  backButton.style.visibility =
-    isFirst ? "hidden" : "visible";
-}
-
-if (nextButton) {
-  nextButton.classList.toggle(
-    "hidden",
-    isLast
+function getOptionId(input) {
+  return (
+    input.dataset.optionId ||
+    input.id ||
+    null
   );
 }
 
-if (submitButton) {
-  submitButton.classList.toggle(
-    "hidden",
-    !isLast
-  );
+
+/* =========================================================
+   RATING
+   ========================================================= */
+
+function setupRating() {
+  const ratingInputs =
+    $$(
+      "input[type='radio'][data-rating], .rating input"
+    );
+
+  ratingInputs.forEach((input) => {
+    input.addEventListener(
+      "change",
+      () => {
+
+        const questionId =
+          input.dataset.questionId ||
+          "Q004";
+
+        state.answers[
+          questionId
+        ] = {
+          optionId:
+            input.dataset.optionId ||
+            `Q004_O${input.value}`,
+
+          value:
+            Number(input.value)
+        };
+      }
+    );
+  });
 }
-```
 
-}
 
-/* =======================================================
-SHOW QUESTION
-======================================================= */
+/* =========================================================
+   RESTORE ANSWERS
+   ========================================================= */
 
-function showQuestion(index, direction = "next") {
-if (
-index < 0 ||
-index >= questionPages.length
+function restoreAnswerForQuestion(
+  index
 ) {
-return;
+  const card =
+    $$(".question-card")[index];
+
+  if (!card) {
+    return;
+  }
+
+  const questionId =
+    card.dataset.questionId ||
+    `Q${String(index + 1).padStart(3, "0")}`;
+
+  const saved =
+    state.answers[
+      questionId
+    ];
+
+  if (!saved) {
+    return;
+  }
+
+  const value =
+    typeof saved === "object"
+      ? saved.value
+      : saved;
+
+  const input =
+    card.querySelector(
+      `input[value="${CSS.escape(
+        String(value)
+      )}"]`
+    );
+
+  if (input) {
+    input.checked = true;
+  }
 }
 
-```
-stopQuestionTimer();
 
-questionPages.forEach((page) => {
-  page.classList.remove("active");
-});
-
-currentStep = index;
-
-const currentPage =
-  questionPages[currentStep];
-
-currentPage.classList.add("active");
-
-const questionId =
-  currentPage.dataset.questionId;
-
-if (questionId) {
-  startQuestionTimer(questionId);
-}
-
-updateProgress();
-updateNavigation();
-clearValidation();
-
-window.scrollTo({
-  top: 0,
-  behavior: "smooth"
-});
-```
-
-}
-
-/* =======================================================
-VALIDATION
-======================================================= */
-
-function getCurrentQuestionId() {
-if (!questionPages[currentStep]) {
-return null;
-}
-
-```
-return questionPages[currentStep]
-  .dataset.questionId || null;
-```
-
-}
+/* =========================================================
+   VALIDATION
+   ========================================================= */
 
 function validateCurrentQuestion() {
-const questionId =
-getCurrentQuestionId();
+  const card =
+    $$(".question-card")[
+      state.currentQuestion
+    ];
 
-```
-if (!questionId) {
-  return true;
-}
+  if (!card) {
+    return true;
+  }
 
-const page =
-  questionPages[currentStep];
+  /*
+   * Text question is optional.
+   */
+  const textarea =
+    card.querySelector(
+      "textarea"
+    );
 
-/*
-  Q001, Q002 and Q003 use selectable options.
-  Q004 uses rating.
-  Q005 is written feedback.
+  if (textarea) {
+    return true;
+  }
 
-  We keep Q005 optional.
-*/
+  const checked =
+    card.querySelector(
+      "input:checked"
+    );
 
-if (
-  questionId === "Q001" ||
-  questionId === "Q002" ||
-  questionId === "Q003"
-) {
-  const answer =
-    answers[questionId];
-
-  if (!answer || !answer.optionId) {
-    showValidation(
+  if (!checked) {
+    showValidationMessage(
       "Please select an option to continue."
     );
 
     return false;
   }
+
+  return true;
 }
 
-if (questionId === "Q004") {
-  const answer =
-    answers[questionId];
 
-  if (
-    !answer ||
-    typeof answer.rating !== "number"
-  ) {
-    showValidation(
-      "Please select a rating to continue."
+function showValidationMessage(
+  message
+) {
+  let element =
+    $("#formValidationMessage");
+
+  if (!element) {
+    element =
+      document.createElement("div");
+
+    element.id =
+      "formValidationMessage";
+
+    element.setAttribute(
+      "role",
+      "alert"
     );
 
-    return false;
+    element.style.marginTop =
+      "12px";
+
+    element.style.fontSize =
+      "13px";
+
+    element.style.textAlign =
+      "center";
+
+    const card =
+      $$(".question-card")[
+        state.currentQuestion
+      ];
+
+    card?.appendChild(element);
   }
-}
 
-return true;
-```
+  element.textContent =
+    message;
 
-}
-
-function showValidation(message) {
-if (!validationMessage) {
-return;
-}
-
-```
-validationMessage.textContent = message;
-validationMessage.classList.add("show");
-```
-
-}
-
-function clearValidation() {
-if (!validationMessage) {
-return;
-}
-
-```
-validationMessage.textContent = "";
-validationMessage.classList.remove("show");
-```
-
-}
-
-/* =======================================================
-OPTION SELECTION
-======================================================= */
-
-function handleOptionSelection(option) {
-const page =
-option.closest(".question-page");
-
-```
-if (!page) {
-  return;
-}
-
-const questionId =
-  page.dataset.questionId;
-
-const optionId =
-  option.dataset.optionId;
-
-if (!questionId || !optionId) {
-  return;
-}
-
-const optionTextElement =
-  option.querySelector(".option-text");
-
-const optionText =
-  optionTextElement
-    ? optionTextElement.textContent.trim()
-    : option.textContent.trim();
-
-const previous =
-  answers[questionId];
-
-if (
-  previous &&
-  previous.optionId !== optionId
-) {
-  engagement.optionChanges += 1;
-}
-
-answers[questionId] = {
-  questionId,
-  optionId,
-  value: optionText,
-  selectedAt: new Date().toISOString()
-};
-
-page
-  .querySelectorAll(".option")
-  .forEach((item) => {
-    item.classList.remove("selected");
-  });
-
-option.classList.add("selected");
-
-markQuestionAnswered(questionId);
-
-clearValidation();
-```
-
-}
-
-/* =======================================================
-RADIO SELECTION
-======================================================= */
-
-function handleRadioSelection(option) {
-const page =
-option.closest(".question-page");
-
-```
-if (!page) {
-  return;
-}
-
-const questionId =
-  page.dataset.questionId;
-
-const optionId =
-  option.dataset.optionId;
-
-if (!questionId || !optionId) {
-  return;
-}
-
-const textElement =
-  option.querySelector(".radio-text");
-
-const optionText =
-  textElement
-    ? textElement.textContent.trim()
-    : option.textContent.trim();
-
-const previous =
-  answers[questionId];
-
-if (
-  previous &&
-  previous.optionId !== optionId
-) {
-  engagement.optionChanges += 1;
-}
-
-answers[questionId] = {
-  questionId,
-  optionId,
-  value: optionText,
-  selectedAt: new Date().toISOString()
-};
-
-page
-  .querySelectorAll(".radio-option")
-  .forEach((item) => {
-    item.classList.remove("selected");
-  });
-
-option.classList.add("selected");
-
-markQuestionAnswered(questionId);
-
-clearValidation();
-```
-
-}
-
-/* =======================================================
-RATING
-======================================================= */
-
-function handleRating(ratingElement) {
-const page =
-ratingElement.closest(".question-page");
-
-```
-if (!page) {
-  return;
-}
-
-const questionId =
-  page.dataset.questionId;
-
-const value =
-  Number(ratingElement.dataset.rating);
-
-if (
-  !questionId ||
-  !Number.isFinite(value)
-) {
-  return;
-}
-
-const previous =
-  answers[questionId];
-
-if (
-  previous &&
-  previous.rating !== value
-) {
-  engagement.optionChanges += 1;
-}
-
-answers[questionId] = {
-  questionId,
-  rating: value,
-  selectedAt: new Date().toISOString()
-};
-
-page
-  .querySelectorAll(".rating")
-  .forEach((item) => {
-    item.classList.remove("selected");
-  });
-
-ratingElement.classList.add("selected");
-
-markQuestionAnswered(questionId);
-
-clearValidation();
-```
-
-}
-
-/* =======================================================
-TEXT RESPONSE
-======================================================= */
-
-function captureTextResponse(textarea) {
-const page =
-textarea.closest(".question-page");
-
-```
-if (!page) {
-  return;
-}
-
-const questionId =
-  page.dataset.questionId;
-
-if (!questionId) {
-  return;
-}
-
-answers[questionId] = {
-  questionId,
-  text: textarea.value.trim(),
-  characterCount: textarea.value.length,
-  wordCount: countWords(textarea.value),
-  capturedAt: new Date().toISOString()
-};
-
-if (textarea.value.trim().length > 0) {
-  markQuestionAnswered(questionId);
-}
-```
-
-}
-
-function countWords(text) {
-const cleaned =
-text.trim();
-
-```
-if (!cleaned) {
-  return 0;
-}
-
-return cleaned.split(/\s+/).length;
-```
-
-}
-
-/* =======================================================
-NEXT
-======================================================= */
-
-function goNext() {
-if (!validateCurrentQuestion()) {
-return;
-}
-
-```
-const currentQuestionId =
-  getCurrentQuestionId();
-
-if (currentQuestionId) {
-  markQuestionAnswered(
-    currentQuestionId
-  );
-}
-
-engagement.nextClicks += 1;
-
-if (
-  currentStep <
-  questionPages.length - 1
-) {
-  showQuestion(
-    currentStep + 1,
-    "next"
-  );
-}
-```
-
-}
-
-/* =======================================================
-BACK
-======================================================= */
-
-function goBack() {
-if (currentStep <= 0) {
-return;
-}
-
-```
-engagement.backClicks += 1;
-
-showQuestion(
-  currentStep - 1,
-  "back"
-);
-```
-
-}
-
-/* =======================================================
-FINAL RESPONSE
-======================================================= */
-
-function buildResponse() {
-stopQuestionTimer();
-
-```
-engagement.completedAt =
-  new Date().toISOString();
-
-if (engagement.startedAt) {
-  engagement.totalDurationMs =
-    Math.max(
-      0,
-      new Date(
-        engagement.completedAt
-      ).getTime() -
-        new Date(
-          engagement.startedAt
-        ).getTime()
-    );
-}
-
-return {
-  feedbackId: createFeedbackId(),
-
-  reelId: CONFIG.reelId,
-
-  sessionId,
-
-  answers: {
-    ...answers
-  },
-
-  questionTiming: {
-    ...questionTiming
-  },
-
-  engagement: {
-    ...engagement
-  },
-
-  device: getDeviceInformation(),
-
-  startedAt: engagement.startedAt,
-
-  completedAt: engagement.completedAt,
-
-  totalDurationMs:
-    engagement.totalDurationMs,
-
-  submittedAt:
-    new Date().toISOString()
-};
-```
-
-}
-
-/* =======================================================
-FEEDBACK ID
-======================================================= */
-
-function createFeedbackId() {
-const timestamp =
-Date.now().toString(36);
-
-```
-const random =
-  Math.random()
-    .toString(36)
-    .substring(2, 8);
-
-return `RB_FB_${timestamp}_${random}`;
-```
-
-}
-
-/* =======================================================
-DEVICE INFORMATION
-======================================================= */
-
-function getDeviceInformation() {
-const width =
-window.innerWidth;
-
-```
-let deviceType = "desktop";
-
-if (width <= 600) {
-  deviceType = "mobile";
-} else if (width <= 1024) {
-  deviceType = "tablet";
-}
-
-return {
-  deviceType,
-
-  screenWidth:
-    window.screen
-      ? window.screen.width
-      : null,
-
-  screenHeight:
-    window.screen
-      ? window.screen.height
-      : null,
-
-  viewportWidth:
-    window.innerWidth,
-
-  viewportHeight:
-    window.innerHeight,
-
-  language:
-    navigator.language || null,
-
-  platform:
-    navigator.platform || null,
-
-  userAgent:
-    navigator.userAgent || null
-};
-```
-
-}
-
-/* =======================================================
-SUBMIT
-======================================================= */
-
-function submitFeedback() {
-if (!validateCurrentQuestion()) {
-return;
-}
-
-```
-const response =
-  buildResponse();
-
-/*
-  Firebase will be connected here later.
-
-  For now we keep the final response
-  locally so the frontend can be tested
-  without any backend.
-*/
-
-try {
-  sessionStorage.setItem(
-    "rudraBhaktiLastFeedback",
-    JSON.stringify(response)
-  );
-} catch (error) {
-  console.warn(
-    "Could not store local feedback:",
-    error
-  );
-}
-
-console.log(
-  "Rudra Bhakti Feedback:",
-  response
-);
-
-showSuccessScreen();
-```
-
-}
-
-/* =======================================================
-SUCCESS SCREEN
-======================================================= */
-
-function showSuccessScreen() {
-stopQuestionTimer();
-
-```
-questionPages.forEach((page) => {
-  page.classList.remove("active");
-});
-
-if (questionCard) {
-  questionCard.classList.add("hidden");
-}
-
-const progressArea =
-  document.querySelector(
-    ".progress-area"
+  clearTimeout(
+    showValidationMessage.timeout
   );
 
-if (progressArea) {
-  progressArea.classList.add("hidden");
+  showValidationMessage.timeout =
+    setTimeout(() => {
+      element.textContent = "";
+    }, 2500);
 }
 
-if (successScreen) {
-  successScreen.classList.remove(
-    "hidden"
-  );
 
-  successScreen.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
-}
-```
+/* =========================================================
+   VOICE / HINDI TEXT TO SPEECH
+   ========================================================= */
 
-}
+function setupVoiceButtons() {
+  $$(
+    "[data-voice], .voice-button, .speak-button"
+  ).forEach((button) => {
 
-/* =======================================================
-HINDI TEXT TO SPEECH
-======================================================= */
-
-function speakHindi(button) {
-if (
-!("speechSynthesis" in window)
-) {
-return;
-}
-
-```
-const text =
-  button.dataset.speak;
-
-if (!text) {
-  return;
-}
-
-window.speechSynthesis.cancel();
-
-const utterance =
-  new SpeechSynthesisUtterance(
-    text
-  );
-
-utterance.lang = "hi-IN";
-utterance.rate = 0.9;
-utterance.pitch = 1;
-
-window.speechSynthesis.speak(
-  utterance
-);
-```
-
-}
-
-/* =======================================================
-EVENT LISTENERS
-======================================================= */
-
-function bindEvents() {
-/* Option buttons */
-
-```
-document
-  .querySelectorAll(".option")
-  .forEach((option) => {
-    option.addEventListener(
-      "click",
-      () => {
-        handleOptionSelection(
-          option
-        );
-      }
-    );
-  });
-
-/* Radio options */
-
-document
-  .querySelectorAll(".radio-option")
-  .forEach((option) => {
-    option.addEventListener(
-      "click",
-      () => {
-        handleRadioSelection(
-          option
-        );
-      }
-    );
-  });
-
-/* Ratings */
-
-document
-  .querySelectorAll(".rating")
-  .forEach((rating) => {
-    rating.addEventListener(
-      "click",
-      () => {
-        handleRating(rating);
-      }
-    );
-  });
-
-/* Textarea */
-
-document
-  .querySelectorAll(
-    ".feedback-textarea"
-  )
-  .forEach((textarea) => {
-    textarea.addEventListener(
-      "input",
-      () => {
-        captureTextResponse(
-          textarea
-        );
-      }
-    );
-
-    textarea.addEventListener(
-      "blur",
-      () => {
-        captureTextResponse(
-          textarea
-        );
-      }
-    );
-  });
-
-/* Voice buttons */
-
-document
-  .querySelectorAll(".voice-btn")
-  .forEach((button) => {
     button.addEventListener(
       "click",
       () => {
-        speakHindi(button);
+
+        const targetId =
+          button.dataset.voiceTarget;
+
+        let text = "";
+
+        if (targetId) {
+          const target =
+            document.getElementById(
+              targetId
+            );
+
+          text =
+            target?.textContent || "";
+        }
+
+        if (!text) {
+          const card =
+            button.closest(
+              ".question-card"
+            );
+
+          const hindi =
+            card?.querySelector(
+              ".hindi-tts, .hindi-text, [data-hindi]"
+            );
+
+          text =
+            hindi?.textContent || "";
+        }
+
+        if (!text) {
+          return;
+        }
+
+        speakHindi(
+          text
+        );
       }
     );
   });
+}
 
-/* Navigation */
 
-if (nextButton) {
-  nextButton.addEventListener(
-    "click",
-    goNext
+function speakHindi(text) {
+  if (
+    !("speechSynthesis" in window)
+  ) {
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const utterance =
+    new SpeechSynthesisUtterance(
+      text
+    );
+
+  utterance.lang =
+    "hi-IN";
+
+  utterance.rate =
+    0.9;
+
+  utterance.pitch =
+    1;
+
+  window.speechSynthesis.speak(
+    utterance
   );
 }
 
-if (backButton) {
-  backButton.addEventListener(
-    "click",
-    goBack
+
+/* =========================================================
+   REEL INFORMATION
+   ========================================================= */
+
+function updateReelInformation() {
+  if (!state.reel) {
+    return;
+  }
+
+  const title =
+    state.reel.title ||
+    "Shiva & Parvati — Eternal Love";
+
+  const reelId =
+    state.reel.reelId ||
+    state.reelId;
+
+  const titleElements =
+    $$(
+      "[data-reel-title], #reelTitle"
+    );
+
+  titleElements.forEach(
+    (element) => {
+      element.textContent =
+        title;
+    }
   );
-}
 
-if (submitButton) {
-  submitButton.addEventListener(
-    "click",
-    submitFeedback
+  const idElements =
+    $$(
+      "[data-reel-id], #reelId"
+    );
+
+  idElements.forEach(
+    (element) => {
+      element.textContent =
+        reelId;
+    }
   );
-}
 
-/* Keyboard navigation */
+  const thumbnails =
+    $$(
+      "[data-reel-thumbnail], #reelThumbnail"
+    );
 
-document.addEventListener(
-  "keydown",
-  (event) => {
-    if (
-      event.key === "Enter" &&
-      event.target.tagName !==
-        "TEXTAREA"
-    ) {
-      event.preventDefault();
-
+  thumbnails.forEach(
+    (image) => {
       if (
-        !nextButton?.classList.contains(
-          "hidden"
-        )
+        state.reel.thumbnailUrl
       ) {
-        goNext();
-      } else if (
-        !submitButton?.classList.contains(
-          "hidden"
-        )
-      ) {
-        submitFeedback();
+        image.src =
+          state.reel.thumbnailUrl;
+
+        image.hidden =
+          false;
       }
     }
-
-    if (
-      event.key === "Escape"
-    ) {
-      window.speechSynthesis?.cancel();
-    }
-  }
-);
-
-/* Prevent accidental page exit
-   only after the user starts typing. */
-
-window.addEventListener(
-  "beforeunload",
-  (event) => {
-    const hasProgress =
-      Object.keys(answers).length >
-      0;
-
-    if (
-      hasProgress &&
-      !engagement.completedAt
-    ) {
-      event.preventDefault();
-      event.returnValue = "";
-    }
-  }
-);
-```
-
+  );
 }
 
-/* =======================================================
-INITIALIZE
-======================================================= */
 
-function init() {
-if (
-!questionPages.length
+/* =========================================================
+   TEXT FEEDBACK
+   ========================================================= */
+
+function getWrittenFeedback() {
+  const textarea =
+    document.querySelector(
+      "textarea"
+    );
+
+  if (!textarea) {
+    return "";
+  }
+
+  return textarea.value.trim();
+}
+
+
+/* =========================================================
+   TYPING ANALYTICS
+   ========================================================= */
+
+const typingState = {
+  startedAt: null,
+  firstInputAt: null,
+  lastInputAt: null,
+  inputEvents: 0,
+  editCount: 0,
+  maxLength: 0
+};
+
+
+function setupTypingAnalytics() {
+  const textarea =
+    document.querySelector(
+      "textarea"
+    );
+
+  if (!textarea) {
+    return;
+  }
+
+  textarea.addEventListener(
+    "focus",
+    () => {
+      if (
+        typingState.startedAt === null
+      ) {
+        typingState.startedAt =
+          performance.now();
+      }
+    }
+  );
+
+  textarea.addEventListener(
+    "input",
+    () => {
+
+      const now =
+        performance.now();
+
+      if (
+        typingState.firstInputAt === null
+      ) {
+        typingState.firstInputAt =
+          now;
+      }
+
+      typingState.lastInputAt =
+        now;
+
+      typingState.inputEvents++;
+
+      typingState.editCount++;
+
+      typingState.maxLength =
+        Math.max(
+          typingState.maxLength,
+          textarea.value.length
+        );
+    }
+  );
+}
+
+
+function getTypingAnalytics() {
+  const text =
+    getWrittenFeedback();
+
+  const words =
+    text
+      ? text
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .length
+      : 0;
+
+  let writingTimeMs = 0;
+
+  if (
+    typingState.firstInputAt !== null &&
+    typingState.lastInputAt !== null
+  ) {
+    writingTimeMs =
+      Math.max(
+        0,
+        typingState.lastInputAt -
+          typingState.firstInputAt
+      );
+  }
+
+  return {
+    characterCount:
+      text.length,
+
+    wordCount:
+      words,
+
+    writingTimeMs,
+
+    inputEvents:
+      typingState.inputEvents,
+
+    editCount:
+      typingState.editCount
+  };
+}
+
+
+/* =========================================================
+   QUESTION TIMING
+   ========================================================= */
+
+function recordQuestionTiming(
+  questionIndex
 ) {
-console.error(
-"No question pages found."
-);
+  if (
+    state.questionEnteredAt === null
+  ) {
+    return;
+  }
 
-```
-  return;
+  const duration =
+    Math.max(
+      0,
+      performance.now() -
+        state.questionEnteredAt
+    );
+
+  const card =
+    $$(".question-card")[
+      questionIndex
+    ];
+
+  if (!card) {
+    return;
+  }
+
+  const questionId =
+    card.dataset.questionId ||
+    `Q${String(
+      questionIndex + 1
+    ).padStart(3, "0")}`;
+
+  const existing =
+    state.questionTiming[
+      questionId
+    ];
+
+  if (existing) {
+    existing.viewCount++;
+
+    existing.totalViewTimeMs +=
+      duration;
+
+  } else {
+    state.questionTiming[
+      questionId
+    ] = {
+      viewCount: 1,
+      totalViewTimeMs:
+        duration,
+
+      answerTimeMs:
+        duration
+    };
+  }
 }
 
-startForm();
 
-bindEvents();
+/* =========================================================
+   DEVICE INFORMATION
+   ========================================================= */
 
-questionPages.forEach(
-  (page) => {
-    page.classList.remove(
-      "active"
+function getDeviceInfo() {
+  return {
+    userAgent:
+      navigator.userAgent,
+
+    language:
+      navigator.language || "",
+
+    platform:
+      navigator.platform || "",
+
+    screenWidth:
+      window.screen.width,
+
+    screenHeight:
+      window.screen.height,
+
+    viewportWidth:
+      window.innerWidth,
+
+    viewportHeight:
+      window.innerHeight,
+
+    devicePixelRatio:
+      window.devicePixelRatio || 1,
+
+    online:
+      navigator.onLine
+  };
+}
+
+
+/* =========================================================
+   SUBMIT
+   ========================================================= */
+
+function setupSubmitButton() {
+  const buttons =
+    $$(
+      "[data-action='submit'], #submitButton, button[type='submit']"
+    );
+
+  buttons.forEach((button) => {
+
+    button.addEventListener(
+      "click",
+      async (event) => {
+
+        /*
+         * Prevent the HTML form's default
+         * page reload.
+         */
+        const form =
+          button.closest("form");
+
+        if (form) {
+          event.preventDefault();
+        }
+
+        await handleSubmit(button);
+      }
+    );
+  });
+}
+
+
+async function handleSubmit(
+  button
+) {
+  if (state.submitted) {
+    return;
+  }
+
+  if (
+    !validateCurrentQuestion()
+  ) {
+    return;
+  }
+
+  state.completedAt =
+    new Date().toISOString();
+
+  /*
+   * Record final question timing.
+   */
+  recordQuestionTiming(
+    state.currentQuestion
+  );
+
+  const started =
+    new Date(
+      state.startedAt
+    ).getTime();
+
+  const completed =
+    new Date(
+      state.completedAt
+    ).getTime();
+
+  const totalDurationMs =
+    Math.max(
+      0,
+      completed - started
+    );
+
+  /*
+   * Add textarea answer.
+   */
+  const writtenFeedback =
+    getWrittenFeedback();
+
+  if (writtenFeedback) {
+    state.answers.Q005 = {
+      optionId: "Q005_TEXT",
+      value: writtenFeedback
+    };
+  }
+
+  /*
+   * Typing analytics.
+   */
+  const typing =
+    getTypingAnalytics();
+
+  state.engagement.typing =
+    typing;
+
+  /*
+   * Lock button.
+   */
+  const originalText =
+    button?.textContent ||
+    "Share My Feedback";
+
+  if (button) {
+    button.disabled =
+      true;
+
+    button.textContent =
+      "Submitting…";
+  }
+
+  const payload = {
+    reelId:
+      state.reelId,
+
+    sessionId:
+      state.sessionId,
+
+    answers:
+      state.answers,
+
+    questionTiming:
+      state.questionTiming,
+
+    engagement:
+      state.engagement,
+
+    typing,
+
+    device:
+      getDeviceInfo(),
+
+    startedAt:
+      state.startedAt,
+
+    completedAt:
+      state.completedAt,
+
+    totalDurationMs
+  };
+
+  try {
+
+    await submitFeedback(
+      payload
+    );
+
+    state.submitted =
+      true;
+
+    showSuccess();
+
+  } catch (error) {
+
+    console.error(
+      "Feedback submission failed:",
+      error
+    );
+
+    if (button) {
+      button.disabled =
+        false;
+
+      button.textContent =
+        originalText;
+    }
+
+    showSubmitError(
+      error
     );
   }
-);
-
-questionPages[0].classList.add(
-  "active"
-);
-
-updateProgress();
-updateNavigation();
-```
-
 }
 
-/* =======================================================
-START
-======================================================= */
 
-if (
-document.readyState ===
-"loading"
+/* =========================================================
+   SUCCESS
+   ========================================================= */
+
+function showSuccess() {
+  const form =
+    document.querySelector(
+      "form"
+    );
+
+  /*
+   * Existing success section.
+   */
+  const success =
+    $(
+      "#success, .success-screen, [data-success]"
+    );
+
+  if (form) {
+    form.style.display =
+      "none";
+  }
+
+  if (success) {
+    success.hidden =
+      false;
+
+    success.style.display =
+      "";
+  }
+
+  /*
+   * Also support existing HTML
+   * where success content already exists.
+   */
+  const successText =
+    $$(
+      "[data-success-message]"
+    );
+
+  successText.forEach(
+    (element) => {
+      element.textContent =
+        "Thank you for sharing. Your feeling has been heard.";
+    }
+  );
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+function showSubmitError(
+  error
 ) {
-document.addEventListener(
-"DOMContentLoaded",
-init
-);
-} else {
-init();
+  let message =
+    "We couldn't submit your feedback. Please try again.";
+
+  if (
+    !navigator.onLine
+  ) {
+    message =
+      "You appear to be offline. Please check your internet connection and try again.";
+  }
+
+  let element =
+    $("#submitError");
+
+  if (!element) {
+    element =
+      document.createElement("div");
+
+    element.id =
+      "submitError";
+
+    element.setAttribute(
+      "role",
+      "alert"
+    );
+
+    element.style.marginTop =
+      "12px";
+
+    element.style.textAlign =
+      "center";
+
+    const submit =
+      $(
+        "[data-action='submit'], #submitButton"
+      );
+
+    submit?.parentElement
+      ?.appendChild(element);
+  }
+
+  element.textContent =
+    message;
 }
 
-})();
+
+/* =========================================================
+   LOADING ERROR
+   ========================================================= */
+
+function showLoadingError(
+  error
+) {
+  console.warn(
+    "Firebase loading error:",
+    error
+  );
+
+  /*
+   * We don't destroy the form.
+   * The fallback questions remain available.
+   */
+  state.questions =
+    getDefaultQuestions();
+
+  setupExistingUI();
+  setupQuestionFlow();
+  setupTypingAnalytics();
+  showQuestion(0);
+}
+
+
+/* =========================================================
+   START TYPING ANALYTICS
+   ========================================================= */
+
+setupTypingAnalytics();
