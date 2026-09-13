@@ -1,12 +1,55 @@
 /* ============================================================
    RUDRA BHAKTI — USER FEEDBACK WIZARD
-   Phase 1 : local-only submission
+   Phase 1A : dynamic reel loading + local submission
    Phase 2 : swap submitFeedback() body with Firebase write
    ============================================================ */
 
 (function () {
     'use strict';
 
+    /* ============================================================
+       DYNAMIC REEL LOADER
+       Reads ?reel=RB001 from URL, looks up saved reels.
+       Falls back to default reel if not found.
+       ============================================================ */
+    const REELS_KEY = 'rrb_reels';
+
+    function getSavedReels() {
+        try {
+            return JSON.parse(localStorage.getItem(REELS_KEY) || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function getActiveReel() {
+        const params = new URLSearchParams(window.location.search);
+        const id = (params.get('reel') || params.get('id') || '').trim().toUpperCase();
+        if (!id) return null;
+        return getSavedReels().find((r) => r.id === id) || null;
+    }
+
+    const activeReel = getActiveReel() || {
+        id: 'RB001',
+        title: 'Shiva & Parvati — Eternal Love',
+        url: '',
+        thumbnail: ''
+    };
+
+    function applyReelToPage() {
+        const titleEl = document.getElementById('reelTitle');
+        const codeEl = document.getElementById('reelCode');
+        const thumbEl = document.getElementById('reelThumb');
+
+        if (titleEl && activeReel.title) titleEl.textContent = activeReel.title;
+        if (codeEl) codeEl.textContent = 'RUDRA • ' + activeReel.id;
+
+        if (thumbEl && activeReel.thumbnail) {
+            thumbEl.innerHTML = '<img src="' + activeReel.thumbnail + '" alt="" />';
+        }
+    }
+
+    /* ===== STATE ===== */
     let currentQuestion = 1;
     const totalQuestions = 5;
     const answers = {};
@@ -126,7 +169,10 @@
        ============================================================ */
     async function submitFeedback() {
         const feedback = {
-            contentId: 'RB001',
+            contentId: activeReel.id,
+            reelId: activeReel.id,
+            reelTitle: activeReel.title,
+            reelUrl: activeReel.url || null,
             feeling: answers.feeling || null,
             wouldWatchMore: answers.more || null,
             connectedWith: answers.liked || null,
@@ -135,7 +181,6 @@
             submittedAt: new Date().toISOString()
         };
 
-        // Phase 1 — local simulation only
         try {
             const list = JSON.parse(localStorage.getItem('rrb_feedback') || '[]');
             list.push({ id: 'local_' + Date.now(), ...feedback });
@@ -188,5 +233,6 @@
     });
 
     /* ===== INIT ===== */
+    applyReelToPage();
     showQuestion(1);
 })();
