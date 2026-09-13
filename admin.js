@@ -24,14 +24,14 @@ import {
 ========================= */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAoPVLSklKARDfdDoSm6Lzkj1kabJVpsw",
+  apiKey: "AIzaSyAoPVLSklKARDfdDoSm6L2zkj1kabJVpsw",
   authDomain: "rudrabhakti-a1d3e.firebaseapp.com",
+  databaseURL: "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com",
   projectId: "rudrabhakti-a1d3e",
   storageBucket: "rudrabhakti-a1d3e.firebasestorage.app",
   messagingSenderId: "96491326088",
-  appId: "1:96491326088:web:16b33c95f6aa67b5936d3d",
-  measurementId: "G-RYKGBGSLVB",
-  databaseURL: "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com/"
+  appId: "1:96491326088:web:593b15e565a12f57936d3d",
+  measurementId: "G-DF9MKJ113R"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -44,7 +44,8 @@ const db = getDatabase(app);
    AUTHORIZED ADMIN
 ========================= */
 
-const ADMIN_UID = "y7u3uoHSiycapycRb2z12Hk0F1E2";
+const ADMIN_UID =
+  "y7u3uoHSiycapycRb2z12Hk0F1E2";
 
 
 /* =========================
@@ -165,6 +166,14 @@ loginForm.addEventListener(
       document.getElementById("password")
         .value;
 
+    if (!email || !password) {
+
+      loginError.textContent =
+        "Please enter email and password.";
+
+      return;
+    }
+
     try {
 
       await signInWithEmailAndPassword(
@@ -177,8 +186,37 @@ loginForm.addEventListener(
 
       console.error(error);
 
-      loginError.textContent =
-        "Invalid email or password.";
+      switch (error.code) {
+
+        case "auth/invalid-credential":
+        case "auth/wrong-password":
+        case "auth/user-not-found":
+
+          loginError.textContent =
+            "Invalid email or password.";
+
+          break;
+
+        case "auth/invalid-api-key":
+
+          loginError.textContent =
+            "Firebase API key is invalid.";
+
+          break;
+
+        case "auth/too-many-requests":
+
+          loginError.textContent =
+            "Too many attempts. Try again later.";
+
+          break;
+
+        default:
+
+          loginError.textContent =
+            error.message ||
+            "Unable to sign in.";
+      }
     }
   }
 );
@@ -201,9 +239,14 @@ onAuthStateChanged(
     }
 
 
+    /* ADMIN UID CHECK */
+
     if (user.uid !== ADMIN_UID) {
 
       await signOut(auth);
+
+      loginScreen.classList.remove("hidden");
+      adminApp.classList.add("hidden");
 
       loginError.textContent =
         "This account is not authorized.";
@@ -212,8 +255,12 @@ onAuthStateChanged(
     }
 
 
+    /* AUTHORIZED */
+
     loginScreen.classList.add("hidden");
     adminApp.classList.remove("hidden");
+
+    loginError.textContent = "";
 
     await loadEverything();
   }
@@ -228,7 +275,14 @@ logoutBtn.addEventListener(
   "click",
   async () => {
 
-    await signOut(auth);
+    try {
+
+      await signOut(auth);
+
+    } catch (error) {
+
+      console.error(error);
+    }
   }
 );
 
@@ -237,7 +291,8 @@ logoutBtn.addEventListener(
    NAVIGATION
 ========================= */
 
-document.querySelectorAll(".nav-btn")
+document
+  .querySelectorAll(".nav-btn")
   .forEach(button => {
 
     button.addEventListener(
@@ -258,12 +313,16 @@ document.querySelectorAll(".nav-btn")
 
         button.classList.add("active");
 
-        document
-          .getElementById(button.dataset.view)
-          .classList.remove("hidden");
+        const target =
+          document.getElementById(
+            button.dataset.view
+          );
+
+        if (target) {
+          target.classList.remove("hidden");
+        }
       }
     );
-
   });
 
 
@@ -358,7 +417,7 @@ function populateReelFilter() {
     [...new Set([
       ...feedbackIds,
       ...reelIds
-    ])];
+    ])].sort();
 
   reelFilter.innerHTML =
     `<option value="ALL">All Reels</option>`;
@@ -385,6 +444,11 @@ function populateReelFilter() {
 
     reelFilter.value =
       currentReel;
+
+  } else {
+
+    currentReel = "ALL";
+    reelFilter.value = "ALL";
   }
 }
 
@@ -719,7 +783,8 @@ function renderWrittenFeedback(responses) {
           </div>
 
           <div class="feedback-meta">
-            Reel: ${escapeHTML(
+            Reel:
+            ${escapeHTML(
               response.reelId || "Unknown"
             )}
           </div>
@@ -736,7 +801,9 @@ function renderWrittenFeedback(responses) {
 ========================================================= */
 
 
-/* ADD / EDIT */
+/* =========================
+   ADD / EDIT
+========================= */
 
 reelForm.addEventListener(
   "submit",
@@ -762,6 +829,8 @@ reelForm.addEventListener(
       thumbnailInput.value.trim();
 
 
+    /* ID FORMAT */
+
     if (!/^RB[0-9]+$/.test(id)) {
 
       showReelMessage(
@@ -772,6 +841,8 @@ reelForm.addEventListener(
       return;
     }
 
+
+    /* TITLE */
 
     if (!title) {
 
@@ -1017,12 +1088,6 @@ function renderReelList() {
       const reel =
         reels[id];
 
-      const feedbackLink =
-        `${window.location.origin}${window.location.pathname.replace(
-          /admin\.html$/,
-          ""
-        )}?reel=${encodeURIComponent(id)}`;
-
 
       return `
         <div class="reel-item">
@@ -1037,7 +1102,8 @@ function renderReelList() {
 
               <h3>
                 ${escapeHTML(
-                  reel.title || "Untitled Reel"
+                  reel.title ||
+                  "Untitled Reel"
                 )}
               </h3>
 
@@ -1133,14 +1199,18 @@ reelList.addEventListener(
 
       try {
 
-        await navigator.clipboard.writeText(link);
+        await navigator.clipboard.writeText(
+          link
+        );
 
         button.textContent =
           "Copied!";
 
         setTimeout(() => {
+
           button.textContent =
             "Copy Link";
+
         }, 1200);
 
       } catch {
