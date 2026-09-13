@@ -20,9 +20,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
 
-/* =========================
-   FIREBASE
-========================= */
+/* =====================================================
+   FIREBASE CONFIG
+===================================================== */
 
 const firebaseConfig = {
   apiKey: "AIzaSyAoSVklKARDfdDoSm6L2zkj1kabJVpsw",
@@ -35,28 +35,45 @@ const firebaseConfig = {
   measurementId: "G-DF9MKJ113R"
 };
 
+
 const ADMIN_UID =
   "y7u3uoHSiycapycRb2z12Hk0F1E2";
 
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+const app =
+  initializeApp(firebaseConfig);
+
+const auth =
+  getAuth(app);
+
+const db =
+  getDatabase(app);
 
 
-/* =========================
-   ELEMENTS
-========================= */
+/* =====================================================
+   DOM
+===================================================== */
 
-const loginScreen = document.getElementById("loginScreen");
-const dashboardScreen = document.getElementById("dashboardScreen");
+const loginScreen =
+  document.getElementById("loginScreen");
 
-const loginForm = document.getElementById("loginForm");
-const emailInput = document.getElementById("emailInput");
-const passwordInput = document.getElementById("passwordInput");
-const loginError = document.getElementById("loginError");
+const dashboardScreen =
+  document.getElementById("dashboardScreen");
 
-const logoutBtn = document.getElementById("logoutBtn");
+const loginForm =
+  document.getElementById("loginForm");
+
+const emailInput =
+  document.getElementById("emailInput");
+
+const passwordInput =
+  document.getElementById("passwordInput");
+
+const loginError =
+  document.getElementById("loginError");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
 
 const navButtons =
   document.querySelectorAll(".nav-btn");
@@ -82,6 +99,9 @@ const metadataStatus =
 const fetchMetadataBtn =
   document.getElementById("fetchMetadataBtn");
 
+const saveReelBtn =
+  document.getElementById("saveReelBtn");
+
 const reelFormMessage =
   document.getElementById("reelFormMessage");
 
@@ -89,9 +109,9 @@ const reelList =
   document.getElementById("reelList");
 
 
-/* =========================
-   DATA
-========================= */
+/* =====================================================
+   STATE
+===================================================== */
 
 let reelsData = {};
 let feedbackData = {};
@@ -100,83 +120,147 @@ let editingReelId = null;
 let fetchedMetadata = null;
 
 
-/* =========================
-   AUTH
-========================= */
+/* =====================================================
+   AUTH — LOGIN
+===================================================== */
 
-loginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
+loginForm.addEventListener(
+  "submit",
+  async (event) => {
 
-  loginError.textContent = "";
+    event.preventDefault();
 
-  try {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
+    loginError.textContent = "";
 
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
+    const email =
+      emailInput.value.trim();
+
+    const password =
+      passwordInput.value;
+
+
+    try {
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Login error:",
+        error
+      );
+
+      loginError.textContent =
+        getAuthErrorMessage(
+          error.code
+        );
+    }
+  }
+);
+
+
+/* =====================================================
+   AUTH STATE
+===================================================== */
+
+onAuthStateChanged(
+  auth,
+  async (user) => {
+
+    if (!user) {
+
+      loginScreen.classList.remove(
+        "hidden"
+      );
+
+      dashboardScreen.classList.add(
+        "hidden"
+      );
+
+      return;
+    }
+
+
+    if (user.uid !== ADMIN_UID) {
+
+      await signOut(auth);
+
+      loginScreen.classList.remove(
+        "hidden"
+      );
+
+      dashboardScreen.classList.add(
+        "hidden"
+      );
+
+      loginError.textContent =
+        "This account is not authorized.";
+
+      return;
+    }
+
+
+    loginScreen.classList.add(
+      "hidden"
     );
 
-  } catch (error) {
-    console.error(error);
+    dashboardScreen.classList.remove(
+      "hidden"
+    );
 
-    loginError.textContent =
-      friendlyAuthError(error.code);
+
+    await loadDashboard();
   }
-});
+);
 
 
-onAuthStateChanged(auth, async (user) => {
+/* =====================================================
+   LOGOUT
+===================================================== */
 
-  if (!user) {
-    loginScreen.classList.remove("hidden");
-    dashboardScreen.classList.add("hidden");
-    return;
+logoutBtn.addEventListener(
+  "click",
+  async () => {
+
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to logout?"
+      );
+
+
+    if (!confirmed) {
+      return;
+    }
+
+
+    try {
+
+      await signOut(auth);
+
+    } catch (error) {
+
+      console.error(
+        "Logout error:",
+        error
+      );
+
+      window.alert(
+        "Logout failed. Please try again."
+      );
+    }
   }
-
-  if (user.uid !== ADMIN_UID) {
-
-    await signOut(auth);
-
-    loginError.textContent =
-      "This account is not authorized.";
-
-    return;
-  }
-
-  loginScreen.classList.add("hidden");
-  dashboardScreen.classList.remove("hidden");
-
-  await loadDashboard();
-});
+);
 
 
-/* =========================
-   LOGOUT CONFIRMATION
-========================= */
+/* =====================================================
+   AUTH ERROR
+===================================================== */
 
-logoutBtn.addEventListener("click", async () => {
-
-  const confirmed = confirm(
-    "Are you sure you want to logout?"
-  );
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-    await signOut(auth);
-  } catch (error) {
-    console.error(error);
-    alert("Logout failed. Please try again.");
-  }
-});
-
-
-function friendlyAuthError(code) {
+function getAuthErrorMessage(code) {
 
   switch (code) {
 
@@ -190,7 +274,10 @@ function friendlyAuthError(code) {
       return "This account has been disabled.";
 
     case "auth/too-many-requests":
-      return "Too many attempts. Please try again later.";
+      return "Too many login attempts. Try again later.";
+
+    case "auth/network-request-failed":
+      return "Network error. Check your internet connection.";
 
     default:
       return "Login failed. Please check your details.";
@@ -198,131 +285,194 @@ function friendlyAuthError(code) {
 }
 
 
-/* =========================
+/* =====================================================
    NAVIGATION
-========================= */
+===================================================== */
 
-navButtons.forEach((button) => {
+navButtons.forEach(
+  (button) => {
 
-  button.addEventListener("click", () => {
+    button.addEventListener(
+      "click",
+      () => {
 
-    navButtons.forEach((btn) =>
-      btn.classList.remove("active")
+        navButtons.forEach(
+          (btn) =>
+            btn.classList.remove(
+              "active"
+            )
+        );
+
+
+        button.classList.add(
+          "active"
+        );
+
+
+        document
+          .querySelectorAll(".admin-view")
+          .forEach(
+            (view) =>
+              view.classList.add(
+                "hidden"
+              )
+          );
+
+
+        const target =
+          document.getElementById(
+            button.dataset.view
+          );
+
+
+        if (target) {
+          target.classList.remove(
+            "hidden"
+          );
+        }
+      }
     );
-
-    button.classList.add("active");
-
-    document
-      .querySelectorAll(".admin-view")
-      .forEach((view) => {
-        view.classList.add("hidden");
-      });
-
-    const target =
-      document.getElementById(button.dataset.view);
-
-    target.classList.remove("hidden");
-  });
-});
+  }
+);
 
 
-/* =========================
-   DASHBOARD
-========================= */
+/* =====================================================
+   DASHBOARD LOAD
+===================================================== */
 
 async function loadDashboard() {
 
   try {
 
-    await Promise.all([
-      loadReels(),
-      loadFeedback()
-    ]);
+    await loadReels();
+
+    await loadFeedback();
 
     populateReelFilter();
+
     renderAnalytics();
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "Dashboard loading error:",
+      error
+    );
 
-    alert(
-      "Could not load dashboard data."
+    window.alert(
+      "Unable to load feedback. Check Firebase Rules."
     );
   }
 }
 
 
-/* =========================
+/* =====================================================
    LOAD REELS
-========================= */
+===================================================== */
 
 async function loadReels() {
 
   const snapshot =
-    await get(ref(db, "reels"));
+    await get(
+      ref(db, "reels")
+    );
+
 
   reelsData =
     snapshot.exists()
       ? snapshot.val()
       : {};
 
+
   populateReelFilter();
+
   renderReelList();
 
   updateGeneratedReelId();
 }
 
 
-/* =========================
-   LOAD FEEDBACK
-========================= */
+/* =====================================================
+   LOAD ALL FEEDBACK
+   NOTE:
+   Firebase Rules must allow admin read at
+   feedback_responses root.
+===================================================== */
 
 async function loadFeedback() {
 
-  const snapshot =
-    await get(ref(db, "feedback_responses"));
+  try {
 
-  feedbackData =
-    snapshot.exists()
-      ? snapshot.val()
-      : {};
+    const snapshot =
+      await get(
+        ref(
+          db,
+          "feedback_responses"
+        )
+      );
+
+
+    feedbackData =
+      snapshot.exists()
+        ? snapshot.val()
+        : {};
+
+  } catch (error) {
+
+    console.error(
+      "Feedback read error:",
+      error
+    );
+
+    throw error;
+  }
 }
 
 
-/* =========================
+/* =====================================================
    AUTO REEL ID
-========================= */
+===================================================== */
 
 function getNextReelId() {
 
-  const numbers = Object.keys(reelsData)
-    .map(id => {
+  const usedNumbers =
+    Object.keys(reelsData)
+      .map(
+        (id) => {
 
-      const match =
-        /^RB(\d+)$/.exec(id);
+          const match =
+            /^RB(\d+)$/.exec(id);
 
-      return match
-        ? Number(match[1])
-        : 0;
-    })
-    .filter(number => number > 0);
+          return match
+            ? Number(match[1])
+            : 0;
+        }
+      )
+      .filter(
+        (number) => number > 0
+      );
 
-  let next =
-    numbers.length
-      ? Math.max(...numbers) + 1
+
+  let nextNumber =
+    usedNumbers.length
+      ? Math.max(...usedNumbers) + 1
       : 1;
 
+
   let candidate;
+
 
   do {
 
     candidate =
-      `RB${String(next).padStart(3, "0")}`;
+      `RB${String(nextNumber).padStart(3, "0")}`;
 
-    next++;
+    nextNumber++;
 
-  } while (reelsData[candidate]);
+  } while (
+    reelsData[candidate]
+  );
+
 
   return candidate;
 }
@@ -330,20 +480,15 @@ function getNextReelId() {
 
 function updateGeneratedReelId() {
 
-  if (editingReelId) {
-    generatedReelId.textContent =
-      editingReelId;
-    return;
-  }
-
   generatedReelId.textContent =
+    editingReelId ||
     getNextReelId();
 }
 
 
-/* =========================
-   FACEBOOK URL
-========================= */
+/* =====================================================
+   FACEBOOK URL VALIDATION
+===================================================== */
 
 function isFacebookUrl(url) {
 
@@ -352,34 +497,39 @@ function isFacebookUrl(url) {
     const parsed =
       new URL(url);
 
+    const host =
+      parsed.hostname.toLowerCase();
+
+
     return (
-      parsed.hostname === "facebook.com" ||
-      parsed.hostname.endsWith(".facebook.com")
+      host === "facebook.com" ||
+      host === "www.facebook.com" ||
+      host.endsWith(".facebook.com")
     );
 
   } catch {
+
     return false;
   }
 }
 
 
-/* =========================
-   METADATA FETCH
-========================= */
+/* =====================================================
+   METADATA
+===================================================== */
 
 async function fetchReelMetadata(url) {
 
   metadataStatus.textContent =
     "Fetching Reel information…";
 
-  metadataStatus.style.color = "#555";
+
+  metadataStatus.style.color =
+    "#555";
+
 
   fetchedMetadata = null;
 
-  /*
-    Facebook frequently blocks browser-side metadata
-    requests. We first try Facebook oEmbed.
-  */
 
   const endpoints = [
 
@@ -394,47 +544,62 @@ async function fetchReelMetadata(url) {
     try {
 
       const response =
-        await fetch(endpoint);
+        await fetch(
+          endpoint
+        );
+
 
       if (!response.ok) {
         continue;
       }
 
+
       const data =
         await response.json();
 
-      if (data) {
+
+      if (!data) {
+        continue;
+      }
+
+
+      const title =
+        data.title ||
+        data.author_name ||
+        null;
+
+
+      const thumbnail =
+        data.thumbnail_url ||
+        "";
+
+
+      if (title) {
 
         fetchedMetadata = {
-          title:
-            data.title ||
-            data.author_name ||
-            null,
-
-          thumbnail:
-            data.thumbnail_url ||
-            null
+          title,
+          thumbnail
         };
 
-        if (fetchedMetadata.title) {
 
-          generatedTitle.textContent =
-            fetchedMetadata.title;
+        generatedTitle.textContent =
+          title;
 
-          metadataStatus.textContent =
-            "Reel information detected.";
 
-          metadataStatus.style.color =
-            "#287a3e";
+        metadataStatus.textContent =
+          "Reel information detected.";
 
-          return fetchedMetadata;
-        }
+        metadataStatus.style.color =
+          "#287a3e";
+
+
+        return fetchedMetadata;
       }
 
     } catch (error) {
 
       console.warn(
-        "Metadata request failed:",
+        "Facebook metadata request failed:",
         error
       );
     }
@@ -442,34 +607,43 @@ async function fetchReelMetadata(url) {
 
 
   /*
-    Facebook blocked metadata request.
-    We do not invent a fake Facebook title.
+    Facebook may block browser-side metadata requests.
+    We never invent a Facebook title.
   */
 
+  const fallbackId =
+    editingReelId ||
+    getNextReelId();
+
+
   const fallbackTitle =
-    `Rudra Bhakti Reel ${generatedReelId.textContent}`;
+    `Rudra Bhakti Reel ${fallbackId}`;
+
 
   fetchedMetadata = {
     title: fallbackTitle,
-    thumbnail: null
+    thumbnail: ""
   };
+
 
   generatedTitle.textContent =
     fallbackTitle;
 
+
   metadataStatus.textContent =
-    "Facebook title could not be fetched automatically. A safe fallback title will be used.";
+    "Facebook title could not be fetched automatically. A fallback title will be used.";
 
   metadataStatus.style.color =
     "#777";
+
 
   return fetchedMetadata;
 }
 
 
-/* =========================
-   FETCH BUTTON
-========================= */
+/* =====================================================
+   FETCH INFO BUTTON
+===================================================== */
 
 fetchMetadataBtn.addEventListener(
   "click",
@@ -477,6 +651,7 @@ fetchMetadataBtn.addEventListener(
 
     const url =
       facebookUrlInput.value.trim();
+
 
     if (!url) {
 
@@ -486,6 +661,7 @@ fetchMetadataBtn.addEventListener(
       return;
     }
 
+
     if (!isFacebookUrl(url)) {
 
       metadataStatus.textContent =
@@ -494,14 +670,29 @@ fetchMetadataBtn.addEventListener(
       return;
     }
 
-    await fetchReelMetadata(url);
+
+    fetchMetadataBtn.disabled =
+      true;
+
+
+    try {
+
+      await fetchReelMetadata(
+        url
+      );
+
+    } finally {
+
+      fetchMetadataBtn.disabled =
+        false;
+    }
   }
 );
 
 
-/* =========================
+/* =====================================================
    URL INPUT
-========================= */
+===================================================== */
 
 facebookUrlInput.addEventListener(
   "input",
@@ -512,16 +703,17 @@ facebookUrlInput.addEventListener(
     generatedTitle.textContent =
       "Waiting for URL…";
 
-    metadataStatus.textContent = "";
+    metadataStatus.textContent =
+      "";
 
     updateGeneratedReelId();
   }
 );
 
 
-/* =========================
-   ADD / EDIT REEL
-========================= */
+/* =====================================================
+   ADD / UPDATE REEL
+===================================================== */
 
 reelForm.addEventListener(
   "submit",
@@ -529,18 +721,29 @@ reelForm.addEventListener(
 
     event.preventDefault();
 
-    reelFormMessage.textContent = "";
+
+    reelFormMessage.textContent =
+      "";
+
 
     const url =
       facebookUrlInput.value.trim();
+
 
     if (!isFacebookUrl(url)) {
 
       reelFormMessage.textContent =
         "Please enter a valid Facebook Reel URL.";
 
+      reelFormMessage.style.color =
+        "#c62828";
+
       return;
     }
+
+
+    saveReelBtn.disabled =
+      true;
 
 
     try {
@@ -551,12 +754,15 @@ reelForm.addEventListener(
 
 
       /*
-        If metadata has not been fetched yet,
-        automatically attempt it before saving.
+        Automatically attempt metadata
+        if the admin didn't press Fetch.
       */
 
       if (!fetchedMetadata) {
-        await fetchReelMetadata(url);
+
+        await fetchReelMetadata(
+          url
+        );
       }
 
 
@@ -571,14 +777,17 @@ reelForm.addEventListener(
 
 
       const reelRef =
-        ref(db, `reels/${reelId}`);
+        ref(
+          db,
+          `reels/${reelId}`
+        );
 
 
-      const existing =
+      const existingReel =
         reelsData[reelId];
 
 
-      if (existing) {
+      if (existingReel) {
 
         await update(
           reelRef,
@@ -586,7 +795,6 @@ reelForm.addEventListener(
             title,
             facebookUrl: url,
             thumbnail,
-
             updated_at:
               serverTimestamp()
           }
@@ -617,6 +825,10 @@ reelForm.addEventListener(
           : `${reelId} added successfully.`;
 
 
+      reelFormMessage.style.color =
+        "#287a3e";
+
+
       await loadReels();
 
 
@@ -625,46 +837,64 @@ reelForm.addEventListener(
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "Reel save error:",
+        error
+      );
+
 
       reelFormMessage.textContent =
-        "Could not save Reel. Please try again.";
+        "Could not save Reel. Check Firebase Rules.";
+
+      reelFormMessage.style.color =
+        "#c62828";
+
+    } finally {
+
+      saveReelBtn.disabled =
+        false;
     }
   }
 );
 
 
-/* =========================
-   RESET FORM
-========================= */
+/* =====================================================
+   RESET REEL FORM
+===================================================== */
 
 function resetReelForm() {
 
   editingReelId = null;
+
   fetchedMetadata = null;
 
   reelForm.reset();
 
+
   generatedTitle.textContent =
     "Waiting for URL…";
 
-  metadataStatus.textContent = "";
+
+  metadataStatus.textContent =
+    "";
+
+
+  saveReelBtn.textContent =
+    "Add Reel";
+
 
   updateGeneratedReelId();
-
-  document.getElementById(
-    "saveReelBtn"
-  ).textContent = "Add Reel";
 }
 
 
-/* =========================
+/* =====================================================
    REEL FILTER
-========================= */
+===================================================== */
 
 reelFilter.addEventListener(
   "change",
   () => {
+
     renderAnalytics();
   }
 );
@@ -672,224 +902,352 @@ reelFilter.addEventListener(
 
 function populateReelFilter() {
 
-  const current =
+  const previous =
     reelFilter.value;
+
 
   reelFilter.innerHTML =
     `<option value="ALL">All Reels</option>`;
 
+
   Object.keys(reelsData)
     .sort()
-    .forEach(id => {
+    .forEach(
+      (id) => {
 
-      const option =
-        document.createElement("option");
+        const option =
+          document.createElement(
+            "option"
+          );
 
-      option.value = id;
 
-      option.textContent =
-        `${id} — ${reelsData[id].title || "Untitled"}`;
+        option.value =
+          id;
 
-      reelFilter.appendChild(option);
-    });
+
+        option.textContent =
+          `${id} — ${
+            reelsData[id].title ||
+            "Untitled"
+          }`;
+
+
+        reelFilter.appendChild(
+          option
+        );
+      }
+    );
 
 
   if (
-    current &&
-    (
-      current === "ALL" ||
-      reelsData[current]
-    )
+    previous === "ALL" ||
+    reelsData[previous]
   ) {
-    reelFilter.value = current;
+
+    reelFilter.value =
+      previous;
   }
 }
 
 
-/* =========================
-   RENDER REEL LIST
-========================= */
+/* =====================================================
+   REEL LIST
+===================================================== */
 
 function renderReelList() {
 
   const ids =
-    Object.keys(reelsData).sort();
+    Object.keys(
+      reelsData
+    ).sort();
+
 
   if (!ids.length) {
 
     reelList.innerHTML =
-      `<p class="empty-state">No Reels added yet.</p>`;
+      `<p class="empty-state">
+        No Reels added yet.
+      </p>`;
 
     return;
   }
 
 
   reelList.innerHTML =
-    ids.map(id => {
+    ids
+      .map(
+        (id) => {
 
-      const reel =
-        reelsData[id];
-
-      const link =
-        `${window.location.origin}${window.location.pathname.replace(
-          /admin\.html$/,
-          ""
-        )}?reel=${encodeURIComponent(id)}`;
+          const reel =
+            reelsData[id];
 
 
-      return `
-        <div class="reel-item">
+          const feedbackLink =
+            `${window.location.origin}${window.location.pathname.replace(
+              /admin\.html$/,
+              ""
+            )}?reel=${encodeURIComponent(id)}`;
 
-          <div class="reel-info">
 
-            <strong>
-              ${escapeHTML(id)} —
-              ${escapeHTML(reel.title || "Untitled")}
-            </strong>
+          return `
+            <div class="reel-item">
 
-            <small>
-              ${escapeHTML(reel.facebookUrl || "")}
-            </small>
+              <div class="reel-info">
 
-          </div>
+                <strong>
+                  ${escapeHTML(id)}
+                  —
+                  ${escapeHTML(
+                    reel.title ||
+                    "Untitled"
+                  )}
+                </strong>
 
-          <div class="reel-actions">
+                <small>
+                  ${escapeHTML(
+                    reel.facebookUrl ||
+                    ""
+                  )}
+                </small>
 
-            <button
-              class="small-btn"
-              data-action="copy"
-              data-id="${escapeHTML(id)}"
-              data-link="${escapeHTML(link)}"
-            >
-              Copy Link
-            </button>
+              </div>
 
-            <button
-              class="small-btn"
-              data-action="edit"
-              data-id="${escapeHTML(id)}"
-            >
-              Edit
-            </button>
 
-            <button
-              class="small-btn"
-              data-action="delete"
-              data-id="${escapeHTML(id)}"
-            >
-              Delete
-            </button>
+              <div class="reel-actions">
 
-          </div>
+                <button
+                  type="button"
+                  class="small-btn"
+                  data-action="copy"
+                  data-id="${escapeHTML(id)}"
+                  data-link="${escapeHTML(feedbackLink)}"
+                >
+                  Copy Link
+                </button>
 
-        </div>
-      `;
 
-    }).join("");
+                <button
+                  type="button"
+                  class="small-btn"
+                  data-action="edit"
+                  data-id="${escapeHTML(id)}"
+                >
+                  Edit
+                </button>
+
+
+                <button
+                  type="button"
+                  class="small-btn"
+                  data-action="delete"
+                  data-id="${escapeHTML(id)}"
+                >
+                  Delete
+                </button>
+
+              </div>
+
+            </div>
+          `;
+        }
+      )
+      .join("");
 
 
   reelList
     .querySelectorAll("button")
-    .forEach(button => {
+    .forEach(
+      (button) => {
 
-      button.addEventListener(
-        "click",
-        async () => {
+        button.addEventListener(
+          "click",
+          async () => {
 
-          const action =
-            button.dataset.action;
+            const action =
+              button.dataset.action;
 
-          const id =
-            button.dataset.id;
+            const id =
+              button.dataset.id;
 
 
-          if (action === "copy") {
+            if (
+              action === "copy"
+            ) {
 
-            await navigator.clipboard.writeText(
-              button.dataset.link
-            );
+              await copyFeedbackLink(
+                button,
+                button.dataset.link
+              );
 
-            button.textContent =
-              "Copied!";
+              return;
+            }
 
-            setTimeout(() => {
-              button.textContent =
-                "Copy Link";
-            }, 1500);
+
+            if (
+              action === "edit"
+            ) {
+
+              editReel(id);
+
+              return;
+            }
+
+
+            if (
+              action === "delete"
+            ) {
+
+              await deleteReel(id);
+            }
           }
-
-
-          if (action === "edit") {
-            editReel(id);
-          }
-
-
-          if (action === "delete") {
-            deleteReel(id);
-          }
-
-        }
-      );
-
-    });
+        );
+      }
+    );
 }
 
 
-/* =========================
+/* =====================================================
+   COPY FEEDBACK LINK
+===================================================== */
+
+async function copyFeedbackLink(
+  button,
+  link
+) {
+
+  try {
+
+    await navigator.clipboard.writeText(
+      link
+    );
+
+
+    const oldText =
+      button.textContent;
+
+
+    button.textContent =
+      "Copied!";
+
+
+    setTimeout(
+      () => {
+        button.textContent =
+          oldText;
+      },
+      1500
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Copy failed:",
+      error
+    );
+
+
+    window.prompt(
+      "Copy this feedback link:",
+      link
+    );
+  }
+}
+
+
+/* =====================================================
    EDIT REEL
-========================= */
+===================================================== */
 
 function editReel(id) {
 
   const reel =
     reelsData[id];
 
+
   if (!reel) {
     return;
   }
 
-  editingReelId = id;
+
+  editingReelId =
+    id;
+
 
   facebookUrlInput.value =
-    reel.facebookUrl || "";
+    reel.facebookUrl ||
+    "";
+
 
   generatedReelId.textContent =
     id;
 
+
   generatedTitle.textContent =
-    reel.title || "Untitled";
+    reel.title ||
+    "Untitled";
+
 
   fetchedMetadata = {
-    title: reel.title || `Rudra Bhakti Reel ${id}`,
-    thumbnail: reel.thumbnail || ""
+    title:
+      reel.title ||
+      `Rudra Bhakti Reel ${id}`,
+
+    thumbnail:
+      reel.thumbnail ||
+      ""
   };
 
-  document.getElementById(
-    "saveReelBtn"
-  ).textContent = "Update Reel";
+
+  saveReelBtn.textContent =
+    "Update Reel";
 
 
-  navButtons.forEach(btn =>
-    btn.classList.remove("active")
+  metadataStatus.textContent =
+    "Editing existing Reel.";
+
+
+  metadataStatus.style.color =
+    "#666";
+
+
+  navButtons.forEach(
+    (button) =>
+      button.classList.remove(
+        "active"
+      )
   );
+
 
   const addButton =
     document.querySelector(
       '[data-view="addReelView"]'
     );
 
-  addButton.classList.add("active");
+
+  if (addButton) {
+    addButton.classList.add(
+      "active"
+    );
+  }
 
 
   document
     .querySelectorAll(".admin-view")
-    .forEach(view =>
-      view.classList.add("hidden")
+    .forEach(
+      (view) =>
+        view.classList.add(
+          "hidden"
+        )
     );
 
+
   document
-    .getElementById("addReelView")
-    .classList.remove("hidden");
+    .getElementById(
+      "addReelView"
+    )
+    .classList.remove(
+      "hidden"
+    );
 
 
   window.scrollTo({
@@ -899,16 +1257,17 @@ function editReel(id) {
 }
 
 
-/* =========================
+/* =====================================================
    DELETE REEL
-========================= */
+===================================================== */
 
 async function deleteReel(id) {
 
   const confirmed =
-    confirm(
+    window.confirm(
       `Delete ${id} from the Reel list?\n\nExisting feedback responses will NOT be deleted.`
     );
+
 
   if (!confirmed) {
     return;
@@ -918,43 +1277,57 @@ async function deleteReel(id) {
   try {
 
     await remove(
-      ref(db, `reels/${id}`)
+      ref(
+        db,
+        `reels/${id}`
+      )
     );
+
 
     delete reelsData[id];
 
+
     populateReelFilter();
+
     renderReelList();
+
     renderAnalytics();
+
     updateGeneratedReelId();
 
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "Delete error:",
+      error
+    );
 
-    alert(
+
+    window.alert(
       "Could not delete Reel."
     );
   }
 }
 
 
-/* =========================
+/* =====================================================
    ANALYTICS
-========================= */
+===================================================== */
 
-function renderAnalytics() {
+function getFilteredResponses() {
 
   const selected =
     reelFilter.value;
 
 
-  let responses = [];
+  const responses = [];
 
 
-  Object.entries(feedbackData)
-    .forEach(([reelId, reelResponses]) => {
+  Object.entries(
+    feedbackData
+  ).forEach(
+    ([reelId, reelResponses]) => {
 
       if (
         selected !== "ALL" &&
@@ -966,16 +1339,27 @@ function renderAnalytics() {
 
       Object.values(
         reelResponses || {}
-      ).forEach(response => {
+      ).forEach(
+        (response) => {
 
-        responses.push({
-          reelId,
-          ...response
-        });
+          responses.push({
+            reelId,
+            ...response
+          });
+        }
+      );
+    }
+  );
 
-      });
 
-    });
+  return responses;
+}
+
+
+function renderAnalytics() {
+
+  const responses =
+    getFilteredResponses();
 
 
   document.getElementById(
@@ -984,20 +1368,43 @@ function renderAnalytics() {
     responses.length;
 
 
-  renderAverageRating(responses);
-  renderWantMore(responses);
-  renderFeeling(responses);
+  renderAverageRating(
+    responses
+  );
+
+
+  renderWantMore(
+    responses
+  );
+
+
+  renderTopFeeling(
+    responses
+  );
+
+
   renderDistribution(
     responses,
     "Q_FEELING",
     "feelingDistribution",
     {
-      FEEL_PEACEFUL: "Peaceful",
-      FEEL_DEVOTIONAL: "Devotional",
-      FEEL_EMOTIONAL: "Emotional",
-      FEEL_INSPIRED: "Inspired",
-      FEEL_CALM: "Calm",
-      FEEL_DEEPLY_MOVED: "Deeply Moved"
+      FEEL_PEACEFUL:
+        "Peaceful",
+
+      FEEL_DEVOTIONAL:
+        "Devotional",
+
+      FEEL_EMOTIONAL:
+        "Emotional",
+
+      FEEL_INSPIRED:
+        "Inspired",
+
+      FEEL_CALM:
+        "Calm",
+
+      FEEL_DEEPLY_MOVED:
+        "Deeply Moved"
     }
   );
 
@@ -1007,10 +1414,17 @@ function renderAnalytics() {
     "Q_MORE_CONTENT",
     "moreDistribution",
     {
-      MORE_DEFINITELY: "Definitely",
-      MORE_SOMETIMES: "Sometimes",
-      MORE_UNSURE: "Unsure",
-      MORE_NOT_REALLY: "Not Really"
+      MORE_DEFINITELY:
+        "Definitely",
+
+      MORE_SOMETIMES:
+        "Sometimes",
+
+      MORE_UNSURE:
+        "Unsure",
+
+      MORE_NOT_REALLY:
+        "Not Really"
     }
   );
 
@@ -1020,11 +1434,20 @@ function renderAnalytics() {
     "Q_CONNECTION",
     "connectionDistribution",
     {
-      CONNECT_SHIVA_PARVATI: "Shiva & Parvati",
-      CONNECT_DEVOTIONAL_FEELING: "Devotional Feeling",
-      CONNECT_ARTWORK: "Artwork",
-      CONNECT_MUSIC: "Music",
-      CONNECT_EVERYTHING: "Everything"
+      CONNECT_SHIVA_PARVATI:
+        "Shiva & Parvati",
+
+      CONNECT_DEVOTIONAL_FEELING:
+        "Devotional Feeling",
+
+      CONNECT_ARTWORK:
+        "Artwork",
+
+      CONNECT_MUSIC:
+        "Music",
+
+      CONNECT_EVERYTHING:
+        "Everything"
     }
   );
 
@@ -1034,39 +1457,57 @@ function renderAnalytics() {
     "Q_RATING",
     "ratingDistribution",
     {
-      RATING_1: "1 Star",
-      RATING_2: "2 Stars",
-      RATING_3: "3 Stars",
-      RATING_4: "4 Stars",
-      RATING_5: "5 Stars"
+      RATING_1:
+        "1 Star",
+
+      RATING_2:
+        "2 Stars",
+
+      RATING_3:
+        "3 Stars",
+
+      RATING_4:
+        "4 Stars",
+
+      RATING_5:
+        "5 Stars"
     }
   );
 
 
-  renderWrittenFeedback(responses);
+  renderWrittenFeedback(
+    responses
+  );
 }
 
 
-/* =========================
-   RATING
-========================= */
+/* =====================================================
+   AVERAGE RATING
+===================================================== */
 
-function renderAverageRating(responses) {
+function renderAverageRating(
+  responses
+) {
 
   const ratings =
     responses
-      .map(r =>
-        ratingNumber(
-          r.answers?.Q_RATING
-        )
+      .map(
+        (response) =>
+          ratingNumber(
+            response.answers?.Q_RATING
+          )
       )
-      .filter(Boolean);
+      .filter(
+        (number) =>
+          number > 0
+      );
 
 
   const average =
     ratings.length
       ? ratings.reduce(
-          (a, b) => a + b,
+          (sum, value) =>
+            sum + value,
           0
         ) / ratings.length
       : 0;
@@ -1079,10 +1520,15 @@ function renderAverageRating(responses) {
 }
 
 
-function ratingNumber(id) {
+function ratingNumber(
+  value
+) {
 
   const match =
-    /^RATING_(\d)$/.exec(id || "");
+    /^RATING_(\d)$/.exec(
+      value || ""
+    );
+
 
   return match
     ? Number(match[1])
@@ -1090,32 +1536,39 @@ function ratingNumber(id) {
 }
 
 
-/* =========================
+/* =====================================================
    WANT MORE
-========================= */
+===================================================== */
 
-function renderWantMore(responses) {
+function renderWantMore(
+  responses
+) {
 
-  if (!responses.length) {
+  const total =
+    responses.length;
+
+
+  if (!total) {
 
     document.getElementById(
       "wantMore"
-    ).textContent = "0%";
+    ).textContent =
+      "0%";
 
     return;
   }
 
 
-  const yes =
+  const definitely =
     responses.filter(
-      r =>
-        r.answers?.Q_MORE_CONTENT ===
+      (response) =>
+        response.answers?.Q_MORE_CONTENT ===
         "MORE_DEFINITELY"
     ).length;
 
 
   const percentage =
-    (yes / responses.length) * 100;
+    (definitely / total) * 100;
 
 
   document.getElementById(
@@ -1125,53 +1578,75 @@ function renderWantMore(responses) {
 }
 
 
-/* =========================
+/* =====================================================
    TOP FEELING
-========================= */
+===================================================== */
 
-function renderFeeling(responses) {
+function renderTopFeeling(
+  responses
+) {
 
   const counts = {};
 
-  responses.forEach(r => {
 
-    const id =
-      r.answers?.Q_FEELING;
+  responses.forEach(
+    (response) => {
 
-    if (id) {
-      counts[id] =
-        (counts[id] || 0) + 1;
+      const value =
+        response.answers?.Q_FEELING;
+
+
+      if (value) {
+
+        counts[value] =
+          (counts[value] || 0) + 1;
+      }
     }
-  });
+  );
 
 
   const labels = {
-    FEEL_PEACEFUL: "Peaceful",
-    FEEL_DEVOTIONAL: "Devotional",
-    FEEL_EMOTIONAL: "Emotional",
-    FEEL_INSPIRED: "Inspired",
-    FEEL_CALM: "Calm",
-    FEEL_DEEPLY_MOVED: "Deeply Moved"
+    FEEL_PEACEFUL:
+      "Peaceful",
+
+    FEEL_DEVOTIONAL:
+      "Devotional",
+
+    FEEL_EMOTIONAL:
+      "Emotional",
+
+    FEEL_INSPIRED:
+      "Inspired",
+
+    FEEL_CALM:
+      "Calm",
+
+    FEEL_DEEPLY_MOVED:
+      "Deeply Moved"
   };
 
 
   const top =
     Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])[0];
+      .sort(
+        (a, b) =>
+          b[1] - a[1]
+      )[0];
 
 
   document.getElementById(
     "topFeeling"
   ).textContent =
     top
-      ? labels[top[0]] || top[0]
+      ? labels[top[0]] ||
+        top[0]
       : "—";
 }
 
 
-/* =========================
-   DISTRIBUTIONS
-========================= */
+/* =====================================================
+   DISTRIBUTION
+===================================================== */
 
 function renderDistribution(
   responses,
@@ -1180,79 +1655,107 @@ function renderDistribution(
   labels
 ) {
 
-  const element =
-    document.getElementById(elementId);
+  const container =
+    document.getElementById(
+      elementId
+    );
+
 
   const counts = {};
 
-  Object.keys(labels).forEach(
-    id => counts[id] = 0
-  );
+
+  Object.keys(labels)
+    .forEach(
+      (id) => {
+        counts[id] = 0;
+      }
+    );
 
 
-  responses.forEach(r => {
+  responses.forEach(
+    (response) => {
 
-    const value =
-      r.answers?.[answerKey];
+      const value =
+        response.answers?.[
+          answerKey
+        ];
 
-    if (
-      value &&
-      Object.prototype.hasOwnProperty.call(
-        counts,
-        value
-      )
-    ) {
-      counts[value]++;
+
+      if (
+        value &&
+        Object.prototype.hasOwnProperty.call(
+          counts,
+          value
+        )
+      ) {
+
+        counts[value]++;
+      }
     }
-  });
+  );
 
 
   const total =
     responses.length;
 
 
-  element.innerHTML =
+  container.innerHTML =
     Object.entries(labels)
-      .map(([id, label]) => {
+      .map(
+        ([id, label]) => {
 
-        const count =
-          counts[id] || 0;
-
-        const percentage =
-          total
-            ? (count / total) * 100
-            : 0;
+          const count =
+            counts[id] || 0;
 
 
-        return `
-          <div class="distribution-row">
+          const percentage =
+            total
+              ? (count / total) * 100
+              : 0;
 
-            <div class="distribution-label">
-              <span>${escapeHTML(label)}</span>
-              <span>
-                ${count} · ${percentage.toFixed(0)}%
-              </span>
+
+          return `
+            <div class="distribution-row">
+
+              <div class="distribution-label">
+
+                <span>
+                  ${escapeHTML(label)}
+                </span>
+
+                <span>
+                  ${count}
+                  ·
+                  ${percentage.toFixed(0)}%
+                </span>
+
+              </div>
+
+
+              <div class="bar">
+
+                <div
+                  class="bar-fill"
+                  style="width:${percentage}%"
+                ></div>
+
+              </div>
+
             </div>
-
-            <div class="bar">
-              <div
-                class="bar-fill"
-                style="width:${percentage}%"
-              ></div>
-            </div>
-
-          </div>
-        `;
-
-      }).join("");
+          `;
+        }
+      )
+      .join("");
 }
 
 
-/* =========================
+/* =====================================================
    WRITTEN FEEDBACK
-========================= */
+===================================================== */
 
-function renderWrittenFeedback(responses) {
+function renderWrittenFeedback(
+  responses
+) {
 
   const container =
     document.getElementById(
@@ -1262,16 +1765,18 @@ function renderWrittenFeedback(responses) {
 
   const written =
     responses.filter(
-      r =>
-        r.answers?.Q_OPEN_FEEDBACK &&
-        r.answers.Q_OPEN_FEEDBACK.trim()
+      (response) =>
+        response.answers?.Q_OPEN_FEEDBACK &&
+        response.answers.Q_OPEN_FEEDBACK.trim()
     );
 
 
   if (!written.length) {
 
     container.innerHTML =
-      `<p class="empty-state">No written feedback yet.</p>`;
+      `<p class="empty-state">
+        No written feedback yet.
+      </p>`;
 
     return;
   }
@@ -1281,45 +1786,73 @@ function renderWrittenFeedback(responses) {
     written
       .slice()
       .reverse()
-      .map(r => {
+      .map(
+        (response) => {
 
-        const reelTitle =
-          reelsData[r.reelId]?.title ||
-          r.reelId;
+          const reelTitle =
+            reelsData[
+              response.reelId
+            ]?.title ||
+            response.reelId;
 
 
-        return `
-          <div class="feedback-item">
+          return `
+            <div class="feedback-item">
 
-            <p>
-              ${escapeHTML(
-                r.answers.Q_OPEN_FEEDBACK
-              )}
-            </p>
+              <p>
+                ${escapeHTML(
+                  response.answers
+                    .Q_OPEN_FEEDBACK
+                )}
+              </p>
 
-            <small>
-              ${escapeHTML(r.reelId)}
-              —
-              ${escapeHTML(reelTitle)}
-            </small>
+              <small>
+                ${escapeHTML(
+                  response.reelId
+                )}
+                —
+                ${escapeHTML(
+                  reelTitle
+                )}
+              </small>
 
-          </div>
-        `;
-
-      }).join("");
+            </div>
+          `;
+        }
+      )
+      .join("");
 }
 
 
-/* =========================
-   ESCAPE HTML
-========================= */
+/* =====================================================
+   HTML ESCAPE
+===================================================== */
 
-function escapeHTML(value) {
+function escapeHTML(
+  value
+) {
 
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(
+    value ?? ""
+  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 }
