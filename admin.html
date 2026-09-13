@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rudra Bhakti — Admin Dashboard</title>
+  <title>Rudra Bhakti — Admin</title>
   <link rel="stylesheet" href="admin.css">
 </head>
 
@@ -14,24 +14,11 @@
     <div class="login-card">
       <div class="logo">ॐ</div>
       <h1>Rudra Bhakti</h1>
-      <p>Admin Analysis Dashboard</p>
+      <p>Admin Dashboard</p>
 
       <form id="loginForm">
-        <input
-          type="email"
-          id="email"
-          placeholder="Admin email"
-          autocomplete="email"
-          required
-        >
-
-        <input
-          type="password"
-          id="password"
-          placeholder="Password"
-          autocomplete="current-password"
-          required
-        >
+        <input id="email" type="email" placeholder="Admin email" required>
+        <input id="password" type="password" placeholder="Password" required>
 
         <button type="submit">Sign In</button>
 
@@ -41,96 +28,267 @@
   </section>
 
 
-  <!-- DASHBOARD -->
-  <main id="dashboard" class="dashboard hidden">
+  <!-- ADMIN APP -->
+  <main id="adminApp" class="hidden">
 
     <header class="topbar">
+
       <div>
         <span class="eyebrow">RUDRA BHAKTI</span>
-        <h1>Feedback Analytics</h1>
+        <h1>Admin Dashboard</h1>
       </div>
 
       <button id="logoutBtn" class="logout-btn">
         Logout
       </button>
+
     </header>
 
 
-    <section class="controls">
-      <label for="reelFilter">Reel</label>
+    <!-- NAVIGATION -->
+    <nav class="nav">
 
-      <select id="reelFilter">
-        <option value="ALL">All Reels</option>
-      </select>
+      <button class="nav-btn active" data-view="analysisView">
+        <span>📊</span>
+        Analysis
+      </button>
 
-      <button id="refreshBtn">Refresh</button>
-    </section>
+      <button class="nav-btn" data-view="reelView">
+        <span>➕</span>
+        Add Reel
+      </button>
 
-
-    <!-- SUMMARY -->
-    <section class="stats-grid">
-
-      <div class="stat-card">
-        <span>Total Responses</span>
-        <strong id="totalResponses">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <span>Average Rating</span>
-        <strong id="averageRating">0.0</strong>
-      </div>
-
-      <div class="stat-card">
-        <span>Want More Content</span>
-        <strong id="moreContent">0%</strong>
-      </div>
-
-      <div class="stat-card">
-        <span>Top Feeling</span>
-        <strong id="topFeeling">—</strong>
-      </div>
-
-    </section>
+    </nav>
 
 
-    <!-- ANALYTICS -->
-    <section class="analytics-grid">
+    <!-- =========================
+         ANALYSIS
+    ========================== -->
 
-      <div class="panel">
-        <h2>How did people feel?</h2>
-        <div id="feelingResults"></div>
-      </div>
+    <section id="analysisView" class="view">
 
-      <div class="panel">
-        <h2>More content?</h2>
-        <div id="moreResults"></div>
-      </div>
-
-      <div class="panel">
-        <h2>What connected most?</h2>
-        <div id="connectionResults"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Ratings</h2>
-        <div id="ratingResults"></div>
-      </div>
-
-    </section>
-
-
-    <!-- WRITTEN FEEDBACK -->
-    <section class="panel feedback-panel">
-      <div class="panel-heading">
+      <div class="section-heading">
         <div>
-          <h2>Written Feedback</h2>
-          <p>Messages shared by your audience</p>
+          <span class="eyebrow">ANALYTICS</span>
+          <h2>Feedback Analysis</h2>
         </div>
 
-        <span id="feedbackCount">0</span>
+        <div class="controls">
+
+          <select id="reelFilter">
+            <option value="ALL">All Reels</option>
+          </select>
+
+          <button id="refreshBtn">
+            Refresh
+          </button>
+
+        </div>
       </div>
 
-      <div id="writtenFeedback"></div>
+
+      <div class="stats-grid">
+
+        <div class="stat-card">
+          <span>Total Responses</span>
+          <strong id="totalResponses">0</strong>
+        </div>
+
+        <div class="stat-card">
+          <span>Average Rating</span>
+          <strong id="averageRating">0.0</strong>
+        </div>
+
+        <div class="stat-card">
+          <span>Want More Content</span>
+          <strong id="moreContent">0%</strong>
+        </div>
+
+        <div class="stat-card">
+          <span>Top Feeling</span>
+          <strong id="topFeeling">—</strong>
+        </div>
+
+      </div>
+
+
+      <div class="analytics-grid">
+
+        <div class="panel">
+          <h2>How did people feel?</h2>
+          <div id="feelingResults"></div>
+        </div>
+
+        <div class="panel">
+          <h2>More content?</h2>
+          <div id="moreResults"></div>
+        </div>
+
+        <div class="panel">
+          <h2>What connected most?</h2>
+          <div id="connectionResults"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Ratings</h2>
+          <div id="ratingResults"></div>
+        </div>
+
+      </div>
+
+
+      <div class="panel feedback-panel">
+
+        <div class="panel-heading">
+
+          <div>
+            <h2>Written Feedback</h2>
+            <p>Messages shared by your audience</p>
+          </div>
+
+          <span id="feedbackCount">0</span>
+
+        </div>
+
+        <div id="writtenFeedback"></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         ADD / MANAGE REELS
+    ========================== -->
+
+    <section id="reelView" class="view hidden">
+
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">CONTENT</span>
+          <h2>Manage Reels</h2>
+          <p>Add and manage feedback links for your Facebook Reels.</p>
+        </div>
+      </div>
+
+
+      <!-- ADD REEL FORM -->
+
+      <div class="panel">
+
+        <h2 id="reelFormTitle">
+          Add New Reel
+        </h2>
+
+        <form id="reelForm">
+
+          <div class="form-grid">
+
+            <div class="field">
+              <label for="reelId">
+                Reel ID
+              </label>
+
+              <input
+                id="reelId"
+                type="text"
+                placeholder="RB002"
+                required
+              >
+
+              <small>
+                Example: RB002
+              </small>
+            </div>
+
+
+            <div class="field">
+              <label for="reelTitle">
+                Reel Title
+              </label>
+
+              <input
+                id="reelTitle"
+                type="text"
+                placeholder="Shiva & Parvati — Divine Love"
+                required
+              >
+            </div>
+
+
+            <div class="field full">
+              <label for="facebookUrl">
+                Facebook Reel URL
+              </label>
+
+              <input
+                id="facebookUrl"
+                type="url"
+                placeholder="https://www.facebook.com/reel/..."
+              >
+            </div>
+
+
+            <div class="field full">
+              <label for="thumbnail">
+                Thumbnail URL
+                <span>(optional)</span>
+              </label>
+
+              <input
+                id="thumbnail"
+                type="url"
+                placeholder="https://..."
+              >
+            </div>
+
+          </div>
+
+
+          <div class="form-actions">
+
+            <button
+              type="submit"
+              class="primary-btn"
+              id="saveReelBtn"
+            >
+              Add Reel
+            </button>
+
+            <button
+              type="button"
+              class="secondary-btn hidden"
+              id="cancelEditBtn"
+            >
+              Cancel Edit
+            </button>
+
+          </div>
+
+          <div id="reelMessage"></div>
+
+        </form>
+
+      </div>
+
+
+      <!-- EXISTING REELS -->
+
+      <div class="panel">
+
+        <div class="panel-heading">
+          <div>
+            <h2>Your Reels</h2>
+            <p>Manage your existing feedback links.</p>
+          </div>
+
+          <span id="reelCount">0</span>
+        </div>
+
+        <div id="reelList"></div>
+
+      </div>
+
     </section>
 
   </main>
