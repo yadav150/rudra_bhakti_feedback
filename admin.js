@@ -44,8 +44,7 @@ const db = getDatabase(app);
    AUTHORIZED ADMIN
 ========================= */
 
-const ADMIN_UID =
-  "YW8S06sHcMYtLNPHjO9otYNc2U13";
+const ADMIN_UID = "y7u3uoHSiycapycRb2z12Hk0F1E2";
 
 
 /* =========================
