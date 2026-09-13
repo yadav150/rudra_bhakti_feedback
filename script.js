@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — PUBLIC FEEDBACK PAGE
-   Phase 2 — Firebase Realtime Database
+   Phase 3 — Firebase + expanded question set
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -21,7 +21,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ===== REEL LOADING FROM FIREBASE ===== */
+/* ===== REEL LOADING ===== */
 const DEFAULT_REEL = {
     id: 'RB001',
     title: 'Shiva & Parvati — Eternal Love',
@@ -92,6 +92,21 @@ const shareBtn = document.getElementById('shareFacebook');
 const nav = document.querySelector('.navigation');
 const progressArea = document.querySelector('.progress-area');
 
+/* ===== REQUIRED PER QUESTION ===== */
+const REQUIRED = {
+    1: 'feeling',
+    2: 'more',
+    3: 'liked',
+    4: 'rating',
+    5: 'stoodOut',
+    6: 'heldInterest',
+    7: 'presentation',
+    8: 'improve',
+    9: 'wantMore',
+    10: 'engageAgain',
+    11: 'likedPart'
+};
+
 /* ===== OPTIONS ===== */
 document.querySelectorAll('.option').forEach((option) => {
     option.addEventListener('click', () => {
@@ -124,12 +139,9 @@ function showQuestion(number) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-    const required = {
-        1: 'feeling', 2: 'more', 3: 'liked', 4: 'rating',
-        5: 'stoodOut', 6: 'heldInterest', 7: 'presentation',
-        8: 'improve', 9: 'wantMore', 10: 'engageAgain', 11: 'likedPart'
-    }[currentQuestion];
-    if (required && !answers[required]) {
+function nextQuestion() {
+    const key = REQUIRED[currentQuestion];
+    if (key && !answers[key]) {
         alert('Please make a selection to continue.');
         return;
     }
@@ -169,7 +181,7 @@ function speakHindi(button, text) {
     window.speechSynthesis.speak(utterance);
 }
 
-/* ===== SUBMIT TO FIREBASE ===== */
+/* ===== SUBMIT ===== */
 async function submitFeedback() {
     if (!reelLoaded) {
         alert('Reel is still loading. Please try again in a moment.');
@@ -186,7 +198,7 @@ async function submitFeedback() {
     nextBtn.disabled = true;
     nextBtn.textContent = 'Submitting…';
 
-        const feedback = {
+    const feedback = {
         reelId: activeReel.id,
         reelTitle: activeReel.title || '',
         name: 'Anonymous',
