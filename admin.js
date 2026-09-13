@@ -308,18 +308,48 @@
         forgotSuccess.textContent = 'If that email is registered, a reset link has been sent.';
     });
 
-    /* ============================================================
-       LOGOUT
+       /* ============================================================
+       LOGOUT — with confirmation modal
        ============================================================ */
-    async function handleLogout() {
+    const logoutModal = document.getElementById('logoutModal');
+    const logoutBackdrop = document.getElementById('logoutBackdrop');
+    const logoutCancel = document.getElementById('logoutCancel');
+    const logoutConfirm = document.getElementById('logoutConfirm');
+
+    function openLogoutModal() {
+        logoutModal.hidden = false;
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => logoutCancel?.focus(), 80);
+    }
+
+    function closeLogoutModal() {
+        logoutModal.hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    async function performLogout() {
+        closeLogoutModal();
         await logoutAdmin();
         loginEmail.value = '';
         loginPassword.value = '';
         closeDrawer();
         showLogin();
     }
-    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
-    if (drawerLogout) drawerLogout.addEventListener('click', handleLogout);
+
+    if (logoutBtn) logoutBtn.addEventListener('click', openLogoutModal);
+    if (drawerLogout) drawerLogout.addEventListener('click', () => {
+        closeDrawer();
+        setTimeout(openLogoutModal, 220);
+    });
+    if (logoutCancel) logoutCancel.addEventListener('click', closeLogoutModal);
+    if (logoutConfirm) logoutConfirm.addEventListener('click', performLogout);
+    if (logoutBackdrop) logoutBackdrop.addEventListener('click', closeLogoutModal);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && logoutModal && !logoutModal.hidden) {
+            closeLogoutModal();
+        }
+    });
 
     /* ============================================================
        MOBILE DRAWER
