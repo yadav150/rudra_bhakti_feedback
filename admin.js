@@ -15,7 +15,8 @@ import {
   get,
   set,
   update,
-  remove
+  remove,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
 
@@ -24,7 +25,7 @@ import {
 ========================= */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAoPVLSklKARDfdDoSm6L2zkj1kabJVpsw",
+  apiKey: "AIzaSyAoSVklKARDfdDoSm6L2zkj1kabJVpsw",
   authDomain: "rudrabhakti-a1d3e.firebaseapp.com",
   databaseURL: "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com",
   projectId: "rudrabhakti-a1d3e",
@@ -34,338 +35,219 @@ const firebaseConfig = {
   measurementId: "G-DF9MKJ113R"
 };
 
-const app = initializeApp(firebaseConfig);
+const ADMIN_UID =
+  "y7u3uoHSiycapycRb2z12Hk0F1E2";
 
+
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
 
 /* =========================
-   AUTHORIZED ADMIN
+   ELEMENTS
 ========================= */
 
-const ADMIN_UID =
-  "y7u3uoHSiycapycRb2z12Hk0F1E2";
+const loginScreen = document.getElementById("loginScreen");
+const dashboardScreen = document.getElementById("dashboardScreen");
 
+const loginForm = document.getElementById("loginForm");
+const emailInput = document.getElementById("emailInput");
+const passwordInput = document.getElementById("passwordInput");
+const loginError = document.getElementById("loginError");
 
-/* =========================
-   DOM
-========================= */
+const logoutBtn = document.getElementById("logoutBtn");
 
-const loginScreen =
-  document.getElementById("loginScreen");
-
-const adminApp =
-  document.getElementById("adminApp");
-
-const loginForm =
-  document.getElementById("loginForm");
-
-const loginError =
-  document.getElementById("loginError");
-
-const logoutBtn =
-  document.getElementById("logoutBtn");
+const navButtons =
+  document.querySelectorAll(".nav-btn");
 
 const reelFilter =
   document.getElementById("reelFilter");
 
-const refreshBtn =
-  document.getElementById("refreshBtn");
-
 const reelForm =
   document.getElementById("reelForm");
-
-const reelIdInput =
-  document.getElementById("reelId");
-
-const reelTitleInput =
-  document.getElementById("reelTitle");
 
 const facebookUrlInput =
   document.getElementById("facebookUrl");
 
-const thumbnailInput =
-  document.getElementById("thumbnail");
+const generatedReelId =
+  document.getElementById("generatedReelId");
 
-const saveReelBtn =
-  document.getElementById("saveReelBtn");
+const generatedTitle =
+  document.getElementById("generatedTitle");
 
-const cancelEditBtn =
-  document.getElementById("cancelEditBtn");
+const metadataStatus =
+  document.getElementById("metadataStatus");
 
-const reelMessage =
-  document.getElementById("reelMessage");
+const fetchMetadataBtn =
+  document.getElementById("fetchMetadataBtn");
 
-const reelFormTitle =
-  document.getElementById("reelFormTitle");
+const reelFormMessage =
+  document.getElementById("reelFormMessage");
 
 const reelList =
   document.getElementById("reelList");
 
 
 /* =========================
-   STATE
+   DATA
 ========================= */
 
-let allFeedback = {};
-let reels = {};
-let currentReel = "ALL";
+let reelsData = {};
+let feedbackData = {};
+
 let editingReelId = null;
+let fetchedMetadata = null;
 
 
 /* =========================
-   LABELS
+   AUTH
 ========================= */
 
-const LABELS = {
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-  FEEL_PEACEFUL: "Peaceful",
-  FEEL_DEVOTIONAL: "Devotional",
-  FEEL_EMOTIONAL: "Emotional",
-  FEEL_INSPIRED: "Inspired",
-  FEEL_CALM: "Calm",
-  FEEL_DEEPLY_MOVED: "Deeply moved",
+  loginError.textContent = "";
 
-  MORE_DEFINITELY: "Definitely",
-  MORE_SOMETIMES: "Sometimes",
-  MORE_UNSURE: "Unsure",
-  MORE_NOT_REALLY: "Not really",
+  try {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
 
-  CONNECT_SHIVA_PARVATI: "Shiva & Parvati",
-  CONNECT_DEVOTIONAL_FEELING: "Devotional feeling",
-  CONNECT_ARTWORK: "Artwork",
-  CONNECT_MUSIC: "Music",
-  CONNECT_EVERYTHING: "Everything",
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
 
-  RATING_1: "1 Star",
-  RATING_2: "2 Stars",
-  RATING_3: "3 Stars",
-  RATING_4: "4 Stars",
-  RATING_5: "5 Stars"
-};
+  } catch (error) {
+    console.error(error);
 
-
-/* =========================
-   LOGIN
-========================= */
-
-loginForm.addEventListener(
-  "submit",
-  async (event) => {
-
-    event.preventDefault();
-
-    loginError.textContent = "";
-
-    const email =
-      document.getElementById("email")
-        .value.trim();
-
-    const password =
-      document.getElementById("password")
-        .value;
-
-    if (!email || !password) {
-
-      loginError.textContent =
-        "Please enter email and password.";
-
-      return;
-    }
-
-    try {
-
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-    } catch (error) {
-
-      console.error(error);
-
-      switch (error.code) {
-
-        case "auth/invalid-credential":
-        case "auth/wrong-password":
-        case "auth/user-not-found":
-
-          loginError.textContent =
-            "Invalid email or password.";
-
-          break;
-
-        case "auth/invalid-api-key":
-
-          loginError.textContent =
-            "Firebase API key is invalid.";
-
-          break;
-
-        case "auth/too-many-requests":
-
-          loginError.textContent =
-            "Too many attempts. Try again later.";
-
-          break;
-
-        default:
-
-          loginError.textContent =
-            error.message ||
-            "Unable to sign in.";
-      }
-    }
+    loginError.textContent =
+      friendlyAuthError(error.code);
   }
-);
+});
+
+
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) {
+    loginScreen.classList.remove("hidden");
+    dashboardScreen.classList.add("hidden");
+    return;
+  }
+
+  if (user.uid !== ADMIN_UID) {
+
+    await signOut(auth);
+
+    loginError.textContent =
+      "This account is not authorized.";
+
+    return;
+  }
+
+  loginScreen.classList.add("hidden");
+  dashboardScreen.classList.remove("hidden");
+
+  await loadDashboard();
+});
 
 
 /* =========================
-   AUTH STATE
+   LOGOUT CONFIRMATION
 ========================= */
 
-onAuthStateChanged(
-  auth,
-  async (user) => {
+logoutBtn.addEventListener("click", async () => {
 
-    if (!user) {
+  const confirmed = confirm(
+    "Are you sure you want to logout?"
+  );
 
-      loginScreen.classList.remove("hidden");
-      adminApp.classList.add("hidden");
-
-      return;
-    }
-
-
-    /* ADMIN UID CHECK */
-
-    if (user.uid !== ADMIN_UID) {
-
-      await signOut(auth);
-
-      loginScreen.classList.remove("hidden");
-      adminApp.classList.add("hidden");
-
-      loginError.textContent =
-        "This account is not authorized.";
-
-      return;
-    }
-
-
-    /* AUTHORIZED */
-
-    loginScreen.classList.add("hidden");
-    adminApp.classList.remove("hidden");
-
-    loginError.textContent = "";
-
-    await loadEverything();
+  if (!confirmed) {
+    return;
   }
-);
 
-
-/* =========================
-   LOGOUT
-========================= */
-
-logoutBtn.addEventListener(
-  "click",
-  async () => {
-
-    try {
-
-      await signOut(auth);
-
-    } catch (error) {
-
-      console.error(error);
-    }
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error(error);
+    alert("Logout failed. Please try again.");
   }
-);
+});
+
+
+function friendlyAuthError(code) {
+
+  switch (code) {
+
+    case "auth/invalid-credential":
+      return "Invalid email or password.";
+
+    case "auth/invalid-email":
+      return "Please enter a valid email.";
+
+    case "auth/user-disabled":
+      return "This account has been disabled.";
+
+    case "auth/too-many-requests":
+      return "Too many attempts. Please try again later.";
+
+    default:
+      return "Login failed. Please check your details.";
+  }
+}
 
 
 /* =========================
    NAVIGATION
 ========================= */
 
-document
-  .querySelectorAll(".nav-btn")
-  .forEach(button => {
+navButtons.forEach((button) => {
 
-    button.addEventListener(
-      "click",
-      () => {
+  button.addEventListener("click", () => {
 
-        document
-          .querySelectorAll(".nav-btn")
-          .forEach(btn =>
-            btn.classList.remove("active")
-          );
-
-        document
-          .querySelectorAll(".view")
-          .forEach(view =>
-            view.classList.add("hidden")
-          );
-
-        button.classList.add("active");
-
-        const target =
-          document.getElementById(
-            button.dataset.view
-          );
-
-        if (target) {
-          target.classList.remove("hidden");
-        }
-      }
+    navButtons.forEach((btn) =>
+      btn.classList.remove("active")
     );
+
+    button.classList.add("active");
+
+    document
+      .querySelectorAll(".admin-view")
+      .forEach((view) => {
+        view.classList.add("hidden");
+      });
+
+    const target =
+      document.getElementById(button.dataset.view);
+
+    target.classList.remove("hidden");
   });
+});
 
 
 /* =========================
-   LOAD EVERYTHING
+   DASHBOARD
 ========================= */
 
-async function loadEverything() {
-
-  await Promise.all([
-    loadFeedback(),
-    loadReels()
-  ]);
-}
-
-
-/* =========================
-   LOAD FEEDBACK
-========================= */
-
-async function loadFeedback() {
+async function loadDashboard() {
 
   try {
 
-    const snapshot =
-      await get(
-        ref(db, "feedback_responses")
-      );
-
-    allFeedback =
-      snapshot.exists()
-        ? snapshot.val()
-        : {};
+    await Promise.all([
+      loadReels(),
+      loadFeedback()
+    ]);
 
     populateReelFilter();
-    renderDashboard();
+    renderAnalytics();
 
   } catch (error) {
 
     console.error(error);
 
     alert(
-      "Unable to load feedback. Check Firebase Rules."
+      "Could not load dashboard data."
     );
   }
 }
@@ -377,27 +259,402 @@ async function loadFeedback() {
 
 async function loadReels() {
 
+  const snapshot =
+    await get(ref(db, "reels"));
+
+  reelsData =
+    snapshot.exists()
+      ? snapshot.val()
+      : {};
+
+  populateReelFilter();
+  renderReelList();
+
+  updateGeneratedReelId();
+}
+
+
+/* =========================
+   LOAD FEEDBACK
+========================= */
+
+async function loadFeedback() {
+
+  const snapshot =
+    await get(ref(db, "feedback_responses"));
+
+  feedbackData =
+    snapshot.exists()
+      ? snapshot.val()
+      : {};
+}
+
+
+/* =========================
+   AUTO REEL ID
+========================= */
+
+function getNextReelId() {
+
+  const numbers = Object.keys(reelsData)
+    .map(id => {
+
+      const match =
+        /^RB(\d+)$/.exec(id);
+
+      return match
+        ? Number(match[1])
+        : 0;
+    })
+    .filter(number => number > 0);
+
+  let next =
+    numbers.length
+      ? Math.max(...numbers) + 1
+      : 1;
+
+  let candidate;
+
+  do {
+
+    candidate =
+      `RB${String(next).padStart(3, "0")}`;
+
+    next++;
+
+  } while (reelsData[candidate]);
+
+  return candidate;
+}
+
+
+function updateGeneratedReelId() {
+
+  if (editingReelId) {
+    generatedReelId.textContent =
+      editingReelId;
+    return;
+  }
+
+  generatedReelId.textContent =
+    getNextReelId();
+}
+
+
+/* =========================
+   FACEBOOK URL
+========================= */
+
+function isFacebookUrl(url) {
+
   try {
 
-    const snapshot =
-      await get(
-        ref(db, "reels")
-      );
+    const parsed =
+      new URL(url);
 
-    reels =
-      snapshot.exists()
-        ? snapshot.val()
-        : {};
+    return (
+      parsed.hostname === "facebook.com" ||
+      parsed.hostname.endsWith(".facebook.com")
+    );
 
-    populateReelFilter();
-    renderReelList();
-
-  } catch (error) {
-
-    console.error(error);
-
-    renderReelList();
+  } catch {
+    return false;
   }
+}
+
+
+/* =========================
+   METADATA FETCH
+========================= */
+
+async function fetchReelMetadata(url) {
+
+  metadataStatus.textContent =
+    "Fetching Reel information…";
+
+  metadataStatus.style.color = "#555";
+
+  fetchedMetadata = null;
+
+  /*
+    Facebook frequently blocks browser-side metadata
+    requests. We first try Facebook oEmbed.
+  */
+
+  const endpoints = [
+
+    `https://www.facebook.com/plugins/post/oembed.json?url=${encodeURIComponent(url)}`,
+
+    `https://www.facebook.com/plugins/video/oembed.json?url=${encodeURIComponent(url)}`
+  ];
+
+
+  for (const endpoint of endpoints) {
+
+    try {
+
+      const response =
+        await fetch(endpoint);
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const data =
+        await response.json();
+
+      if (data) {
+
+        fetchedMetadata = {
+          title:
+            data.title ||
+            data.author_name ||
+            null,
+
+          thumbnail:
+            data.thumbnail_url ||
+            null
+        };
+
+        if (fetchedMetadata.title) {
+
+          generatedTitle.textContent =
+            fetchedMetadata.title;
+
+          metadataStatus.textContent =
+            "Reel information detected.";
+
+          metadataStatus.style.color =
+            "#287a3e";
+
+          return fetchedMetadata;
+        }
+      }
+
+    } catch (error) {
+
+      console.warn(
+        "Metadata request failed:",
+        error
+      );
+    }
+  }
+
+
+  /*
+    Facebook blocked metadata request.
+    We do not invent a fake Facebook title.
+  */
+
+  const fallbackTitle =
+    `Rudra Bhakti Reel ${generatedReelId.textContent}`;
+
+  fetchedMetadata = {
+    title: fallbackTitle,
+    thumbnail: null
+  };
+
+  generatedTitle.textContent =
+    fallbackTitle;
+
+  metadataStatus.textContent =
+    "Facebook title could not be fetched automatically. A safe fallback title will be used.";
+
+  metadataStatus.style.color =
+    "#777";
+
+  return fetchedMetadata;
+}
+
+
+/* =========================
+   FETCH BUTTON
+========================= */
+
+fetchMetadataBtn.addEventListener(
+  "click",
+  async () => {
+
+    const url =
+      facebookUrlInput.value.trim();
+
+    if (!url) {
+
+      metadataStatus.textContent =
+        "Paste the Facebook Reel URL first.";
+
+      return;
+    }
+
+    if (!isFacebookUrl(url)) {
+
+      metadataStatus.textContent =
+        "Please enter a valid Facebook URL.";
+
+      return;
+    }
+
+    await fetchReelMetadata(url);
+  }
+);
+
+
+/* =========================
+   URL INPUT
+========================= */
+
+facebookUrlInput.addEventListener(
+  "input",
+  () => {
+
+    fetchedMetadata = null;
+
+    generatedTitle.textContent =
+      "Waiting for URL…";
+
+    metadataStatus.textContent = "";
+
+    updateGeneratedReelId();
+  }
+);
+
+
+/* =========================
+   ADD / EDIT REEL
+========================= */
+
+reelForm.addEventListener(
+  "submit",
+  async (event) => {
+
+    event.preventDefault();
+
+    reelFormMessage.textContent = "";
+
+    const url =
+      facebookUrlInput.value.trim();
+
+    if (!isFacebookUrl(url)) {
+
+      reelFormMessage.textContent =
+        "Please enter a valid Facebook Reel URL.";
+
+      return;
+    }
+
+
+    try {
+
+      const reelId =
+        editingReelId ||
+        getNextReelId();
+
+
+      /*
+        If metadata has not been fetched yet,
+        automatically attempt it before saving.
+      */
+
+      if (!fetchedMetadata) {
+        await fetchReelMetadata(url);
+      }
+
+
+      const title =
+        fetchedMetadata?.title ||
+        `Rudra Bhakti Reel ${reelId}`;
+
+
+      const thumbnail =
+        fetchedMetadata?.thumbnail ||
+        "";
+
+
+      const reelRef =
+        ref(db, `reels/${reelId}`);
+
+
+      const existing =
+        reelsData[reelId];
+
+
+      if (existing) {
+
+        await update(
+          reelRef,
+          {
+            title,
+            facebookUrl: url,
+            thumbnail,
+
+            updated_at:
+              serverTimestamp()
+          }
+        );
+
+      } else {
+
+        await set(
+          reelRef,
+          {
+            title,
+            facebookUrl: url,
+            thumbnail,
+
+            created_at:
+              serverTimestamp(),
+
+            updated_at:
+              serverTimestamp()
+          }
+        );
+      }
+
+
+      reelFormMessage.textContent =
+        editingReelId
+          ? `${reelId} updated successfully.`
+          : `${reelId} added successfully.`;
+
+
+      await loadReels();
+
+
+      resetReelForm();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      reelFormMessage.textContent =
+        "Could not save Reel. Please try again.";
+    }
+  }
+);
+
+
+/* =========================
+   RESET FORM
+========================= */
+
+function resetReelForm() {
+
+  editingReelId = null;
+  fetchedMetadata = null;
+
+  reelForm.reset();
+
+  generatedTitle.textContent =
+    "Waiting for URL…";
+
+  metadataStatus.textContent = "";
+
+  updateGeneratedReelId();
+
+  document.getElementById(
+    "saveReelBtn"
+  ).textContent = "Add Reel";
 }
 
 
@@ -405,224 +662,497 @@ async function loadReels() {
    REEL FILTER
 ========================= */
 
+reelFilter.addEventListener(
+  "change",
+  () => {
+    renderAnalytics();
+  }
+);
+
+
 function populateReelFilter() {
 
-  const feedbackIds =
-    Object.keys(allFeedback);
-
-  const reelIds =
-    Object.keys(reels);
-
-  const ids =
-    [...new Set([
-      ...feedbackIds,
-      ...reelIds
-    ])].sort();
+  const current =
+    reelFilter.value;
 
   reelFilter.innerHTML =
     `<option value="ALL">All Reels</option>`;
 
-  ids.forEach(id => {
+  Object.keys(reelsData)
+    .sort()
+    .forEach(id => {
 
-    const option =
-      document.createElement("option");
+      const option =
+        document.createElement("option");
 
-    option.value = id;
+      option.value = id;
 
-    option.textContent =
-      reels[id]?.title
-        ? `${id} — ${reels[id].title}`
-        : id;
+      option.textContent =
+        `${id} — ${reelsData[id].title || "Untitled"}`;
 
-    reelFilter.appendChild(option);
-  });
+      reelFilter.appendChild(option);
+    });
+
 
   if (
-    currentReel === "ALL" ||
-    ids.includes(currentReel)
+    current &&
+    (
+      current === "ALL" ||
+      reelsData[current]
+    )
   ) {
-
-    reelFilter.value =
-      currentReel;
-
-  } else {
-
-    currentReel = "ALL";
-    reelFilter.value = "ALL";
+    reelFilter.value = current;
   }
 }
 
 
-reelFilter.addEventListener(
-  "change",
-  () => {
-
-    currentReel =
-      reelFilter.value;
-
-    renderDashboard();
-  }
-);
-
-
-refreshBtn.addEventListener(
-  "click",
-  async () => {
-
-    await loadEverything();
-  }
-);
-
-
 /* =========================
-   GET RESPONSES
+   RENDER REEL LIST
 ========================= */
 
-function getSelectedResponses() {
+function renderReelList() {
 
-  if (currentReel === "ALL") {
+  const ids =
+    Object.keys(reelsData).sort();
 
-    return Object.entries(allFeedback)
-      .flatMap(
-        ([reelId, responses]) =>
+  if (!ids.length) {
 
-          Object.values(responses || {})
-            .map(response => ({
-              ...response,
-              reelId
-            }))
+    reelList.innerHTML =
+      `<p class="empty-state">No Reels added yet.</p>`;
+
+    return;
+  }
+
+
+  reelList.innerHTML =
+    ids.map(id => {
+
+      const reel =
+        reelsData[id];
+
+      const link =
+        `${window.location.origin}${window.location.pathname.replace(
+          /admin\.html$/,
+          ""
+        )}?reel=${encodeURIComponent(id)}`;
+
+
+      return `
+        <div class="reel-item">
+
+          <div class="reel-info">
+
+            <strong>
+              ${escapeHTML(id)} —
+              ${escapeHTML(reel.title || "Untitled")}
+            </strong>
+
+            <small>
+              ${escapeHTML(reel.facebookUrl || "")}
+            </small>
+
+          </div>
+
+          <div class="reel-actions">
+
+            <button
+              class="small-btn"
+              data-action="copy"
+              data-id="${escapeHTML(id)}"
+              data-link="${escapeHTML(link)}"
+            >
+              Copy Link
+            </button>
+
+            <button
+              class="small-btn"
+              data-action="edit"
+              data-id="${escapeHTML(id)}"
+            >
+              Edit
+            </button>
+
+            <button
+              class="small-btn"
+              data-action="delete"
+              data-id="${escapeHTML(id)}"
+            >
+              Delete
+            </button>
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+
+
+  reelList
+    .querySelectorAll("button")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const action =
+            button.dataset.action;
+
+          const id =
+            button.dataset.id;
+
+
+          if (action === "copy") {
+
+            await navigator.clipboard.writeText(
+              button.dataset.link
+            );
+
+            button.textContent =
+              "Copied!";
+
+            setTimeout(() => {
+              button.textContent =
+                "Copy Link";
+            }, 1500);
+          }
+
+
+          if (action === "edit") {
+            editReel(id);
+          }
+
+
+          if (action === "delete") {
+            deleteReel(id);
+          }
+
+        }
       );
-  }
 
-
-  return Object.values(
-    allFeedback[currentReel] || {}
-  ).map(response => ({
-    ...response,
-    reelId: currentReel
-  }));
+    });
 }
 
 
 /* =========================
-   DASHBOARD
+   EDIT REEL
 ========================= */
 
-function renderDashboard() {
+function editReel(id) {
 
-  const responses =
-    getSelectedResponses();
+  const reel =
+    reelsData[id];
 
-  renderSummary(responses);
+  if (!reel) {
+    return;
+  }
 
-  renderDistribution(
-    "feelingResults",
-    responses,
-    "Q_FEELING"
+  editingReelId = id;
+
+  facebookUrlInput.value =
+    reel.facebookUrl || "";
+
+  generatedReelId.textContent =
+    id;
+
+  generatedTitle.textContent =
+    reel.title || "Untitled";
+
+  fetchedMetadata = {
+    title: reel.title || `Rudra Bhakti Reel ${id}`,
+    thumbnail: reel.thumbnail || ""
+  };
+
+  document.getElementById(
+    "saveReelBtn"
+  ).textContent = "Update Reel";
+
+
+  navButtons.forEach(btn =>
+    btn.classList.remove("active")
   );
 
+  const addButton =
+    document.querySelector(
+      '[data-view="addReelView"]'
+    );
+
+  addButton.classList.add("active");
+
+
+  document
+    .querySelectorAll(".admin-view")
+    .forEach(view =>
+      view.classList.add("hidden")
+    );
+
+  document
+    .getElementById("addReelView")
+    .classList.remove("hidden");
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+/* =========================
+   DELETE REEL
+========================= */
+
+async function deleteReel(id) {
+
+  const confirmed =
+    confirm(
+      `Delete ${id} from the Reel list?\n\nExisting feedback responses will NOT be deleted.`
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  try {
+
+    await remove(
+      ref(db, `reels/${id}`)
+    );
+
+    delete reelsData[id];
+
+    populateReelFilter();
+    renderReelList();
+    renderAnalytics();
+    updateGeneratedReelId();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Could not delete Reel."
+    );
+  }
+}
+
+
+/* =========================
+   ANALYTICS
+========================= */
+
+function renderAnalytics() {
+
+  const selected =
+    reelFilter.value;
+
+
+  let responses = [];
+
+
+  Object.entries(feedbackData)
+    .forEach(([reelId, reelResponses]) => {
+
+      if (
+        selected !== "ALL" &&
+        reelId !== selected
+      ) {
+        return;
+      }
+
+
+      Object.values(
+        reelResponses || {}
+      ).forEach(response => {
+
+        responses.push({
+          reelId,
+          ...response
+        });
+
+      });
+
+    });
+
+
+  document.getElementById(
+    "totalResponses"
+  ).textContent =
+    responses.length;
+
+
+  renderAverageRating(responses);
+  renderWantMore(responses);
+  renderFeeling(responses);
   renderDistribution(
-    "moreResults",
     responses,
-    "Q_MORE_CONTENT"
+    "Q_FEELING",
+    "feelingDistribution",
+    {
+      FEEL_PEACEFUL: "Peaceful",
+      FEEL_DEVOTIONAL: "Devotional",
+      FEEL_EMOTIONAL: "Emotional",
+      FEEL_INSPIRED: "Inspired",
+      FEEL_CALM: "Calm",
+      FEEL_DEEPLY_MOVED: "Deeply Moved"
+    }
   );
 
-  renderDistribution(
-    "connectionResults",
-    responses,
-    "Q_CONNECTION"
-  );
 
   renderDistribution(
-    "ratingResults",
     responses,
-    "Q_RATING"
+    "Q_MORE_CONTENT",
+    "moreDistribution",
+    {
+      MORE_DEFINITELY: "Definitely",
+      MORE_SOMETIMES: "Sometimes",
+      MORE_UNSURE: "Unsure",
+      MORE_NOT_REALLY: "Not Really"
+    }
   );
+
+
+  renderDistribution(
+    responses,
+    "Q_CONNECTION",
+    "connectionDistribution",
+    {
+      CONNECT_SHIVA_PARVATI: "Shiva & Parvati",
+      CONNECT_DEVOTIONAL_FEELING: "Devotional Feeling",
+      CONNECT_ARTWORK: "Artwork",
+      CONNECT_MUSIC: "Music",
+      CONNECT_EVERYTHING: "Everything"
+    }
+  );
+
+
+  renderDistribution(
+    responses,
+    "Q_RATING",
+    "ratingDistribution",
+    {
+      RATING_1: "1 Star",
+      RATING_2: "2 Stars",
+      RATING_3: "3 Stars",
+      RATING_4: "4 Stars",
+      RATING_5: "5 Stars"
+    }
+  );
+
 
   renderWrittenFeedback(responses);
 }
 
 
 /* =========================
-   SUMMARY
+   RATING
 ========================= */
 
-function renderSummary(responses) {
+function renderAverageRating(responses) {
 
-  const total =
-    responses.length;
-
-  document.getElementById(
-    "totalResponses"
-  ).textContent = total;
-
-
-  let ratingTotal = 0;
-  let ratingCount = 0;
-
-  responses.forEach(response => {
-
-    const id =
-      response.answers?.Q_RATING;
-
-    const number =
-      Number(
-        String(id || "")
-          .replace("RATING_", "")
-      );
-
-    if (number >= 1 && number <= 5) {
-
-      ratingTotal += number;
-      ratingCount++;
-    }
-  });
+  const ratings =
+    responses
+      .map(r =>
+        ratingNumber(
+          r.answers?.Q_RATING
+        )
+      )
+      .filter(Boolean);
 
 
   const average =
-    ratingCount
-      ? ratingTotal / ratingCount
+    ratings.length
+      ? ratings.reduce(
+          (a, b) => a + b,
+          0
+        ) / ratings.length
       : 0;
+
 
   document.getElementById(
     "averageRating"
   ).textContent =
     average.toFixed(1);
+}
 
 
-  const more =
-    responses.filter(response =>
-      response.answers?.Q_MORE_CONTENT ===
-        "MORE_DEFINITELY" ||
-      response.answers?.Q_MORE_CONTENT ===
-        "MORE_SOMETIMES"
+function ratingNumber(id) {
+
+  const match =
+    /^RATING_(\d)$/.exec(id || "");
+
+  return match
+    ? Number(match[1])
+    : 0;
+}
+
+
+/* =========================
+   WANT MORE
+========================= */
+
+function renderWantMore(responses) {
+
+  if (!responses.length) {
+
+    document.getElementById(
+      "wantMore"
+    ).textContent = "0%";
+
+    return;
+  }
+
+
+  const yes =
+    responses.filter(
+      r =>
+        r.answers?.Q_MORE_CONTENT ===
+        "MORE_DEFINITELY"
     ).length;
 
-  const morePercentage =
-    total
-      ? Math.round(
-          (more / total) * 100
-        )
-      : 0;
+
+  const percentage =
+    (yes / responses.length) * 100;
+
 
   document.getElementById(
-    "moreContent"
+    "wantMore"
   ).textContent =
-    `${morePercentage}%`;
+    `${percentage.toFixed(0)}%`;
+}
 
+
+/* =========================
+   TOP FEELING
+========================= */
+
+function renderFeeling(responses) {
 
   const counts = {};
 
-  responses.forEach(response => {
+  responses.forEach(r => {
 
     const id =
-      response.answers?.Q_FEELING;
+      r.answers?.Q_FEELING;
 
-    if (!id) return;
-
-    counts[id] =
-      (counts[id] || 0) + 1;
+    if (id) {
+      counts[id] =
+        (counts[id] || 0) + 1;
+    }
   });
+
+
+  const labels = {
+    FEEL_PEACEFUL: "Peaceful",
+    FEEL_DEVOTIONAL: "Devotional",
+    FEEL_EMOTIONAL: "Emotional",
+    FEEL_INSPIRED: "Inspired",
+    FEEL_CALM: "Calm",
+    FEEL_DEEPLY_MOVED: "Deeply Moved"
+  };
 
 
   const top =
@@ -634,95 +1164,87 @@ function renderSummary(responses) {
     "topFeeling"
   ).textContent =
     top
-      ? LABELS[top[0]] || top[0]
+      ? labels[top[0]] || top[0]
       : "—";
 }
 
 
 /* =========================
-   DISTRIBUTION
+   DISTRIBUTIONS
 ========================= */
 
 function renderDistribution(
-  elementId,
   responses,
-  questionId
+  answerKey,
+  elementId,
+  labels
 ) {
 
-  const container =
+  const element =
     document.getElementById(elementId);
 
   const counts = {};
 
-  responses.forEach(response => {
+  Object.keys(labels).forEach(
+    id => counts[id] = 0
+  );
 
-    const answer =
-      response.answers?.[questionId];
 
-    if (!answer) return;
+  responses.forEach(r => {
 
-    counts[answer] =
-      (counts[answer] || 0) + 1;
+    const value =
+      r.answers?.[answerKey];
+
+    if (
+      value &&
+      Object.prototype.hasOwnProperty.call(
+        counts,
+        value
+      )
+    ) {
+      counts[value]++;
+    }
   });
 
 
   const total =
     responses.length;
 
-  const sorted =
-    Object.entries(counts)
-      .sort((a, b) => b[1] - a[1]);
+
+  element.innerHTML =
+    Object.entries(labels)
+      .map(([id, label]) => {
+
+        const count =
+          counts[id] || 0;
+
+        const percentage =
+          total
+            ? (count / total) * 100
+            : 0;
 
 
-  if (!sorted.length) {
+        return `
+          <div class="distribution-row">
 
-    container.innerHTML =
-      `<p class="feedback-meta">
-        No responses yet.
-      </p>`;
+            <div class="distribution-label">
+              <span>${escapeHTML(label)}</span>
+              <span>
+                ${count} · ${percentage.toFixed(0)}%
+              </span>
+            </div>
 
-    return;
-  }
-
-
-  container.innerHTML =
-    sorted.map(([id, count]) => {
-
-      const percentage =
-        total
-          ? Math.round(
-              (count / total) * 100
-            )
-          : 0;
-
-      return `
-        <div class="result-row">
-
-          <div class="result-top">
-
-            <span class="result-label">
-              ${escapeHTML(
-                LABELS[id] || id
-              )}
-            </span>
-
-            <span class="result-value">
-              ${count} · ${percentage}%
-            </span>
+            <div class="bar">
+              <div
+                class="bar-fill"
+                style="width:${percentage}%"
+              ></div>
+            </div>
 
           </div>
+        `;
 
-          <div class="bar">
-            <div
-              class="bar-fill"
-              style="width:${percentage}%"
-            ></div>
-          </div>
-
-        </div>
-      `;
-
-    }).join("");
+      }).join("");
 }
 
 
@@ -737,508 +1259,54 @@ function renderWrittenFeedback(responses) {
       "writtenFeedback"
     );
 
-  const feedback =
-    responses
-      .filter(response => {
 
-        const text =
-          response.answers?.Q_OPEN_FEEDBACK;
-
-        return (
-          typeof text === "string" &&
-          text.trim()
-        );
-      })
-      .reverse();
+  const written =
+    responses.filter(
+      r =>
+        r.answers?.Q_OPEN_FEEDBACK &&
+        r.answers.Q_OPEN_FEEDBACK.trim()
+    );
 
 
-  document.getElementById(
-    "feedbackCount"
-  ).textContent =
-    feedback.length;
-
-
-  if (!feedback.length) {
+  if (!written.length) {
 
     container.innerHTML =
-      `<p class="feedback-meta">
-        No written feedback yet.
-      </p>`;
+      `<p class="empty-state">No written feedback yet.</p>`;
 
     return;
   }
 
 
   container.innerHTML =
-    feedback.map(response => {
-
-      const text =
-        response.answers.Q_OPEN_FEEDBACK;
-
-      return `
-        <div class="feedback-item">
-
-          <div class="feedback-text">
-            ${escapeHTML(text)}
-          </div>
-
-          <div class="feedback-meta">
-            Reel:
-            ${escapeHTML(
-              response.reelId || "Unknown"
-            )}
-          </div>
-
-        </div>
-      `;
-
-    }).join("");
-}
-
-
-/* =========================================================
-   REEL MANAGEMENT
-========================================================= */
-
-
-/* =========================
-   ADD / EDIT
-========================= */
-
-reelForm.addEventListener(
-  "submit",
-  async (event) => {
-
-    event.preventDefault();
-
-    reelMessage.textContent = "";
-    reelMessage.className = "";
-
-    const id =
-      reelIdInput.value
-        .trim()
-        .toUpperCase();
-
-    const title =
-      reelTitleInput.value.trim();
-
-    const facebookUrl =
-      facebookUrlInput.value.trim();
-
-    const thumbnail =
-      thumbnailInput.value.trim();
-
-
-    /* ID FORMAT */
-
-    if (!/^RB[0-9]+$/.test(id)) {
-
-      showReelMessage(
-        "Reel ID must look like RB001, RB002, etc.",
-        true
-      );
-
-      return;
-    }
-
-
-    /* TITLE */
-
-    if (!title) {
-
-      showReelMessage(
-        "Please enter a Reel title.",
-        true
-      );
-
-      return;
-    }
-
-
-    try {
-
-      const reelData = {
-        title,
-        facebookUrl,
-        thumbnail,
-        updated_at: Date.now()
-      };
-
-
-      /* NEW REEL */
-
-      if (!editingReelId) {
-
-        if (reels[id]) {
-
-          showReelMessage(
-            "This Reel ID already exists.",
-            true
-          );
-
-          return;
-        }
-
-
-        reelData.created_at =
-          Date.now();
-
-
-        await set(
-          ref(db, `reels/${id}`),
-          reelData
-        );
-
-
-        showReelMessage(
-          `${id} added successfully.`
-        );
-      }
-
-
-      /* EDIT */
-
-      else {
-
-        await update(
-          ref(db, `reels/${editingReelId}`),
-          reelData
-        );
-
-
-        showReelMessage(
-          `${editingReelId} updated successfully.`
-        );
-      }
-
-
-      resetReelForm();
-
-      await loadReels();
-
-    } catch (error) {
-
-      console.error(error);
-
-      showReelMessage(
-        "Unable to save Reel. Check Firebase Rules.",
-        true
-      );
-    }
-  }
-);
-
-
-/* =========================
-   EDIT REEL
-========================= */
-
-function editReel(id) {
-
-  const reel =
-    reels[id];
-
-  if (!reel) return;
-
-  editingReelId =
-    id;
-
-  reelIdInput.value =
-    id;
-
-  reelIdInput.disabled =
-    true;
-
-  reelTitleInput.value =
-    reel.title || "";
-
-  facebookUrlInput.value =
-    reel.facebookUrl || "";
-
-  thumbnailInput.value =
-    reel.thumbnail || "";
-
-  reelFormTitle.textContent =
-    `Edit ${id}`;
-
-  saveReelBtn.textContent =
-    "Save Changes";
-
-  cancelEditBtn.classList.remove(
-    "hidden"
-  );
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-
-/* =========================
-   CANCEL EDIT
-========================= */
-
-cancelEditBtn.addEventListener(
-  "click",
-  () => {
-
-    resetReelForm();
-  }
-);
-
-
-/* =========================
-   RESET FORM
-========================= */
-
-function resetReelForm() {
-
-  editingReelId =
-    null;
-
-  reelForm.reset();
-
-  reelIdInput.disabled =
-    false;
-
-  reelFormTitle.textContent =
-    "Add New Reel";
-
-  saveReelBtn.textContent =
-    "Add Reel";
-
-  cancelEditBtn.classList.add(
-    "hidden"
-  );
-}
-
-
-/* =========================
-   DELETE REEL
-========================= */
-
-async function deleteReel(id) {
-
-  const confirmed =
-    confirm(
-      `Delete ${id}?\n\nThis removes the Reel information, but does NOT delete existing feedback responses.`
-    );
-
-  if (!confirmed) return;
-
-
-  try {
-
-    await remove(
-      ref(db, `reels/${id}`)
-    );
-
-    if (currentReel === id) {
-
-      currentReel = "ALL";
-    }
-
-    await loadReels();
-
-    renderDashboard();
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "Unable to delete Reel. Check Firebase Rules."
-    );
-  }
-}
-
-
-/* =========================
-   REEL LIST
-========================= */
-
-function renderReelList() {
-
-  const ids =
-    Object.keys(reels)
-      .sort();
-
-
-  document.getElementById(
-    "reelCount"
-  ).textContent =
-    ids.length;
-
-
-  if (!ids.length) {
-
-    reelList.innerHTML =
-      `<p class="feedback-meta">
-        No Reels added yet.
-      </p>`;
-
-    return;
-  }
-
-
-  reelList.innerHTML =
-    ids.map(id => {
-
-      const reel =
-        reels[id];
-
-
-      return `
-        <div class="reel-item">
-
-          <div class="reel-item-main">
-
-            <div class="reel-info">
-
-              <div class="reel-id">
-                ${escapeHTML(id)}
-              </div>
-
-              <h3>
-                ${escapeHTML(
-                  reel.title ||
-                  "Untitled Reel"
-                )}
-              </h3>
-
-              ${
-                reel.facebookUrl
-                  ? `
-                    <div class="reel-url">
-                      ${escapeHTML(
-                        reel.facebookUrl
-                      )}
-                    </div>
-                  `
-                  : ""
-              }
-
-            </div>
-
-
-            <div class="reel-actions">
-
-              <button
-                data-action="copy"
-                data-id="${escapeHTML(id)}"
-              >
-                Copy Link
-              </button>
-
-              <button
-                data-action="edit"
-                data-id="${escapeHTML(id)}"
-              >
-                Edit
-              </button>
-
-              <button
-                class="delete-btn"
-                data-action="delete"
-                data-id="${escapeHTML(id)}"
-              >
-                Delete
-              </button>
-
-            </div>
+    written
+      .slice()
+      .reverse()
+      .map(r => {
+
+        const reelTitle =
+          reelsData[r.reelId]?.title ||
+          r.reelId;
+
+
+        return `
+          <div class="feedback-item">
+
+            <p>
+              ${escapeHTML(
+                r.answers.Q_OPEN_FEEDBACK
+              )}
+            </p>
+
+            <small>
+              ${escapeHTML(r.reelId)}
+              —
+              ${escapeHTML(reelTitle)}
+            </small>
 
           </div>
+        `;
 
-        </div>
-      `;
-
-    }).join("");
-}
-
-
-/* =========================
-   REEL ACTIONS
-========================= */
-
-reelList.addEventListener(
-  "click",
-  async (event) => {
-
-    const button =
-      event.target.closest("button");
-
-    if (!button) return;
-
-    const id =
-      button.dataset.id;
-
-    const action =
-      button.dataset.action;
-
-
-    if (action === "edit") {
-
-      editReel(id);
-    }
-
-
-    if (action === "delete") {
-
-      await deleteReel(id);
-    }
-
-
-    if (action === "copy") {
-
-      const link =
-        `${window.location.origin}${window.location.pathname.replace(
-          /admin\.html$/,
-          ""
-        )}?reel=${encodeURIComponent(id)}`;
-
-      try {
-
-        await navigator.clipboard.writeText(
-          link
-        );
-
-        button.textContent =
-          "Copied!";
-
-        setTimeout(() => {
-
-          button.textContent =
-            "Copy Link";
-
-        }, 1200);
-
-      } catch {
-
-        alert(link);
-      }
-    }
-
-  }
-);
-
-
-/* =========================
-   MESSAGE
-========================= */
-
-function showReelMessage(
-  message,
-  error = false
-) {
-
-  reelMessage.textContent =
-    message;
-
-  reelMessage.className =
-    error
-      ? "message-error"
-      : "message-success";
+      }).join("");
 }
 
 
@@ -1248,10 +1316,10 @@ function showReelMessage(
 
 function escapeHTML(value) {
 
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
