@@ -154,6 +154,24 @@
             </div>
         </section>
 
+        <!-- REEL MANAGEMENT -->
+        <section class="reel-mgmt">
+            <div class="reel-mgmt-head">
+                <div>
+                    <h2 class="reel-mgmt-title">Reel Management</h2>
+                    <p class="reel-mgmt-sub">Add and manage Facebook Reels for feedback collection.</p>
+                </div>
+                <button type="button" class="btn btn-primary" id="openAddReel">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    Add Reel
+                </button>
+            </div>
+
+            <div class="reels-list" id="reelsList"></div>
+        </section>
+
         <section class="toolbar">
             <div class="search">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -196,6 +214,40 @@
         </section>
 
     </main>
+</div>
+
+<!-- ADD REEL MODAL -->
+<div class="modal" id="addReelModal" hidden>
+    <div class="modal-backdrop" id="addReelBackdrop"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addReelHeading">
+        <div class="modal-head">
+            <h2 id="addReelHeading">Add Reel</h2>
+            <button type="button" class="modal-close" id="closeAddReel" aria-label="Close">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="field" id="reelUrlField">
+                <label for="reelUrl">Facebook Reel URL</label>
+                <input type="url" id="reelUrl" placeholder="https://www.facebook.com/reel/..." autocomplete="off" />
+            </div>
+
+            <p class="form-error" id="reelUrlError" role="alert"></p>
+
+            <button type="button" class="btn btn-primary fetch-btn" id="fetchReel">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span id="fetchLabel">Fetch Details</span>
+                <svg class="btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </button>
+
+            <div class="reel-preview" id="reelPreview" hidden></div>
+        </div>
+    </div>
 </div>
 
 <script src="admin.js"></script>
