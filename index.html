@@ -2,238 +2,580 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rudra Bhakti — Admin</title>
-  <link rel="stylesheet" href="admin.css">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="description"
+    content="Share your feedback with Rudra Bhakti."
+  >
+
+  <title>Rudra Bhakti — Share Your Feedback</title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- LOGIN -->
-  <section id="loginScreen" class="screen">
-    <div class="login-card">
-      <div class="brand-mark">ॐ</div>
-      <h1>Rudra Bhakti</h1>
-      <p>Admin Dashboard</p>
+  <main class="app-shell">
 
-      <form id="loginForm">
-        <input
-          id="emailInput"
-          type="email"
-          placeholder="Admin email"
-          autocomplete="username"
-          required
+    <!-- =========================
+         INTRO / USER DETAILS
+    ========================== -->
+
+    <section
+      id="welcomeScreen"
+      class="screen active"
+      aria-labelledby="welcomeTitle"
+    >
+
+      <div class="brand-mark" aria-hidden="true">
+        <svg
+          viewBox="0 0 48 48"
+          width="28"
+          height="28"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
         >
+          <path
+            d="M24 5v38M12 12c4 4 8 5 12 5s8-1 12-5M10 25c5 4 9 5 14 5s9-1 14-5"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+          />
+        </svg>
+      </div>
 
-        <input
-          id="passwordInput"
-          type="password"
-          placeholder="Password"
-          autocomplete="current-password"
-          required
+      <div class="screen-content">
+
+        <span class="eyebrow">
+          RUDRA BHAKTI
+        </span>
+
+        <h1 id="welcomeTitle">
+          Your thoughts matter.
+        </h1>
+
+        <p class="intro-text">
+          We would love to know how this Reel made you feel.
+          Your feedback helps us create more meaningful
+          devotional content.
+        </p>
+
+        <div
+          id="reelPreview"
+          class="reel-preview hidden"
         >
+          <div class="reel-thumbnail-wrap">
+            <img
+              id="reelThumbnail"
+              class="reel-thumbnail"
+              src=""
+              alt=""
+            >
+          </div>
 
-        <button type="submit" class="primary-btn">
-          Login
-        </button>
+          <div class="reel-info">
+            <span class="reel-label">
+              FEEDBACK FOR
+            </span>
 
-        <p id="loginError" class="error-text"></p>
-      </form>
-    </div>
-  </section>
-
-
-  <!-- DASHBOARD -->
-  <section id="dashboardScreen" class="screen hidden">
-
-    <header class="topbar">
-      <div>
-        <h1>Rudra Bhakti</h1>
-        <span>Admin Dashboard</span>
-      </div>
-
-      <button id="logoutBtn" class="logout-btn">
-        Logout
-      </button>
-    </header>
-
-
-    <nav class="admin-nav">
-      <button class="nav-btn active" data-view="analysisView">
-        Analysis
-      </button>
-
-      <button class="nav-btn" data-view="addReelView">
-        Add Reel
-      </button>
-    </nav>
-
-
-    <!-- ANALYSIS -->
-    <main id="analysisView" class="admin-view">
-
-      <div class="section-heading">
-        <div>
-          <h2>Analysis</h2>
-          <p>Understand how your audience responds to each Reel.</p>
+            <h2 id="reelTitle">
+              —
+            </h2>
+          </div>
         </div>
 
-        <select id="reelFilter">
-          <option value="ALL">All Reels</option>
-        </select>
-      </div>
 
+        <!-- USER DETAILS -->
 
-      <div class="stats-grid">
+        <form id="userDetailsForm" novalidate>
 
-        <div class="stat-card">
-          <span>Total Responses</span>
-          <strong id="totalResponses">0</strong>
-        </div>
+          <div class="field-group">
 
-        <div class="stat-card">
-          <span>Average Rating</span>
-          <strong id="averageRating">0.0</strong>
-        </div>
-
-        <div class="stat-card">
-          <span>Want More Content</span>
-          <strong id="wantMore">0%</strong>
-        </div>
-
-        <div class="stat-card">
-          <span>Top Feeling</span>
-          <strong id="topFeeling">—</strong>
-        </div>
-
-      </div>
-
-
-      <div class="analytics-grid">
-
-        <div class="panel">
-          <h3>Feeling</h3>
-          <div id="feelingDistribution"></div>
-        </div>
-
-        <div class="panel">
-          <h3>More Content</h3>
-          <div id="moreDistribution"></div>
-        </div>
-
-        <div class="panel">
-          <h3>Connection</h3>
-          <div id="connectionDistribution"></div>
-        </div>
-
-        <div class="panel">
-          <h3>Rating</h3>
-          <div id="ratingDistribution"></div>
-        </div>
-
-      </div>
-
-
-      <div class="panel feedback-panel">
-        <h3>Written Feedback</h3>
-        <div id="writtenFeedback">
-          <p class="empty-state">No written feedback yet.</p>
-        </div>
-      </div>
-
-    </main>
-
-
-    <!-- ADD REEL -->
-    <main id="addReelView" class="admin-view hidden">
-
-      <div class="section-heading">
-        <div>
-          <h2>Add Reel</h2>
-          <p>Paste the Facebook Reel URL. Everything else is automatic.</p>
-        </div>
-      </div>
-
-
-      <div class="panel add-reel-panel">
-
-        <form id="reelForm">
-
-          <div class="form-group">
-            <label for="facebookUrl">
-              Facebook Reel URL
+            <label for="userName">
+              Your Name
             </label>
 
             <input
-              id="facebookUrl"
-              type="url"
-              placeholder="https://www.facebook.com/reel/..."
+              id="userName"
+              name="name"
+              type="text"
+              autocomplete="name"
+              placeholder="Enter your name"
+              maxlength="100"
               required
             >
 
-            <small>
-              Reel ID and title will be generated automatically.
-            </small>
-          </div>
-
-
-          <div class="auto-info-grid">
-
-            <div class="auto-field">
-              <span>Generated Reel ID</span>
-              <strong id="generatedReelId">RB001</strong>
-            </div>
-
-            <div class="auto-field">
-              <span>Detected Title</span>
-              <strong id="generatedTitle">Waiting for URL…</strong>
-            </div>
+            <small
+              id="nameError"
+              class="field-error"
+            ></small>
 
           </div>
 
 
-          <div id="metadataStatus" class="metadata-status"></div>
+          <div class="field-group">
+
+            <label for="userEmail">
+              Email Address
+            </label>
+
+            <input
+              id="userEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="Enter your email"
+              maxlength="150"
+              required
+            >
+
+            <small
+              id="emailError"
+              class="field-error"
+            ></small>
+
+          </div>
+
+
+          <div class="field-group">
+
+            <label for="userMobile">
+              Mobile Number
+            </label>
+
+            <input
+              id="userMobile"
+              name="mobile"
+              type="tel"
+              autocomplete="tel"
+              inputmode="numeric"
+              placeholder="Enter your mobile number"
+              maxlength="15"
+              required
+            >
+
+            <small
+              id="mobileError"
+              class="field-error"
+            ></small>
+
+          </div>
 
 
           <button
-            type="button"
-            id="fetchMetadataBtn"
-            class="secondary-btn"
-          >
-            Fetch Reel Info
-          </button>
-
-
-          <button
+            id="continueToFeedback"
+            class="primary-button"
             type="submit"
-            id="saveReelBtn"
-            class="primary-btn"
           >
-            Add Reel
-          </button>
+            <span>Continue</span>
 
-          <p id="reelFormMessage"></p>
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 12h13M13 6l6 6-6 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
 
         </form>
 
       </div>
 
+    </section>
 
-      <div class="panel">
-        <div class="panel-heading">
-          <h3>Existing Reels</h3>
+
+    <!-- =========================
+         FEEDBACK
+    ========================== -->
+
+    <section
+      id="feedbackScreen"
+      class="screen hidden"
+      aria-labelledby="questionTitle"
+    >
+
+      <div class="feedback-header">
+
+        <div class="progress-meta">
+          <span id="questionCounter">
+            Question 1 of 5
+          </span>
+
+          <span id="progressPercent">
+            20%
+          </span>
         </div>
 
-        <div id="reelList">
-          <p class="empty-state">Loading reels…</p>
+        <div class="progress-track">
+          <div
+            id="progressBar"
+            class="progress-fill"
+            style="width: 20%"
+          ></div>
         </div>
+
       </div>
 
-    </main>
 
-  </section>
+      <div class="question-content">
+
+        <div class="question-heading">
+
+          <div>
+            <span
+              id="questionLabel"
+              class="eyebrow"
+            >
+              YOUR FEELING
+            </span>
+
+            <h1 id="questionTitle">
+              How did this Reel make you feel?
+            </h1>
+          </div>
 
 
-  <script type="module" src="admin.js"></script>
+          <!-- HINDI TTS -->
+
+          <button
+            id="voiceButton"
+            class="icon-button"
+            type="button"
+            aria-label="Listen to Hindi translation"
+            title="Listen in Hindi"
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              width="21"
+              height="21"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 10v4h4l5 4V6l-5 4H4Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linejoin="round"
+              />
+
+              <path
+                d="M17 9.5a4 4 0 0 1 0 5M19.5 7a7.5 7.5 0 0 1 0 10"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+
+          </button>
+
+        </div>
+
+
+        <p
+          id="questionHint"
+          class="question-hint"
+        >
+          Choose the option that best describes your feeling.
+        </p>
+
+
+        <!-- ANSWERS -->
+
+        <div
+          id="answerOptions"
+          class="answer-options"
+        >
+          <!-- Generated by app.js -->
+        </div>
+
+
+        <!-- OPTIONAL TEXT -->
+
+        <div
+          id="textAnswerContainer"
+          class="text-answer-container hidden"
+        >
+
+          <label for="openFeedback">
+            Share anything you'd like us to know
+          </label>
+
+          <textarea
+            id="openFeedback"
+            rows="5"
+            maxlength="1000"
+            placeholder="Write your thoughts here..."
+          ></textarea>
+
+          <div class="character-count">
+            <span id="characterCount">0</span>/1000
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="question-footer">
+
+        <button
+          id="backButton"
+          class="secondary-button"
+          type="button"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M19 12H5M11 18l-6-6 6-6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+          <span>Back</span>
+
+        </button>
+
+
+        <button
+          id="continueButton"
+          class="primary-button"
+          type="button"
+          disabled
+        >
+
+          <span>Continue</span>
+
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M5 12h13M13 6l6 6-6 6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         SUBMITTING
+    ========================== -->
+
+    <section
+      id="submittingScreen"
+      class="screen hidden"
+    >
+
+      <div class="status-content">
+
+        <div class="loader" aria-hidden="true"></div>
+
+        <h1>
+          Saving your feedback
+        </h1>
+
+        <p>
+          Please wait a moment.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         THANK YOU
+    ========================== -->
+
+    <section
+      id="thankYouScreen"
+      class="screen hidden"
+      aria-labelledby="thankYouTitle"
+    >
+
+      <div class="status-content">
+
+        <div
+          class="success-icon"
+          aria-hidden="true"
+        >
+
+          <svg
+            viewBox="0 0 48 48"
+            width="32"
+            height="32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m13 25 8 8 14-17"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+        </div>
+
+        <span class="eyebrow">
+          FEEDBACK RECEIVED
+        </span>
+
+        <h1 id="thankYouTitle">
+          Thank you for sharing.
+        </h1>
+
+        <p>
+          Your response has been recorded successfully.
+          Your thoughts help us create more meaningful
+          devotional content.
+        </p>
+
+
+        <!-- FACEBOOK SHARE -->
+
+        <button
+          id="facebookShareButton"
+          class="share-button"
+          type="button"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="19"
+            height="19"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M14 8h3V4h-3c-3.3 0-5 1.8-5 5v3H6v4h3v4h4v-4h3l1-4h-4V9c0-.7.3-1 1-1Z"
+              fill="currentColor"
+            />
+          </svg>
+
+          <span>
+            Share on Facebook
+          </span>
+
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         ERROR
+    ========================== -->
+
+    <section
+      id="errorScreen"
+      class="screen hidden"
+    >
+
+      <div class="status-content">
+
+        <div
+          class="error-icon"
+          aria-hidden="true"
+        >
+
+          <svg
+            viewBox="0 0 48 48"
+            width="30"
+            height="30"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M24 13v12"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+            />
+
+            <circle
+              cx="24"
+              cy="32"
+              r="1.7"
+              fill="currentColor"
+            />
+
+            <path
+              d="M21.4 6.8 6.8 32.1A5 5 0 0 0 11.1 39h25.8a5 5 0 0 0 4.3-6.9L26.6 6.8a3 3 0 0 0-5.2 0Z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+        </div>
+
+        <h1>
+          Something went wrong.
+        </h1>
+
+        <p id="errorMessage">
+          We could not load this feedback page.
+          Please try again.
+        </p>
+
+        <button
+          id="retryButton"
+          class="primary-button"
+          type="button"
+        >
+          Try Again
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script type="module" src="app.js"></script>
+
 </body>
 </html>
