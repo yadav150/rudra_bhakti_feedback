@@ -1,27 +1,32 @@
 /* =========================================================
    RUDRA BHAKTI — FIREBASE INITIALIZATION
    js/firebase.js
+   Realtime Database + Authentication + Analytics
    ========================================================= */
 
-import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 
-import { getAuth } from
-  "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import {
+  getAuth
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-import { getFirestore } from
-  "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import {
+  getDatabase
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-import { getAnalytics } from
-  "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+import {
+  getAnalytics
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    FIREBASE CONFIG
---------------------------------------------------------- */
+   ========================================================= */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAoPVLSklKARDfdDoSm6Lzkj1kabJVpsw",
+  apiKey: "AIzaSyAoPVLSklKARDfdDoSm6Lzk1kabJVpsw",
   authDomain: "rudrabhakti-a1d3e.firebaseapp.com",
   databaseURL:
     "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com",
@@ -35,25 +40,39 @@ const firebaseConfig = {
 };
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    INITIALIZE FIREBASE
---------------------------------------------------------- */
+   ========================================================= */
 
-const app = initializeApp(firebaseConfig);
+const app =
+  initializeApp(firebaseConfig);
 
 
-/* ---------------------------------------------------------
-   SERVICES
---------------------------------------------------------- */
+/* =========================================================
+   FIREBASE AUTHENTICATION
+   ========================================================= */
 
-const auth = getAuth(app);
+const auth =
+  getAuth(app);
 
-const db = getFirestore(app);
+
+/* =========================================================
+   REALTIME DATABASE
+   ========================================================= */
+
+const db =
+  getDatabase(app);
+
+
+/* =========================================================
+   GOOGLE ANALYTICS
+   ========================================================= */
 
 let analytics = null;
 
 try {
-  analytics = getAnalytics(app);
+  analytics =
+    getAnalytics(app);
 } catch (error) {
   console.warn(
     "Firebase Analytics unavailable:",
@@ -62,9 +81,9 @@ try {
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    EXPORT
---------------------------------------------------------- */
+   ========================================================= */
 
 export {
   app,
