@@ -1,16 +1,15 @@
 /* =====================================================
-   RUDRA BHAKTI FEEDBACK
-   Firebase Realtime Database + Analytics
+   RUDRA BHAKTI — FEEDBACK ENGINE
+   Version: 1.1
 ===================================================== */
 
 import { initializeApp }
-from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
 import {
   getAnalytics,
   logEvent
-}
-from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
 
 import {
   getDatabase,
@@ -18,136 +17,155 @@ import {
   push,
   set,
   serverTimestamp
-}
-from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
 
 /* =====================================================
-   FIREBASE CONFIG
+   FIREBASE
 ===================================================== */
 
 const firebaseConfig = {
-
-  apiKey:
-    "AIzaSyAoPVLSklKARDfdDoSm6L2zkj1kabJVpsw",
-
-  authDomain:
-    "rudrabhakti-a1d3e.firebaseapp.com",
-
-  projectId:
-    "rudrabhakti-a1d3e",
-
-  storageBucket:
-    "rudrabhakti-a1d3e.firebasestorage.app",
-
-  messagingSenderId:
-    "96491326088",
-
-  appId:
-    "1:96491326088:web:16b33c95f6aa67b5936d3d",
-
-  measurementId:
-    "G-RYKGBGSLVB",
-
+  apiKey: "AIzaSyAoPVLSklKARDfdDoSm6L2zkj1kabJVpsw",
+  authDomain: "rudrabhakti-a1d3e.firebaseapp.com",
+  projectId: "rudrabhakti-a1d3e",
+  storageBucket: "rudrabhakti-a1d3e.firebasestorage.app",
+  messagingSenderId: "96491326088",
+  appId: "1:96491326088:web:16b33c95f6aa67b5936d3d",
+  measurementId: "G-RYKGBGSLVB",
   databaseURL:
     "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com/"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const database = getDatabase(app);
+
+
+/* =====================================================
+   FEEDBACK SCHEMA
+   DO NOT CHANGE THESE IDs LATER
+===================================================== */
+
+const SCHEMA_VERSION = "1.1";
+
+const QUESTIONS = {
+
+  Q_FEELING: {
+    number: 1,
+    options: [
+      "FEEL_PEACEFUL",
+      "FEEL_DEVOTIONAL",
+      "FEEL_EMOTIONAL",
+      "FEEL_INSPIRED",
+      "FEEL_CALM",
+      "FEEL_DEEPLY_MOVED"
+    ]
+  },
+
+  Q_MORE_CONTENT: {
+    number: 2,
+    options: [
+      "MORE_DEFINITELY",
+      "MORE_SOMETIMES",
+      "MORE_UNSURE",
+      "MORE_NOT_REALLY"
+    ]
+  },
+
+  Q_CONNECTION: {
+    number: 3,
+    options: [
+      "CONNECT_SHIVA_PARVATI",
+      "CONNECT_DEVOTIONAL_FEELING",
+      "CONNECT_ARTWORK",
+      "CONNECT_MUSIC",
+      "CONNECT_EVERYTHING"
+    ]
+  },
+
+  Q_RATING: {
+    number: 4,
+    options: [
+      "RATING_1",
+      "RATING_2",
+      "RATING_3",
+      "RATING_4",
+      "RATING_5"
+    ]
+  },
+
+  Q_OPEN_FEEDBACK: {
+    number: 5
+  }
 
 };
 
 
-const app =
-  initializeApp(firebaseConfig);
-
-const analytics =
-  getAnalytics(app);
-
-const database =
-  getDatabase(app);
-
-
 /* =====================================================
-   REEL SYSTEM
+   REEL
 ===================================================== */
 
 const params =
-  new URLSearchParams(
-    window.location.search
-  );
+  new URLSearchParams(window.location.search);
 
 const contentId =
   params.get("reel") || "RB001";
 
 
 /*
-  Add future Reels here.
+   Temporary Reel catalogue.
 
-  Example:
-
-  RB002:{
-    title:"Your next Reel",
-    facebookUrl:"https://www.facebook.com/...",
-    thumbnail:"images/rb002.jpg"
-  }
+   Later this can be moved completely into Firebase
+   without changing the feedback-response structure.
 */
 
-const reels = {
+const REELS = {
 
-  RB001:{
-    title:
-      "Shiva & Parvati — Eternal Love",
-
-    facebookUrl:
-      "",
-
-    thumbnail:
-      ""
+  RB001: {
+    title: "Shiva & Parvati — Eternal Love",
+    facebookUrl: "",
+    thumbnail: ""
   }
 
 };
 
 
 const reel =
-  reels[contentId] || reels.RB001;
+  REELS[contentId] || REELS.RB001;
 
 
-document.getElementById(
-  "reelTitle"
-).textContent =
+/* =====================================================
+   REEL UI
+===================================================== */
+
+document.getElementById("reelTitle").textContent =
   reel.title;
 
-
-document.getElementById(
-  "reelId"
-).textContent =
+document.getElementById("reelId").textContent =
   "RUDRA • " + contentId;
 
 
-if(reel.facebookUrl){
+const reelLink =
+  document.getElementById("reelLink");
 
-  const link =
-    document.getElementById(
-      "reelLink"
-    );
 
-  link.href =
+if (reel.facebookUrl) {
+
+  reelLink.href =
     reel.facebookUrl;
 
-}else{
+} else {
 
-  document.getElementById(
-    "reelLink"
-  ).style.display =
+  reelLink.style.display =
     "none";
 
 }
 
 
-if(reel.thumbnail){
+if (reel.thumbnail) {
 
   const image =
-    document.getElementById(
-      "reelImage"
-    );
+    document.getElementById("reelImage");
 
   image.src =
     reel.thumbnail;
@@ -164,14 +182,13 @@ if(reel.thumbnail){
 
 
 /* =====================================================
-   FEEDBACK STATE
+   STATE
 ===================================================== */
 
 let currentQuestion = 1;
+let submitting = false;
 
 const totalQuestions = 5;
-
-let submitting = false;
 
 const answers = {};
 
@@ -180,31 +197,24 @@ const answers = {};
    ANALYTICS
 ===================================================== */
 
-function track(
-  eventName,
-  parameters = {}
-){
+function track(eventName, parameters = {}) {
 
-  try{
+  try {
 
     logEvent(
       analytics,
       eventName,
       {
-        content_id:
-          contentId,
-
-        feedback_version:
-          "1.0",
-
+        content_id: contentId,
+        feedback_schema: SCHEMA_VERSION,
         ...parameters
       }
     );
 
-  }catch(error){
+  } catch (error) {
 
     console.warn(
-      "Analytics error:",
+      "Analytics event failed:",
       error
     );
 
@@ -213,165 +223,188 @@ function track(
 }
 
 
-track(
-  "feedback_started"
-);
+track("feedback_started");
 
 
 /* =====================================================
-   OPTION SELECTION
+   SAVE ANSWER LOCALLY
+   IMPORTANT:
+   Analytics is NOT sent here.
+   This prevents answer-change overcounting.
+===================================================== */
+
+function saveAnswer(questionId, optionId) {
+
+  answers[questionId] =
+    optionId;
+
+}
+
+
+/* =====================================================
+   OPTION BUTTONS
 ===================================================== */
 
 document
-.querySelectorAll(".option")
-.forEach(option => {
+  .querySelectorAll(".option")
+  .forEach(option => {
 
-  option.addEventListener(
-    "click",
-    () => {
+    option.addEventListener(
+      "click",
+      () => {
 
-      const questionId =
-        option.dataset.questionId;
+        const questionId =
+          option.dataset.questionId;
 
-      const optionId =
-        option.dataset.optionId;
+        const optionId =
+          option.dataset.optionId;
 
 
-      document
-      .querySelectorAll(
-        `.option[data-question-id="${questionId}"]`
-      )
-      .forEach(item => {
+        document
+          .querySelectorAll(
+            `.option[data-question-id="${questionId}"]`
+          )
+          .forEach(item => {
 
-        item.classList.remove(
+            item.classList.remove(
+              "selected"
+            );
+
+          });
+
+
+        option.classList.add(
           "selected"
         );
 
-      });
 
+        saveAnswer(
+          questionId,
+          optionId
+        );
 
-      option.classList.add(
-        "selected"
-      );
+      }
+    );
 
-
-      answers[questionId] =
-        optionId;
-
-
-      track(
-        "feedback_question_answered",
-        {
-          question_id:
-            questionId,
-
-          option_id:
-            optionId,
-
-          question_number:
-            currentQuestion
-        }
-      );
-
-    }
-  );
-
-});
+  });
 
 
 /* =====================================================
-   RATING
+   RATING BUTTONS
 ===================================================== */
 
 document
-.querySelectorAll(".rate")
-.forEach(rate => {
+  .querySelectorAll(".rate")
+  .forEach(rate => {
 
-  rate.addEventListener(
-    "click",
-    () => {
+    rate.addEventListener(
+      "click",
+      () => {
 
-      const questionId =
-        rate.dataset.questionId;
+        const questionId =
+          rate.dataset.questionId;
 
-      const optionId =
-        rate.dataset.optionId;
+        const optionId =
+          rate.dataset.optionId;
 
 
-      document
-      .querySelectorAll(".rate")
-      .forEach(item => {
+        document
+          .querySelectorAll(".rate")
+          .forEach(item => {
 
-        item.classList.remove(
+            item.classList.remove(
+              "selected"
+            );
+
+          });
+
+
+        rate.classList.add(
           "selected"
         );
 
-      });
 
+        saveAnswer(
+          questionId,
+          optionId
+        );
 
-      rate.classList.add(
-        "selected"
-      );
+      }
+    );
 
-
-      answers[questionId] =
-        optionId;
-
-
-      track(
-        "feedback_question_answered",
-        {
-          question_id:
-            questionId,
-
-          option_id:
-            optionId,
-
-          question_number:
-            currentQuestion
-        }
-      );
-
-    }
-  );
-
-});
+  });
 
 
 /* =====================================================
-   HINDI TEXT-TO-SPEECH
+   FINAL QUESTION ANALYTICS
 ===================================================== */
 
-document
-.querySelectorAll(".voice")
-.forEach(button => {
+function trackFinalAnswer(questionNumber) {
 
-  button.addEventListener(
-    "click",
-    () => {
-
-      const text =
-        button.dataset.hindi;
-
-      speakHindi(
-        button,
-        text
+  const question =
+    Object.entries(QUESTIONS)
+      .find(
+        ([, value]) =>
+          value.number === questionNumber
       );
 
+
+  if (!question) return;
+
+
+  const questionId =
+    question[0];
+
+  const optionId =
+    answers[questionId];
+
+
+  if (!optionId) return;
+
+
+  track(
+    "feedback_question_answered",
+    {
+      question_id: questionId,
+      option_id: optionId,
+      question_number: questionNumber
     }
   );
 
-});
+}
 
 
-function speakHindi(
-  button,
-  text
-){
+/* =====================================================
+   HINDI VOICE
+===================================================== */
 
-  if(
+document
+  .querySelectorAll(".voice")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const text =
+          button.dataset.hindi;
+
+        speakHindi(
+          button,
+          text
+        );
+
+      }
+    );
+
+  });
+
+
+function speakHindi(button, text) {
+
+  if (
     !("speechSynthesis" in window)
-  ){
+  ) {
 
     showStatus(
       "Hindi voice is not supported on this device.",
@@ -387,21 +420,14 @@ function speakHindi(
 
 
   document
-  .querySelectorAll(".voice")
-  .forEach(btn => {
-
-    btn.classList.remove(
-      "playing"
+    .querySelectorAll(".voice")
+    .forEach(btn =>
+      btn.classList.remove("playing")
     );
-
-  });
 
 
   const utterance =
-    new SpeechSynthesisUtterance(
-      text
-    );
-
+    new SpeechSynthesisUtterance(text);
 
   utterance.lang =
     "hi-IN";
@@ -439,12 +465,12 @@ function speakHindi(
    VALIDATION
 ===================================================== */
 
-function validateCurrentQuestion(){
+function validateCurrentQuestion() {
 
-  if(
+  if (
     currentQuestion === 1 &&
     !answers.Q_FEELING
-  ){
+  ) {
 
     showStatus(
       "Please select how this Reel made you feel.",
@@ -456,10 +482,10 @@ function validateCurrentQuestion(){
   }
 
 
-  if(
+  if (
     currentQuestion === 2 &&
     !answers.Q_MORE_CONTENT
-  ){
+  ) {
 
     showStatus(
       "Please choose one option to continue.",
@@ -471,10 +497,10 @@ function validateCurrentQuestion(){
   }
 
 
-  if(
+  if (
     currentQuestion === 3 &&
     !answers.Q_CONNECTION
-  ){
+  ) {
 
     showStatus(
       "Please choose what connected with you most.",
@@ -486,10 +512,10 @@ function validateCurrentQuestion(){
   }
 
 
-  if(
+  if (
     currentQuestion === 4 &&
     !answers.Q_RATING
-  ){
+  ) {
 
     showStatus(
       "Please give the Reel a rating.",
@@ -507,44 +533,56 @@ function validateCurrentQuestion(){
 
 
 /* =====================================================
-   NEXT
+   CONTINUE
 ===================================================== */
 
 document
-.getElementById("nextBtn")
-.addEventListener(
-  "click",
-  () => {
+  .getElementById("nextBtn")
+  .addEventListener(
+    "click",
+    () => {
 
-    if(
-      !validateCurrentQuestion()
-    ){
+      if (
+        !validateCurrentQuestion()
+      ) {
 
-      return;
+        return;
+
+      }
+
+
+      /*
+        NOW the answer is final.
+
+        Therefore Analytics receives
+        exactly one answer per question.
+      */
+
+      trackFinalAnswer(
+        currentQuestion
+      );
+
+
+      if (
+        currentQuestion ===
+        totalQuestions
+      ) {
+
+        submitFeedback();
+
+        return;
+
+      }
+
+
+      currentQuestion++;
+
+      showQuestion(
+        currentQuestion
+      );
 
     }
-
-
-    if(
-      currentQuestion ===
-      totalQuestions
-    ){
-
-      submitFeedback();
-
-      return;
-
-    }
-
-
-    currentQuestion++;
-
-    showQuestion(
-      currentQuestion
-    );
-
-  }
-);
+  );
 
 
 /* =====================================================
@@ -552,47 +590,45 @@ document
 ===================================================== */
 
 document
-.getElementById("backBtn")
-.addEventListener(
-  "click",
-  () => {
+  .getElementById("backBtn")
+  .addEventListener(
+    "click",
+    () => {
 
-    if(
-      currentQuestion <= 1
-    ){
+      if (
+        currentQuestion <= 1
+      ) {
 
-      return;
+        return;
+
+      }
+
+
+      currentQuestion--;
+
+      showQuestion(
+        currentQuestion
+      );
 
     }
-
-
-    currentQuestion--;
-
-    showQuestion(
-      currentQuestion
-    );
-
-  }
-);
+  );
 
 
 /* =====================================================
-   SHOW QUESTION
+   QUESTION UI
 ===================================================== */
 
-function showQuestion(
-  number
-){
+function showQuestion(number) {
 
   document
-  .querySelectorAll(".question-screen")
-  .forEach(screen => {
+    .querySelectorAll(".question-screen")
+    .forEach(screen => {
 
-    screen.classList.remove(
-      "active"
-    );
+      screen.classList.remove(
+        "active"
+      );
 
-  });
+    });
 
 
   const target =
@@ -601,7 +637,7 @@ function showQuestion(
     );
 
 
-  if(target){
+  if (target) {
 
     target.classList.add(
       "active"
@@ -613,16 +649,13 @@ function showQuestion(
   document.getElementById(
     "progressNumber"
   ).textContent =
-    number +
-    " / " +
-    totalQuestions;
+    `${number} / ${totalQuestions}`;
 
 
   document.getElementById(
     "progressFill"
   ).style.width =
-    ((number / totalQuestions) * 100) +
-    "%";
+    `${(number / totalQuestions) * 100}%`;
 
 
   document.getElementById(
@@ -643,11 +676,11 @@ function showQuestion(
 
 
   document
-  .getElementById("questionCard")
-  .scrollIntoView({
-    behavior:"smooth",
-    block:"center"
-  });
+    .getElementById("questionCard")
+    .scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
 
 }
 
@@ -656,14 +689,9 @@ function showQuestion(
    SUBMIT
 ===================================================== */
 
-async function submitFeedback(){
+async function submitFeedback() {
 
-  if(submitting){
-
-    return;
-
-  }
-
+  if (submitting) return;
 
   submitting = true;
 
@@ -681,22 +709,22 @@ async function submitFeedback(){
     "Submitting...";
 
 
-  clearStatus();
-
-
   const writtenFeedback =
     document
-    .getElementById("message")
-    .value
-    .trim();
+      .getElementById("message")
+      .value
+      .trim();
+
+
+  answers.Q_OPEN_FEEDBACK =
+    writtenFeedback || null;
 
 
   /*
-    IMPORTANT:
+    FINAL DATABASE OBJECT
 
-    Stable IDs are deliberately stored.
-    The future analytics dashboard can
-    aggregate these IDs directly.
+    This schema is deliberately stable
+    for the future analytics dashboard.
   */
 
   const response = {
@@ -705,9 +733,9 @@ async function submitFeedback(){
       contentId,
 
     schema_version:
-      "1.0",
+      SCHEMA_VERSION,
 
-    answers:{
+    answers: {
 
       Q_FEELING:
         answers.Q_FEELING || null,
@@ -722,7 +750,7 @@ async function submitFeedback(){
         answers.Q_RATING || null,
 
       Q_OPEN_FEEDBACK:
-        writtenFeedback || null
+        answers.Q_OPEN_FEEDBACK || null
 
     },
 
@@ -732,20 +760,17 @@ async function submitFeedback(){
   };
 
 
-  try{
+  try {
 
     const responsesRef =
       ref(
         database,
-        "feedback_responses/" +
-        contentId
+        `feedback_responses/${contentId}`
       );
 
 
     const newResponseRef =
-      push(
-        responsesRef
-      );
+      push(responsesRef);
 
 
     await set(
@@ -766,7 +791,7 @@ async function submitFeedback(){
     showSuccess();
 
 
-  }catch(error){
+  } catch (error) {
 
     console.error(
       "Firebase submission error:",
@@ -783,10 +808,8 @@ async function submitFeedback(){
     submitting =
       false;
 
-
     button.disabled =
       false;
-
 
     button.textContent =
       "Submit Feedback";
@@ -797,10 +820,10 @@ async function submitFeedback(){
 
 
 /* =====================================================
-   SUCCESS SCREEN
+   SUCCESS
 ===================================================== */
 
-function showSuccess(){
+function showSuccess() {
 
   document.getElementById(
     "questionCard"
@@ -830,10 +853,10 @@ function showSuccess(){
     "Your feedback has been received. Your feelings help Rudra Bhakti understand what truly resonates with you.";
 
 
-  if(
+  if (
     answers.Q_FEELING ===
     "FEEL_PEACEFUL"
-  ){
+  ) {
 
     message =
       "We're glad this Reel brought you a sense of peace. Your response helps us create more moments like this.";
@@ -841,10 +864,10 @@ function showSuccess(){
   }
 
 
-  else if(
+  if (
     answers.Q_FEELING ===
     "FEEL_EMOTIONAL"
-  ){
+  ) {
 
     message =
       "Thank you for sharing that emotion with us. Your response helps us create more meaningful devotional moments.";
@@ -852,10 +875,10 @@ function showSuccess(){
   }
 
 
-  else if(
+  if (
     answers.Q_FEELING ===
     "FEEL_DEVOTIONAL"
-  ){
+  ) {
 
     message =
       "Thank you for sharing your devotional feeling. It helps us understand what connects with our community.";
@@ -876,31 +899,31 @@ function showSuccess(){
 ===================================================== */
 
 document
-.getElementById("shareFacebook")
-.addEventListener(
-  "click",
-  () => {
+  .getElementById("shareFacebook")
+  .addEventListener(
+    "click",
+    () => {
 
-    track(
-      "facebook_share_clicked"
-    );
-
-
-    const shareUrl =
-      "https://www.facebook.com/sharer/sharer.php?u=" +
-      encodeURIComponent(
-        window.location.href
+      track(
+        "facebook_share_clicked"
       );
 
 
-    window.open(
-      shareUrl,
-      "_blank",
-      "width=650,height=550"
-    );
+      const shareUrl =
+        "https://www.facebook.com/sharer/sharer.php?u=" +
+        encodeURIComponent(
+          window.location.href
+        );
 
-  }
-);
+
+      window.open(
+        shareUrl,
+        "_blank",
+        "width=650,height=550"
+      );
+
+    }
+  );
 
 
 /* =====================================================
@@ -910,7 +933,7 @@ document
 function showStatus(
   message,
   error = false
-){
+) {
 
   const status =
     document.getElementById(
@@ -923,8 +946,9 @@ function showStatus(
 
 
   status.className =
-    "status" +
-    (error ? " error" : "");
+    error
+      ? "status error"
+      : "status";
 
 
   status.style.display =
@@ -933,7 +957,7 @@ function showStatus(
 }
 
 
-function clearStatus(){
+function clearStatus() {
 
   const status =
     document.getElementById(
