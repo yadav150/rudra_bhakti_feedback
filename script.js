@@ -77,7 +77,7 @@ loadActiveReel();
 
 /* ===== WIZARD STATE ===== */
 let currentQuestion = 1;
-const totalQuestions = 5;
+const totalQuestions = 12;
 const answers = {};
 
 const progressNumber = document.getElementById('progressNumber');
@@ -124,9 +124,13 @@ function showQuestion(number) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function nextQuestion() {
-    if (currentQuestion === 1 && !answers.feeling) {
-        alert('Please select how this Reel made you feel.');
+    const required = {
+        1: 'feeling', 2: 'more', 3: 'liked', 4: 'rating',
+        5: 'stoodOut', 6: 'heldInterest', 7: 'presentation',
+        8: 'improve', 9: 'wantMore', 10: 'engageAgain', 11: 'likedPart'
+    }[currentQuestion];
+    if (required && !answers[required]) {
+        alert('Please make a selection to continue.');
         return;
     }
     if (currentQuestion === totalQuestions) { submitFeedback(); return; }
@@ -182,7 +186,7 @@ async function submitFeedback() {
     nextBtn.disabled = true;
     nextBtn.textContent = 'Submitting…';
 
-    const feedback = {
+        const feedback = {
         reelId: activeReel.id,
         reelTitle: activeReel.title || '',
         name: 'Anonymous',
@@ -192,6 +196,13 @@ async function submitFeedback() {
         wouldWatchMore: answers.more || '',
         connectedWith: answers.liked || '',
         rating: rating,
+        stoodOut: answers.stoodOut || '',
+        heldInterest: answers.heldInterest || '',
+        presentation: answers.presentation || '',
+        improve: answers.improve || '',
+        wantMore: answers.wantMore || '',
+        engageAgain: answers.engageAgain || '',
+        likedPart: answers.likedPart || '',
         message: (messageField.value || '').trim(),
         submittedAt: serverTimestamp()
     };
