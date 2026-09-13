@@ -24,67 +24,189 @@ const state = {
   answers: {},
 
   questionTiming: {},
-
   engagement: {
+    questionViews: 0,
     nextClicks: 0,
     backClicks: 0,
     optionChanges: 0,
-    questionViews: 0
+    abandoned: false
   },
+
+  typing: {},
 
   startedAt: null,
   completedAt: null,
 
   questionEnteredAt: null,
 
-  sessionId: getSessionId(),
+  sessionId: null,
 
   submitted: false
 };
 
 
 /* =========================================================
-   DOM HELPERS
+   FALLBACK QUESTIONS
    ========================================================= */
 
-const $ = (selector) =>
-  document.querySelector(selector);
+const FALLBACK_QUESTIONS = [
+  {
+    questionId: "Q001",
+    questionText:
+      "How did this Reel make you feel?",
 
-const $$ = (selector) =>
-  [...document.querySelectorAll(selector)];
+    hindiText:
+      "इस रील को देखकर आपको कैसा महसूस हुआ?",
+
+    type: "single",
+    required: true,
+    order: 1,
+    active: true,
+
+    options: [
+      {
+        optionId: "Q001_O01",
+        text: "Peaceful"
+      },
+      {
+        optionId: "Q001_O02",
+        text: "Devotional"
+      },
+      {
+        optionId: "Q001_O03",
+        text: "Emotional"
+      },
+      {
+        optionId: "Q001_O04",
+        text: "Inspired"
+      },
+      {
+        optionId: "Q001_O05",
+        text: "Calm"
+      },
+      {
+        optionId: "Q001_O06",
+        text: "Deeply moved"
+      }
+    ]
+  },
+
+  {
+    questionId: "Q002",
+    questionText:
+      "Would you like to see more Reels like this?",
+
+    hindiText:
+      "क्या आप इस तरह की और रील देखना चाहेंगे?",
+
+    type: "single",
+    required: true,
+    order: 2,
+    active: true,
+
+    options: [
+      {
+        optionId: "Q002_O01",
+        text:
+          "Definitely — I love this type of content"
+      },
+      {
+        optionId: "Q002_O02",
+        text: "Yes, sometimes"
+      },
+      {
+        optionId: "Q002_O03",
+        text: "I'm not sure"
+      },
+      {
+        optionId: "Q002_O04",
+        text: "Not really"
+      }
+    ]
+  },
+
+  {
+    questionId: "Q003",
+    questionText:
+      "What did you connect with the most?",
+
+    hindiText:
+      "इस रील में आपको सबसे ज्यादा किस चीज़ से जुड़ाव महसूस हुआ?",
+
+    type: "single",
+    required: true,
+    order: 3,
+    active: true,
+
+    options: [
+      {
+        optionId: "Q003_O01",
+        text: "The Shiva & Parvati emotion"
+      },
+      {
+        optionId: "Q003_O02",
+        text: "The devotional feeling"
+      },
+      {
+        optionId: "Q003_O03",
+        text: "The artwork / visuals"
+      },
+      {
+        optionId: "Q003_O04",
+        text: "The music"
+      },
+      {
+        optionId: "Q003_O05",
+        text: "Everything together"
+      }
+    ]
+  },
+
+  {
+    questionId: "Q004",
+    questionText:
+      "How would you rate this Reel?",
+
+    hindiText:
+      "आप इस रील को कितने अंक देना चाहेंगे?",
+
+    type: "rating",
+    required: true,
+    order: 4,
+    active: true
+  },
+
+  {
+    questionId: "Q005",
+    questionText:
+      "Tell us what you felt",
+
+    hindiText:
+      "आपने क्या महसूस किया, हमें बताइए।",
+
+    type: "textarea",
+    required: false,
+    order: 5,
+    active: true
+  }
+];
 
 
 /* =========================================================
    SESSION ID
    ========================================================= */
 
-function getSessionId() {
-  const key =
-    "rudraBhaktiFeedbackSession";
-
-  let sessionId =
-    sessionStorage.getItem(key);
-
-  if (!sessionId) {
-    sessionId =
-      crypto.randomUUID
-        ? crypto.randomUUID()
-        : createFallbackId();
-
-    sessionStorage.setItem(
-      key,
-      sessionId
-    );
+function createSessionId() {
+  if (
+    window.crypto &&
+    crypto.randomUUID
+  ) {
+    return crypto.randomUUID();
   }
 
-  return sessionId;
-}
-
-
-function createFallbackId() {
   return (
     "RB-" +
-    Date.now().toString(36) +
+    Date.now() +
     "-" +
     Math.random()
       .toString(36)
@@ -94,7 +216,7 @@ function createFallbackId() {
 
 
 /* =========================================================
-   REEL ID FROM URL
+   GET REEL ID FROM URL
    ========================================================= */
 
 function getReelIdFromURL() {
@@ -107,841 +229,92 @@ function getReelIdFromURL() {
     params.get("r") ||
     params.get("reel") ||
     params.get("reelId") ||
-    "RB001"
+    "RB0001"
   );
 }
 
 
 /* =========================================================
-   INITIALIZATION
+   DOM HELPERS
    ========================================================= */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  init
-);
-
-
-async function init() {
-  try {
-    state.reelId =
-      getReelIdFromURL();
-
-    state.startedAt =
-      new Date().toISOString();
-
-    await loadFirebaseData();
-
-    setupExistingUI();
-
-    setupQuestionFlow();
-
-    updateReelInformation();
-
-    showQuestion(0);
-
-  } catch (error) {
-    console.error(
-      "Rudra Bhakti initialization failed:",
-      error
-    );
-
-    showLoadingError(error);
-  }
+function $(selector) {
+  return document.querySelector(
+    selector
+  );
 }
 
-
-/* =========================================================
-   FIREBASE DATA
-   ========================================================= */
-
-async function loadFirebaseData() {
-  /*
-   * Load Reel information.
-   */
-  try {
-    state.reel =
-      await getReel(
-        state.reelId
-      );
-  } catch (error) {
-    console.warn(
-      "Unable to load Reel:",
-      error
-    );
-  }
-
-
-  /*
-   * Load active questions.
-   *
-   * If Firebase questions are not available yet,
-   * the local questions below keep the current
-   * frontend functional.
-   */
-  try {
-    state.questions =
-      await getActiveQuestions();
-  } catch (error) {
-    console.warn(
-      "Unable to load Firebase questions:",
-      error
-    );
-  }
-
-
-  /*
-   * Do not leave the public form empty if
-   * Firebase questions have not been created yet.
-   */
-  if (
-    !Array.isArray(state.questions) ||
-    state.questions.length === 0
-  ) {
-    state.questions =
-      getDefaultQuestions();
-  }
-}
-
-
-/* =========================================================
-   DEFAULT QUESTIONS
-   ========================================================= */
-
-function getDefaultQuestions() {
+function $$(selector) {
   return [
-    {
-      questionId: "Q001",
-
-      questionText:
-        "How did this Reel make you feel?",
-
-      hindiText:
-        "इस रील को देखकर आपको कैसा महसूस हुआ?",
-
-      type: "single",
-
-      required: true,
-
-      order: 1,
-
-      active: true,
-
-      options: [
-        {
-          optionId: "Q001_O01",
-          text: "Peaceful"
-        },
-        {
-          optionId: "Q001_O02",
-          text: "Devotional"
-        },
-        {
-          optionId: "Q001_O03",
-          text: "Emotional"
-        },
-        {
-          optionId: "Q001_O04",
-          text: "Inspired"
-        },
-        {
-          optionId: "Q001_O05",
-          text: "Calm"
-        },
-        {
-          optionId: "Q001_O06",
-          text: "Deeply moved"
-        }
-      ]
-    },
-
-    {
-      questionId: "Q002",
-
-      questionText:
-        "Would you like to see more Reels like this?",
-
-      hindiText:
-        "क्या आप इस तरह की और रील देखना चाहेंगे?",
-
-      type: "single",
-
-      required: true,
-
-      order: 2,
-
-      active: true,
-
-      options: [
-        {
-          optionId: "Q002_O01",
-          text:
-            "Definitely — I love this type of content"
-        },
-        {
-          optionId: "Q002_O02",
-          text: "Yes, sometimes"
-        },
-        {
-          optionId: "Q002_O03",
-          text: "I'm not sure"
-        },
-        {
-          optionId: "Q002_O04",
-          text: "Not really"
-        }
-      ]
-    },
-
-    {
-      questionId: "Q003",
-
-      questionText:
-        "What did you connect with the most?",
-
-      hindiText:
-        "इस रील में आपको सबसे ज्यादा किस चीज़ से जुड़ाव महसूस हुआ?",
-
-      type: "single",
-
-      required: true,
-
-      order: 3,
-
-      active: true,
-
-      options: [
-        {
-          optionId: "Q003_O01",
-          text:
-            "The Shiva & Parvati emotion"
-        },
-        {
-          optionId: "Q003_O02",
-          text:
-            "The devotional feeling"
-        },
-        {
-          optionId: "Q003_O03",
-          text:
-            "The artwork / visuals"
-        },
-        {
-          optionId: "Q003_O04",
-          text:
-            "The music"
-        },
-        {
-          optionId: "Q003_O05",
-          text:
-            "Everything together"
-        }
-      ]
-    },
-
-    {
-      questionId: "Q004",
-
-      questionText:
-        "How would you rate this Reel?",
-
-      hindiText:
-        "आप इस रील को कितने अंक देना चाहेंगे?",
-
-      type: "rating",
-
-      required: true,
-
-      order: 4,
-
-      active: true
-    },
-
-    {
-      questionId: "Q005",
-
-      questionText:
-        "Tell us what you felt",
-
-      hindiText:
-        "आपने क्या महसूस किया, हमें बताइए।",
-
-      type: "text",
-
-      required: false,
-
-      order: 5,
-
-      active: true,
-
-      placeholder:
-        "Share your thoughts, emotions or suggestions..."
-    }
+    ...document.querySelectorAll(
+      selector
+    )
   ];
 }
 
 
 /* =========================================================
-   EXISTING UI
+   INITIALIZE
    ========================================================= */
 
-function setupExistingUI() {
-  setupOptionSelection();
+async function init() {
+  state.reelId =
+    getReelIdFromURL();
 
-  setupRating();
+  state.sessionId =
+    createSessionId();
 
-  setupVoiceButtons();
+  state.startedAt =
+    Date.now();
 
-  setupSubmitButton();
-
-  setupBackButton();
-
-  setupNextButton();
-}
-
-
-/* =========================================================
-   QUESTION FLOW
-   ========================================================= */
-
-function setupQuestionFlow() {
-  /*
-   * If the existing HTML already contains
-   * question cards, keep them and control visibility.
-   */
-  const cards =
-    $$(".question-card");
-
-  if (!cards.length) {
-    return;
-  }
-
-  cards.forEach((card, index) => {
-    card.dataset.questionIndex =
-      String(index);
-  });
-}
-
-
-function showQuestion(index) {
-  const cards =
-    $$(".question-card");
-
-  if (!cards.length) {
-    return;
-  }
-
-  if (
-    index < 0 ||
-    index >= cards.length
-  ) {
-    return;
-  }
-
-  /*
-   * Record timing for previous question.
-   */
-  if (
-    state.questionEnteredAt !== null &&
-    state.currentQuestion !== index
-  ) {
-    recordQuestionTiming(
-      state.currentQuestion
-    );
-  }
-
-  state.currentQuestion =
-    index;
-
-  state.questionEnteredAt =
-    performance.now();
-
-  state.engagement.questionViews++;
-
-  cards.forEach(
-    (card, cardIndex) => {
-      const visible =
-        cardIndex === index;
-
-      card.hidden =
-        !visible;
-
-      card.classList.toggle(
-        "active",
-        visible
-      );
-    }
-  );
-
-  updateNavigation(index);
-
-  restoreAnswerForQuestion(index);
-}
-
-
-function updateNavigation(index) {
-  const backButton =
-    $(
-      "[data-action='back'], #backButton"
-    );
-
-  const nextButton =
-    $(
-      "[data-action='next'], #nextButton"
-    );
-
-  const submitButton =
-    $(
-      "[data-action='submit'], #submitButton"
-    );
-
-  if (backButton) {
-    backButton.disabled =
-      index === 0;
-  }
-
-  const last =
-    index ===
-    $$(".question-card").length - 1;
-
-  if (nextButton) {
-    nextButton.hidden =
-      last;
-  }
-
-  if (submitButton) {
-    submitButton.hidden =
-      !last;
-  }
-}
-
-
-/* =========================================================
-   NEXT / BACK
-   ========================================================= */
-
-function setupNextButton() {
-  const buttons =
-    $$(
-      "[data-action='next'], #nextButton"
-    );
-
-  buttons.forEach((button) => {
-    button.addEventListener(
-      "click",
-      () => {
-
-        if (
-          !validateCurrentQuestion()
-        ) {
-          return;
-        }
-
-        state.engagement.nextClicks++;
-
-        showQuestion(
-          state.currentQuestion + 1
-        );
-      }
-    );
-  });
-}
-
-
-function setupBackButton() {
-  const buttons =
-    $$(
-      "[data-action='back'], #backButton"
-    );
-
-  buttons.forEach((button) => {
-    button.addEventListener(
-      "click",
-      () => {
-
-        if (
-          state.currentQuestion <= 0
-        ) {
-          return;
-        }
-
-        state.engagement.backClicks++;
-
-        showQuestion(
-          state.currentQuestion - 1
-        );
-      }
-    );
-  });
-}
-
-
-/* =========================================================
-   OPTION SELECTION
-   ========================================================= */
-
-function setupOptionSelection() {
-  const optionElements =
-    $$(
-      "input[type='radio'], input[type='checkbox']"
-    );
-
-  optionElements.forEach((input) => {
-
-    input.addEventListener(
-      "change",
-      () => {
-
-        const questionId =
-          getQuestionIdFromElement(
-            input
-          );
-
-        if (!questionId) {
-          return;
-        }
-
-        const previous =
-          state.answers[
-            questionId
-          ];
-
-        const value =
-          input.value ||
-          input.dataset.optionId ||
-          getOptionId(input);
-
-        state.answers[
-          questionId
-        ] = value;
-
-        if (
-          previous !== undefined &&
-          previous !== value
-        ) {
-          state.engagement.optionChanges++;
-        }
-
-        /*
-         * Store stable option ID whenever available.
-         */
-        const optionId =
-          input.dataset.optionId ||
-          getOptionId(input);
-
-        if (optionId) {
-          state.answers[
-            questionId
-          ] = {
-            optionId,
-            value
-          };
-        }
-      }
-    );
-  });
-}
-
-
-function getQuestionIdFromElement(
-  element
-) {
-  const explicit =
-    element.dataset.questionId;
-
-  if (explicit) {
-    return explicit;
-  }
-
-  const group =
-    element.name;
-
-  if (group) {
-    const match =
-      group.match(
-        /Q\d+/i
+  try {
+    /*
+     * Load Reel from RTDB.
+     */
+    state.reel =
+      await getReel(
+        state.reelId
       );
 
-    if (match) {
-      return match[0].toUpperCase();
-    }
-  }
+    /*
+     * Load active questions.
+     */
+    const firebaseQuestions =
+      await getActiveQuestions();
 
-  const card =
-    element.closest(
-      ".question-card"
+    state.questions =
+      firebaseQuestions.length
+        ? firebaseQuestions
+        : FALLBACK_QUESTIONS;
+
+  } catch (error) {
+    console.error(
+      "Firebase loading error:",
+      error
     );
 
-  if (card?.dataset.questionId) {
-    return card.dataset.questionId;
+    /*
+     * Public form should still work
+     * if Firebase question data is unavailable.
+     */
+    state.questions =
+      FALLBACK_QUESTIONS;
   }
 
-  return null;
-}
 
+  updateReelInformation();
 
-function getOptionId(input) {
-  return (
-    input.dataset.optionId ||
-    input.id ||
-    null
-  );
-}
+  setupExistingUI();
 
+  setupTypingAnalytics();
 
-/* =========================================================
-   RATING
-   ========================================================= */
-
-function setupRating() {
-  const ratingInputs =
-    $$(
-      "input[type='radio'][data-rating], .rating input"
-    );
-
-  ratingInputs.forEach((input) => {
-    input.addEventListener(
-      "change",
-      () => {
-
-        const questionId =
-          input.dataset.questionId ||
-          "Q004";
-
-        state.answers[
-          questionId
-        ] = {
-          optionId:
-            input.dataset.optionId ||
-            `Q004_O${input.value}`,
-
-          value:
-            Number(input.value)
-        };
-      }
-    );
-  });
-}
-
-
-/* =========================================================
-   RESTORE ANSWERS
-   ========================================================= */
-
-function restoreAnswerForQuestion(
-  index
-) {
-  const card =
-    $$(".question-card")[index];
-
-  if (!card) {
-    return;
-  }
-
-  const questionId =
-    card.dataset.questionId ||
-    `Q${String(index + 1).padStart(3, "0")}`;
-
-  const saved =
-    state.answers[
-      questionId
-    ];
-
-  if (!saved) {
-    return;
-  }
-
-  const value =
-    typeof saved === "object"
-      ? saved.value
-      : saved;
-
-  const input =
-    card.querySelector(
-      `input[value="${CSS.escape(
-        String(value)
-      )}"]`
-    );
-
-  if (input) {
-    input.checked = true;
-  }
-}
-
-
-/* =========================================================
-   VALIDATION
-   ========================================================= */
-
-function validateCurrentQuestion() {
-  const card =
-    $$(".question-card")[
-      state.currentQuestion
-    ];
-
-  if (!card) {
-    return true;
-  }
-
-  /*
-   * Text question is optional.
-   */
-  const textarea =
-    card.querySelector(
-      "textarea"
-    );
-
-  if (textarea) {
-    return true;
-  }
-
-  const checked =
-    card.querySelector(
-      "input:checked"
-    );
-
-  if (!checked) {
-    showValidationMessage(
-      "Please select an option to continue."
-    );
-
-    return false;
-  }
-
-  return true;
-}
-
-
-function showValidationMessage(
-  message
-) {
-  let element =
-    $("#formValidationMessage");
-
-  if (!element) {
-    element =
-      document.createElement("div");
-
-    element.id =
-      "formValidationMessage";
-
-    element.setAttribute(
-      "role",
-      "alert"
-    );
-
-    element.style.marginTop =
-      "12px";
-
-    element.style.fontSize =
-      "13px";
-
-    element.style.textAlign =
-      "center";
-
-    const card =
-      $$(".question-card")[
-        state.currentQuestion
-      ];
-
-    card?.appendChild(element);
-  }
-
-  element.textContent =
-    message;
-
-  clearTimeout(
-    showValidationMessage.timeout
+  showQuestion(
+    state.currentQuestion
   );
 
-  showValidationMessage.timeout =
-    setTimeout(() => {
-      element.textContent = "";
-    }, 2500);
-}
-
-
-/* =========================================================
-   VOICE / HINDI TEXT TO SPEECH
-   ========================================================= */
-
-function setupVoiceButtons() {
-  $$(
-    "[data-voice], .voice-button, .speak-button"
-  ).forEach((button) => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        const targetId =
-          button.dataset.voiceTarget;
-
-        let text = "";
-
-        if (targetId) {
-          const target =
-            document.getElementById(
-              targetId
-            );
-
-          text =
-            target?.textContent || "";
-        }
-
-        if (!text) {
-          const card =
-            button.closest(
-              ".question-card"
-            );
-
-          const hindi =
-            card?.querySelector(
-              ".hindi-tts, .hindi-text, [data-hindi]"
-            );
-
-          text =
-            hindi?.textContent || "";
-        }
-
-        if (!text) {
-          return;
-        }
-
-        speakHindi(
-          text
-        );
-      }
-    );
-  });
-}
-
-
-function speakHindi(text) {
-  if (
-    !("speechSynthesis" in window)
-  ) {
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-
-  const utterance =
-    new SpeechSynthesisUtterance(
-      text
-    );
-
-  utterance.lang =
-    "hi-IN";
-
-  utterance.rate =
-    0.9;
-
-  utterance.pitch =
-    1;
-
-  window.speechSynthesis.speak(
-    utterance
+  window.addEventListener(
+    "beforeunload",
+    handleAbandonment
   );
 }
 
@@ -951,190 +324,143 @@ function speakHindi(text) {
    ========================================================= */
 
 function updateReelInformation() {
-  if (!state.reel) {
-    return;
-  }
+  const reel =
+    state.reel;
 
   const title =
-    state.reel.title ||
+    reel?.title ||
     "Shiva & Parvati — Eternal Love";
 
   const reelId =
-    state.reel.reelId ||
+    reel?.reelId ||
     state.reelId;
 
-  const titleElements =
-    $$(
-      "[data-reel-title], #reelTitle"
-    );
-
-  titleElements.forEach(
-    (element) => {
-      element.textContent =
-        title;
-    }
-  );
-
-  const idElements =
-    $$(
-      "[data-reel-id], #reelId"
-    );
-
-  idElements.forEach(
-    (element) => {
-      element.textContent =
-        reelId;
-    }
-  );
-
-  const thumbnails =
-    $$(
-      "[data-reel-thumbnail], #reelThumbnail"
-    );
-
-  thumbnails.forEach(
-    (image) => {
-      if (
-        state.reel.thumbnailUrl
-      ) {
-        image.src =
-          state.reel.thumbnailUrl;
-
-        image.hidden =
-          false;
-      }
-    }
-  );
-}
-
-
-/* =========================================================
-   TEXT FEEDBACK
-   ========================================================= */
-
-function getWrittenFeedback() {
-  const textarea =
+  /*
+   * Existing frontend selectors.
+   */
+  const titleElement =
     document.querySelector(
-      "textarea"
+      "[data-reel-title]"
+    ) ||
+    document.querySelector(
+      ".reel-title"
     );
 
-  if (!textarea) {
-    return "";
+  if (titleElement) {
+    titleElement.textContent =
+      title;
   }
 
-  return textarea.value.trim();
+
+  const idElement =
+    document.querySelector(
+      "[data-reel-id]"
+    ) ||
+    document.querySelector(
+      ".reel-id"
+    );
+
+  if (idElement) {
+    idElement.textContent =
+      reelId;
+  }
+
+
+  const image =
+    document.querySelector(
+      "[data-reel-thumbnail]"
+    ) ||
+    document.querySelector(
+      ".reel-thumbnail img"
+    );
+
+  if (
+    image &&
+    reel?.thumbnailUrl
+  ) {
+    image.src =
+      reel.thumbnailUrl;
+  }
 }
 
 
 /* =========================================================
-   TYPING ANALYTICS
+   QUESTION FLOW
    ========================================================= */
 
-const typingState = {
-  startedAt: null,
-  firstInputAt: null,
-  lastInputAt: null,
-  inputEvents: 0,
-  editCount: 0,
-  maxLength: 0
-};
-
-
-function setupTypingAnalytics() {
-  const textarea =
-    document.querySelector(
-      "textarea"
-    );
-
-  if (!textarea) {
+function showQuestion(index) {
+  if (
+    index < 0 ||
+    index >= state.questions.length
+  ) {
     return;
   }
 
-  textarea.addEventListener(
-    "focus",
-    () => {
-      if (
-        typingState.startedAt === null
-      ) {
-        typingState.startedAt =
-          performance.now();
-      }
-    }
-  );
-
-  textarea.addEventListener(
-    "input",
-    () => {
-
-      const now =
-        performance.now();
-
-      if (
-        typingState.firstInputAt === null
-      ) {
-        typingState.firstInputAt =
-          now;
-      }
-
-      typingState.lastInputAt =
-        now;
-
-      typingState.inputEvents++;
-
-      typingState.editCount++;
-
-      typingState.maxLength =
-        Math.max(
-          typingState.maxLength,
-          textarea.value.length
-        );
-    }
-  );
-}
-
-
-function getTypingAnalytics() {
-  const text =
-    getWrittenFeedback();
-
-  const words =
-    text
-      ? text
-          .trim()
-          .split(/\s+/)
-          .filter(Boolean)
-          .length
-      : 0;
-
-  let writingTimeMs = 0;
-
+  /*
+   * Finish timing of previous question.
+   */
   if (
-    typingState.firstInputAt !== null &&
-    typingState.lastInputAt !== null
+    state.questionEnteredAt &&
+    state.currentQuestion !== index
   ) {
-    writingTimeMs =
-      Math.max(
-        0,
-        typingState.lastInputAt -
-          typingState.firstInputAt
-      );
+    recordQuestionTiming();
   }
 
-  return {
-    characterCount:
-      text.length,
+  state.currentQuestion =
+    index;
 
-    wordCount:
-      words,
+  state.questionEnteredAt =
+    Date.now();
 
-    writingTimeMs,
+  state.engagement.questionViews++;
 
-    inputEvents:
-      typingState.inputEvents,
+  const question =
+    state.questions[index];
 
-    editCount:
-      typingState.editCount
-  };
+  /*
+   * Hide all question cards.
+   */
+  const cards =
+    $$(".question-card");
+
+  cards.forEach(
+    (card) => {
+      card.classList.remove(
+        "active"
+      );
+    }
+  );
+
+
+  /*
+   * Try stable question ID first.
+   */
+  let card =
+    document.querySelector(
+      `[data-question-id="${question.questionId}"]`
+    );
+
+
+  /*
+   * Fallback: question cards in DOM order.
+   */
+  if (!card) {
+    card =
+      cards[index];
+  }
+
+  if (card) {
+    card.classList.add(
+      "active"
+    );
+  }
+
+
+  updateProgress();
+
+  updateNavigation();
+
+  speakQuestion(question);
 }
 
 
@@ -1142,65 +468,525 @@ function getTypingAnalytics() {
    QUESTION TIMING
    ========================================================= */
 
-function recordQuestionTiming(
-  questionIndex
-) {
+function recordQuestionTiming() {
   if (
     state.questionEnteredAt === null
   ) {
     return;
   }
 
-  const duration =
-    Math.max(
-      0,
-      performance.now() -
-        state.questionEnteredAt
-    );
-
-  const card =
-    $$(".question-card")[
-      questionIndex
+  const question =
+    state.questions[
+      state.currentQuestion
     ];
 
-  if (!card) {
+  if (!question) {
     return;
   }
 
-  const questionId =
-    card.dataset.questionId ||
-    `Q${String(
-      questionIndex + 1
-    ).padStart(3, "0")}`;
+  const duration =
+    Math.max(
+      0,
+      Date.now() -
+        state.questionEnteredAt
+    );
 
   const existing =
     state.questionTiming[
-      questionId
+      question.questionId
     ];
 
   if (existing) {
-    existing.viewCount++;
-
-    existing.totalViewTimeMs +=
+    existing.totalMs +=
       duration;
 
+    existing.visits += 1;
   } else {
     state.questionTiming[
-      questionId
+      question.questionId
     ] = {
-      viewCount: 1,
-      totalViewTimeMs:
+      questionId:
+        question.questionId,
+
+      totalMs:
         duration,
 
-      answerTimeMs:
-        duration
+      visits: 1,
+
+      answerTimeMs: 0
     };
   }
 }
 
 
 /* =========================================================
-   DEVICE INFORMATION
+   ANSWER TIMING
+   ========================================================= */
+
+function recordAnswerTiming() {
+  const question =
+    state.questions[
+      state.currentQuestion
+    ];
+
+  if (!question) {
+    return;
+  }
+
+  const timing =
+    state.questionTiming[
+      question.questionId
+    ];
+
+  if (!timing) {
+    return;
+  }
+
+  timing.answerTimeMs =
+    Date.now() -
+    state.questionEnteredAt;
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+function updateProgress() {
+  const total =
+    state.questions.length;
+
+  const current =
+    state.currentQuestion + 1;
+
+
+  const progress =
+    total
+      ? (current / total) * 100
+      : 0;
+
+
+  const progressBar =
+    document.querySelector(
+      "[data-progress]"
+    );
+
+  if (progressBar) {
+    progressBar.style.width =
+      `${progress}%`;
+  }
+
+
+  const progressText =
+    document.querySelector(
+      "[data-progress-text]"
+    );
+
+  if (progressText) {
+    progressText.textContent =
+      `${current} / ${total}`;
+  }
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function updateNavigation() {
+  const backButton =
+    document.querySelector(
+      "[data-back]"
+    ) ||
+    document.querySelector(
+      ".back-btn"
+    );
+
+  const nextButton =
+    document.querySelector(
+      "[data-next]"
+    ) ||
+    document.querySelector(
+      ".next-btn"
+    );
+
+
+  if (backButton) {
+    backButton.disabled =
+      state.currentQuestion === 0;
+  }
+
+
+  if (nextButton) {
+    const isLast =
+      state.currentQuestion ===
+      state.questions.length - 1;
+
+    nextButton.textContent =
+      isLast
+        ? "Share My Feedback"
+        : "Next";
+  }
+}
+
+
+/* =========================================================
+   NEXT QUESTION
+   ========================================================= */
+
+function goNext() {
+  const question =
+    state.questions[
+      state.currentQuestion
+    ];
+
+  if (!question) {
+    return;
+  }
+
+
+  if (
+    question.required &&
+    !hasAnswer(question)
+  ) {
+    showValidationMessage(
+      "Please select an answer before continuing."
+    );
+
+    return;
+  }
+
+
+  recordAnswerTiming();
+
+  state.engagement.nextClicks++;
+
+
+  if (
+    state.currentQuestion ===
+    state.questions.length - 1
+  ) {
+    submit();
+    return;
+  }
+
+
+  showQuestion(
+    state.currentQuestion + 1
+  );
+}
+
+
+/* =========================================================
+   PREVIOUS QUESTION
+   ========================================================= */
+
+function goBack() {
+  if (
+    state.currentQuestion <= 0
+  ) {
+    return;
+  }
+
+  recordQuestionTiming();
+
+  state.engagement.backClicks++;
+
+  showQuestion(
+    state.currentQuestion - 1
+  );
+}
+
+
+/* =========================================================
+   ANSWER CHECK
+   ========================================================= */
+
+function hasAnswer(
+  question
+) {
+  const answer =
+    state.answers[
+      question.questionId
+    ];
+
+  if (
+    answer === undefined ||
+    answer === null
+  ) {
+    return false;
+  }
+
+  if (
+    typeof answer === "string" &&
+    !answer.trim()
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+/* =========================================================
+   OPTION SELECTION
+   ========================================================= */
+
+function selectOption(
+  questionId,
+  optionId,
+  value
+) {
+  const previous =
+    state.answers[
+      questionId
+    ];
+
+
+  if (
+    previous !== undefined &&
+    previous !== optionId
+  ) {
+    state.engagement
+      .optionChanges++;
+  }
+
+
+  state.answers[
+    questionId
+  ] = optionId;
+
+
+  const timing =
+    state.questionTiming[
+      questionId
+    ];
+
+  if (timing) {
+    timing.answerTimeMs =
+      Date.now() -
+      state.questionEnteredAt;
+  }
+
+
+  /*
+   * Keep existing UI selection behavior.
+   */
+  const group =
+    document.querySelectorAll(
+      `[data-question="${questionId}"]`
+    );
+
+  group.forEach(
+    (element) => {
+      element.classList.toggle(
+        "selected",
+        element.dataset.optionId ===
+          optionId
+      );
+    }
+  );
+}
+
+
+/* =========================================================
+   RATING
+   ========================================================= */
+
+function selectRating(
+  questionId,
+  rating
+) {
+  const previous =
+    state.answers[
+      questionId
+    ];
+
+  if (
+    previous !== undefined &&
+    previous !== rating
+  ) {
+    state.engagement
+      .optionChanges++;
+  }
+
+  state.answers[
+    questionId
+  ] = Number(rating);
+
+
+  const stars =
+    document.querySelectorAll(
+      "[data-rating-value]"
+    );
+
+  stars.forEach(
+    (star) => {
+      const value =
+        Number(
+          star.dataset.ratingValue
+        );
+
+      star.classList.toggle(
+        "selected",
+        value <=
+          Number(rating)
+      );
+    }
+  );
+}
+
+
+/* =========================================================
+   TEXT RESPONSE
+   ========================================================= */
+
+function saveTextAnswer(
+  questionId,
+  value
+) {
+  state.answers[
+    questionId
+  ] = value;
+
+  updateTypingAnalytics(
+    questionId,
+    value
+  );
+}
+
+
+/* =========================================================
+   TYPING ANALYTICS
+   ========================================================= */
+
+function setupTypingAnalytics() {
+  const textareas =
+    $$("textarea");
+
+  textareas.forEach(
+    (textarea) => {
+      const questionId =
+        textarea.dataset.questionId ||
+        "Q005";
+
+      let started =
+        null;
+
+      textarea.addEventListener(
+        "focus",
+        () => {
+          if (!started) {
+            started =
+              Date.now();
+          }
+        }
+      );
+
+
+      textarea.addEventListener(
+        "input",
+        () => {
+          if (!started) {
+            started =
+              Date.now();
+          }
+
+          updateTypingAnalytics(
+            questionId,
+            textarea.value,
+            started
+          );
+        }
+      );
+
+
+      textarea.addEventListener(
+        "blur",
+        () => {
+          if (!started) {
+            return;
+          }
+
+          updateTypingAnalytics(
+            questionId,
+            textarea.value,
+            started
+          );
+        }
+      );
+    }
+  );
+}
+
+
+function updateTypingAnalytics(
+  questionId,
+  value,
+  startedAt = null
+) {
+  const text =
+    String(value || "");
+
+
+  const words =
+    text.trim()
+      ? text
+          .trim()
+          .split(/\s+/)
+          .length
+      : 0;
+
+
+  if (
+    !state.typing[questionId]
+  ) {
+    state.typing[
+      questionId
+    ] = {
+      questionId,
+      characterCount: 0,
+      wordCount: 0,
+      editCount: 0,
+      writingTimeMs: 0
+    };
+  }
+
+
+  const data =
+    state.typing[
+      questionId
+    ];
+
+
+  if (
+    data.characterCount !==
+    text.length
+  ) {
+    data.editCount++;
+  }
+
+
+  data.characterCount =
+    text.length;
+
+  data.wordCount =
+    words;
+
+
+  if (startedAt) {
+    data.writingTimeMs =
+      Math.max(
+        0,
+        Date.now() -
+          startedAt
+      );
+  }
+}
+
+
+/* =========================================================
+   DEVICE DATA
    ========================================================= */
 
 function getDeviceInfo() {
@@ -1215,135 +1001,56 @@ function getDeviceInfo() {
       navigator.platform || "",
 
     screenWidth:
-      window.screen.width,
+      window.screen?.width || null,
 
     screenHeight:
-      window.screen.height,
+      window.screen?.height || null,
 
     viewportWidth:
-      window.innerWidth,
+      window.innerWidth || null,
 
     viewportHeight:
-      window.innerHeight,
+      window.innerHeight || null,
 
     devicePixelRatio:
       window.devicePixelRatio || 1,
 
-    online:
-      navigator.onLine
+    timezone:
+      Intl.DateTimeFormat()
+        .resolvedOptions()
+        .timeZone || ""
   };
 }
 
 
 /* =========================================================
-   SUBMIT
+   SUBMIT FEEDBACK
    ========================================================= */
 
-function setupSubmitButton() {
-  const buttons =
-    $$(
-      "[data-action='submit'], #submitButton, button[type='submit']"
-    );
-
-  buttons.forEach((button) => {
-
-    button.addEventListener(
-      "click",
-      async (event) => {
-
-        /*
-         * Prevent the HTML form's default
-         * page reload.
-         */
-        const form =
-          button.closest("form");
-
-        if (form) {
-          event.preventDefault();
-        }
-
-        await handleSubmit(button);
-      }
-    );
-  });
-}
-
-
-async function handleSubmit(
-  button
-) {
+async function submit() {
   if (state.submitted) {
     return;
   }
 
-  if (
-    !validateCurrentQuestion()
-  ) {
-    return;
-  }
+
+  recordQuestionTiming();
+
 
   state.completedAt =
-    new Date().toISOString();
+    Date.now();
 
-  /*
-   * Record final question timing.
-   */
-  recordQuestionTiming(
-    state.currentQuestion
-  );
 
-  const started =
-    new Date(
-      state.startedAt
-    ).getTime();
+  state.engagement.abandoned =
+    false;
 
-  const completed =
-    new Date(
-      state.completedAt
-    ).getTime();
 
   const totalDurationMs =
     Math.max(
       0,
-      completed - started
+      state.completedAt -
+        state.startedAt
     );
 
-  /*
-   * Add textarea answer.
-   */
-  const writtenFeedback =
-    getWrittenFeedback();
-
-  if (writtenFeedback) {
-    state.answers.Q005 = {
-      optionId: "Q005_TEXT",
-      value: writtenFeedback
-    };
-  }
-
-  /*
-   * Typing analytics.
-   */
-  const typing =
-    getTypingAnalytics();
-
-  state.engagement.typing =
-    typing;
-
-  /*
-   * Lock button.
-   */
-  const originalText =
-    button?.textContent ||
-    "Share My Feedback";
-
-  if (button) {
-    button.disabled =
-      true;
-
-    button.textContent =
-      "Submitting…";
-  }
 
   const payload = {
     reelId:
@@ -1361,7 +1068,8 @@ async function handleSubmit(
     engagement:
       state.engagement,
 
-    typing,
+    typing:
+      state.typing,
 
     device:
       getDeviceInfo(),
@@ -1375,11 +1083,23 @@ async function handleSubmit(
     totalDurationMs
   };
 
-  try {
 
-    await submitFeedback(
-      payload
+  setSubmitLoading(
+    true
+  );
+
+
+  try {
+    const result =
+      await submitFeedback(
+        payload
+      );
+
+    console.log(
+      "Feedback submitted:",
+      result
     );
+
 
     state.submitted =
       true;
@@ -1387,23 +1107,111 @@ async function handleSubmit(
     showSuccess();
 
   } catch (error) {
-
     console.error(
       "Feedback submission failed:",
       error
     );
 
-    if (button) {
-      button.disabled =
-        false;
+    showSubmitError();
 
-      button.textContent =
-        originalText;
-    }
-
-    showSubmitError(
-      error
+  } finally {
+    setSubmitLoading(
+      false
     );
+  }
+}
+
+
+/* =========================================================
+   ABANDONMENT
+   ========================================================= */
+
+function handleAbandonment() {
+  if (
+    state.submitted
+  ) {
+    return;
+  }
+
+  /*
+   * This is only kept in memory here.
+   * A future server-side/session event system
+   * can record true abandoned sessions.
+   */
+  state.engagement.abandoned =
+    true;
+}
+
+
+/* =========================================================
+   VALIDATION
+   ========================================================= */
+
+function showValidationMessage(
+  message
+) {
+  let element =
+    document.querySelector(
+      "[data-validation]"
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    message;
+
+  element.classList.add(
+    "show"
+  );
+
+
+  setTimeout(
+    () => {
+      element.classList.remove(
+        "show"
+      );
+    },
+    2500
+  );
+}
+
+
+/* =========================================================
+   SUBMIT LOADING
+   ========================================================= */
+
+function setSubmitLoading(
+  loading
+) {
+  const button =
+    document.querySelector(
+      "[data-submit]"
+    ) ||
+    document.querySelector(
+      ".submit-btn"
+    );
+
+  if (!button) {
+    return;
+  }
+
+  button.disabled =
+    loading;
+
+  if (loading) {
+    button.dataset
+      .originalText =
+      button.textContent;
+
+    button.textContent =
+      "Saving...";
+  } else {
+    button.textContent =
+      button.dataset
+        .originalText ||
+      "Share My Feedback";
   }
 }
 
@@ -1415,16 +1223,21 @@ async function handleSubmit(
 function showSuccess() {
   const form =
     document.querySelector(
-      "form"
+      "[data-feedback-form]"
+    ) ||
+    document.querySelector(
+      ".feedback-form"
     );
 
-  /*
-   * Existing success section.
-   */
+
   const success =
-    $(
-      "#success, .success-screen, [data-success]"
+    document.querySelector(
+      "[data-success]"
+    ) ||
+    document.querySelector(
+      ".success"
     );
+
 
   if (form) {
     form.style.display =
@@ -1432,116 +1245,255 @@ function showSuccess() {
   }
 
   if (success) {
-    success.hidden =
-      false;
-
     success.style.display =
-      "";
+      "block";
+  }
+}
+
+
+/* =========================================================
+   SUBMIT ERROR
+   ========================================================= */
+
+function showSubmitError() {
+  alert(
+    "We couldn't save your feedback right now. Please try again."
+  );
+}
+
+
+/* =========================================================
+   HINDI VOICE
+   ========================================================= */
+
+function speakQuestion(
+  question
+) {
+  if (
+    !("speechSynthesis" in window)
+  ) {
+    return;
   }
 
-  /*
-   * Also support existing HTML
-   * where success content already exists.
-   */
-  const successText =
-    $$(
-      "[data-success-message]"
-    );
 
-  successText.forEach(
-    (element) => {
-      element.textContent =
-        "Thank you for sharing. Your feeling has been heard.";
+  if (
+    !question?.hindiText
+  ) {
+    return;
+  }
+
+
+  /*
+   * Do not automatically speak every
+   * question if browser/user has not
+   * interacted yet.
+   */
+}
+
+
+/**
+ * Public helper for existing voice button.
+ */
+window.speakHindi =
+  function (
+    questionId
+  ) {
+    if (
+      !("speechSynthesis" in window)
+    ) {
+      return;
+    }
+
+
+    const question =
+      state.questions.find(
+        (item) =>
+          item.questionId ===
+          questionId
+      );
+
+
+    if (!question) {
+      return;
+    }
+
+
+    window.speechSynthesis.cancel();
+
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        question.hindiText ||
+        question.questionText
+      );
+
+
+    utterance.lang =
+      "hi-IN";
+
+    utterance.rate =
+      0.9;
+
+    utterance.pitch =
+      1;
+
+
+    window.speechSynthesis
+      .speak(
+        utterance
+      );
+  };
+
+
+/* =========================================================
+   EXISTING HTML UI BINDINGS
+   ========================================================= */
+
+function setupExistingUI() {
+
+  /*
+   * Next buttons.
+   */
+  $$(
+    "[data-next], .next-btn"
+  ).forEach(
+    (button) => {
+      button.addEventListener(
+        "click",
+        goNext
+      );
     }
   );
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-function showSubmitError(
-  error
-) {
-  let message =
-    "We couldn't submit your feedback. Please try again.";
-
-  if (
-    !navigator.onLine
-  ) {
-    message =
-      "You appear to be offline. Please check your internet connection and try again.";
-  }
-
-  let element =
-    $("#submitError");
-
-  if (!element) {
-    element =
-      document.createElement("div");
-
-    element.id =
-      "submitError";
-
-    element.setAttribute(
-      "role",
-      "alert"
-    );
-
-    element.style.marginTop =
-      "12px";
-
-    element.style.textAlign =
-      "center";
-
-    const submit =
-      $(
-        "[data-action='submit'], #submitButton"
-      );
-
-    submit?.parentElement
-      ?.appendChild(element);
-  }
-
-  element.textContent =
-    message;
-}
-
-
-/* =========================================================
-   LOADING ERROR
-   ========================================================= */
-
-function showLoadingError(
-  error
-) {
-  console.warn(
-    "Firebase loading error:",
-    error
-  );
 
   /*
-   * We don't destroy the form.
-   * The fallback questions remain available.
+   * Back buttons.
    */
-  state.questions =
-    getDefaultQuestions();
+  $$(
+    "[data-back], .back-btn"
+  ).forEach(
+    (button) => {
+      button.addEventListener(
+        "click",
+        goBack
+      );
+    }
+  );
 
-  setupExistingUI();
-  setupQuestionFlow();
-  setupTypingAnalytics();
-  showQuestion(0);
+
+  /*
+   * Option buttons.
+   */
+  $$(
+    "[data-option-id]"
+  ).forEach(
+    (element) => {
+      element.addEventListener(
+        "click",
+        () => {
+
+          const optionId =
+            element.dataset
+              .optionId;
+
+          const questionId =
+            element.dataset
+              .questionId ||
+            element.closest(
+              "[data-question-id]"
+            )?.dataset
+              .questionId;
+
+
+          if (
+            !questionId ||
+            !optionId
+          ) {
+            return;
+          }
+
+
+          selectOption(
+            questionId,
+            optionId,
+            element.dataset
+              .value ||
+              element.textContent
+          );
+        }
+      );
+    }
+  );
+
+
+  /*
+   * Rating buttons.
+   */
+  $$(
+    "[data-rating-value]"
+  ).forEach(
+    (element) => {
+      element.addEventListener(
+        "click",
+        () => {
+
+          const rating =
+            Number(
+              element.dataset
+                .ratingValue
+            );
+
+
+          const questionId =
+            element.dataset
+              .questionId ||
+            "Q004";
+
+
+          selectRating(
+            questionId,
+            rating
+          );
+        }
+      );
+    }
+  );
+
+
+  /*
+   * Textareas.
+   */
+  $$(
+    "textarea"
+  ).forEach(
+    (textarea) => {
+
+      textarea.addEventListener(
+        "input",
+        () => {
+
+          const questionId =
+            textarea.dataset
+              .questionId ||
+            "Q005";
+
+
+          saveTextAnswer(
+            questionId,
+            textarea.value
+          );
+        }
+      );
+    }
+  );
 }
 
 
 /* =========================================================
-   START TYPING ANALYTICS
+   START
    ========================================================= */
 
-setupTypingAnalytics();
+document.addEventListener(
+  "DOMContentLoaded",
+  init
+);
