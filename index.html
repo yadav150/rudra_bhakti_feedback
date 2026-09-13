@@ -2,580 +2,632 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="description"
-    content="Share your feedback with Rudra Bhakti."
-  >
+  <title>Rudra Bhakti — Feedback</title>
 
-  <title>Rudra Bhakti — Share Your Feedback</title>
-
-  <link rel="stylesheet" href="style.css">
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-  <main class="app-shell">
+  <div class="page">
 
-    <!-- =========================
-         INTRO / USER DETAILS
-    ========================== -->
+    <!-- HEADER -->
+    <header class="header">
 
-    <section
-      id="welcomeScreen"
-      class="screen active"
-      aria-labelledby="welcomeTitle"
-    >
-
-      <div class="brand-mark" aria-hidden="true">
-        <svg
-          viewBox="0 0 48 48"
-          width="28"
-          height="28"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M24 5v38M12 12c4 4 8 5 12 5s8-1 12-5M10 25c5 4 9 5 14 5s9-1 14-5"
-            stroke="currentColor"
-            stroke-width="2.4"
-            stroke-linecap="round"
-          />
-        </svg>
+      <div class="logo">
+        ॐ
       </div>
 
-      <div class="screen-content">
+      <div class="brand">
+        Rudra Bhakti
+      </div>
 
-        <span class="eyebrow">
-          RUDRA BHAKTI
-        </span>
+      <div class="subtitle">
+        Your feelings help us create better devotional content.
+      </div>
 
-        <h1 id="welcomeTitle">
-          Your thoughts matter.
-        </h1>
+    </header>
 
-        <p class="intro-text">
-          We would love to know how this Reel made you feel.
-          Your feedback helps us create more meaningful
-          devotional content.
-        </p>
 
-        <div
-          id="reelPreview"
-          class="reel-preview hidden"
-        >
-          <div class="reel-thumbnail-wrap">
-            <img
-              id="reelThumbnail"
-              class="reel-thumbnail"
-              src=""
-              alt=""
-            >
-          </div>
+    <!-- MAIN FEEDBACK AREA -->
+    <main id="feedbackForm">
 
-          <div class="reel-info">
-            <span class="reel-label">
-              FEEDBACK FOR
-            </span>
+      <!-- REEL INFORMATION -->
+      <section class="reel">
 
-            <h2 id="reelTitle">
-              —
-            </h2>
-          </div>
+        <div class="reel-thumb">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round">
+
+            <path d="M8 5v14l11-7z"/>
+
+          </svg>
+
         </div>
 
+        <div class="reel-info">
 
-        <!-- USER DETAILS -->
+          <small>You're reviewing</small>
 
-        <form id="userDetailsForm" novalidate>
+          <h2 id="reelTitle">
+            Shiva &amp; Parvati — Eternal Love
+          </h2>
 
-          <div class="field-group">
+          <p id="reelId">
+            RUDRA • RB001
+          </p>
 
-            <label for="userName">
-              Your Name
-            </label>
+        </div>
 
-            <input
-              id="userName"
-              name="name"
-              type="text"
-              autocomplete="name"
-              placeholder="Enter your name"
-              maxlength="100"
-              required
-            >
-
-            <small
-              id="nameError"
-              class="field-error"
-            ></small>
-
-          </div>
+      </section>
 
 
-          <div class="field-group">
+      <!-- PROGRESS -->
+      <div class="progress-area">
 
-            <label for="userEmail">
-              Email Address
-            </label>
-
-            <input
-              id="userEmail"
-              name="email"
-              type="email"
-              autocomplete="email"
-              placeholder="Enter your email"
-              maxlength="150"
-              required
-            >
-
-            <small
-              id="emailError"
-              class="field-error"
-            ></small>
-
-          </div>
-
-
-          <div class="field-group">
-
-            <label for="userMobile">
-              Mobile Number
-            </label>
-
-            <input
-              id="userMobile"
-              name="mobile"
-              type="tel"
-              autocomplete="tel"
-              inputmode="numeric"
-              placeholder="Enter your mobile number"
-              maxlength="15"
-              required
-            >
-
-            <small
-              id="mobileError"
-              class="field-error"
-            ></small>
-
-          </div>
-
-
-          <button
-            id="continueToFeedback"
-            class="primary-button"
-            type="submit"
-          >
-            <span>Continue</span>
-
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M5 12h13M13 6l6 6-6 6"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-
-        </form>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         FEEDBACK
-    ========================== -->
-
-    <section
-      id="feedbackScreen"
-      class="screen hidden"
-      aria-labelledby="questionTitle"
-    >
-
-      <div class="feedback-header">
-
-        <div class="progress-meta">
-          <span id="questionCounter">
-            Question 1 of 5
-          </span>
-
-          <span id="progressPercent">
-            20%
-          </span>
+        <div class="progress-info">
+          <span id="stepLabel">Question 1 of 5</span>
+          <span id="progressPercent">20%</span>
         </div>
 
         <div class="progress-track">
           <div
-            id="progressBar"
-            class="progress-fill"
-            style="width: 20%"
-          ></div>
+            class="progress-bar"
+            id="progressBar">
+          </div>
         </div>
 
       </div>
 
 
-      <div class="question-content">
+      <!-- =========================
+           QUESTION 1
+      ========================== -->
 
-        <div class="question-heading">
+      <section
+        class="question-page active"
+        data-question-id="Q001"
+        data-step="1">
 
-          <div>
-            <span
-              id="questionLabel"
-              class="eyebrow"
-            >
-              YOUR FEELING
-            </span>
+        <div class="card">
 
-            <h1 id="questionTitle">
+          <div class="question">
+
+            <div class="question-text">
               How did this Reel make you feel?
-            </h1>
+              <span class="required">Required</span>
+            </div>
+
+            <button
+              class="voice"
+              type="button"
+              onclick="speakHindi(
+                this,
+                'इस रील को देखकर आपको कैसा महसूस हुआ?'
+              )"
+              aria-label="Hear question in Hindi">
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+
+                <path d="M11 5 6 9H3v6h3l5 4V5z"/>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+
+              </svg>
+
+            </button>
+
           </div>
 
 
-          <!-- HINDI TTS -->
+          <div class="feelings">
 
-          <button
-            id="voiceButton"
-            class="icon-button"
-            type="button"
-            aria-label="Listen to Hindi translation"
-            title="Listen in Hindi"
-          >
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q001"
+              data-option-id="Q001_OPT01">
+              Peaceful
+            </button>
 
-            <svg
-              viewBox="0 0 24 24"
-              width="21"
-              height="21"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M4 10v4h4l5 4V6l-5 4H4Z"
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q001"
+              data-option-id="Q001_OPT02">
+              Devotional
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q001"
+              data-option-id="Q001_OPT03">
+              Emotional
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q001"
+              data-option-id="Q001_OPT04">
+              Inspired
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q001"
+              data-option-id="Q001_OPT05">
+              Calm
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q001"
+              data-option-id="Q001_OPT06">
+              Deeply moved
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================
+           QUESTION 2
+      ========================== -->
+
+      <section
+        class="question-page"
+        data-question-id="Q002"
+        data-step="2">
+
+        <div class="card">
+
+          <div class="question">
+
+            <div class="question-text">
+              Would you like to see more Reels like this?
+            </div>
+
+            <button
+              class="voice"
+              type="button"
+              onclick="speakHindi(
+                this,
+                'क्या आप इस तरह की और रील देखना चाहेंगे?'
+              )"
+              aria-label="Hear question in Hindi">
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
                 stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linejoin="round"
-              />
-
-              <path
-                d="M17 9.5a4 4 0 0 1 0 5M19.5 7a7.5 7.5 0 0 1 0 10"
-                stroke="currentColor"
-                stroke-width="1.8"
+                stroke-width="2"
                 stroke-linecap="round"
-              />
-            </svg>
+                stroke-linejoin="round">
 
-          </button>
+                <path d="M11 5 6 9H3v6h3l5 4V5z"/>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+
+              </svg>
+
+            </button>
+
+          </div>
+
+
+          <div class="stack">
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q002"
+              data-option-id="Q002_OPT01">
+
+              <span class="radio"></span>
+              Definitely — I love this type of content
+
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q002"
+              data-option-id="Q002_OPT02">
+
+              <span class="radio"></span>
+              Yes, sometimes
+
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q002"
+              data-option-id="Q002_OPT03">
+
+              <span class="radio"></span>
+              I'm not sure
+
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q002"
+              data-option-id="Q002_OPT04">
+
+              <span class="radio"></span>
+              Not really
+
+            </button>
+
+          </div>
 
         </div>
 
-
-        <p
-          id="questionHint"
-          class="question-hint"
-        >
-          Choose the option that best describes your feeling.
-        </p>
+      </section>
 
 
-        <!-- ANSWERS -->
+      <!-- =========================
+           QUESTION 3
+      ========================== -->
 
-        <div
-          id="answerOptions"
-          class="answer-options"
-        >
-          <!-- Generated by app.js -->
+      <section
+        class="question-page"
+        data-question-id="Q003"
+        data-step="3">
+
+        <div class="card">
+
+          <div class="question">
+
+            <div class="question-text">
+              What did you connect with the most?
+            </div>
+
+            <button
+              class="voice"
+              type="button"
+              onclick="speakHindi(
+                this,
+                'इस रील में आपको सबसे ज्यादा किस चीज़ से जुड़ाव महसूस हुआ?'
+              )"
+              aria-label="Hear question in Hindi">
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+
+                <path d="M11 5 6 9H3v6h3l5 4V5z"/>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+
+              </svg>
+
+            </button>
+
+          </div>
+
+
+          <div class="stack">
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q003"
+              data-option-id="Q003_OPT01">
+
+              <span class="radio"></span>
+              The Shiva &amp; Parvati emotion
+
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q003"
+              data-option-id="Q003_OPT02">
+
+              <span class="radio"></span>
+              The devotional feeling
+
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q003"
+              data-option-id="Q003_OPT03">
+
+              <span class="radio"></span>
+              The artwork / visuals
+
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q003"
+              data-option-id="Q003_OPT04">
+
+              <span class="radio"></span>
+              The music
+
+            </button>
+
+            <button
+              class="option"
+              type="button"
+              data-question-id="Q003"
+              data-option-id="Q003_OPT05">
+
+              <span class="radio"></span>
+              Everything together
+
+            </button>
+
+          </div>
+
         </div>
 
+      </section>
 
-        <!-- OPTIONAL TEXT -->
 
-        <div
-          id="textAnswerContainer"
-          class="text-answer-container hidden"
-        >
+      <!-- =========================
+           QUESTION 4
+      ========================== -->
 
-          <label for="openFeedback">
-            Share anything you'd like us to know
-          </label>
+      <section
+        class="question-page"
+        data-question-id="Q004"
+        data-step="4">
+
+        <div class="card">
+
+          <div class="question">
+
+            <div class="question-text">
+              How would you rate this Reel?
+            </div>
+
+            <button
+              class="voice"
+              type="button"
+              onclick="speakHindi(
+                this,
+                'आप इस रील को कितने अंक देना चाहेंगे?'
+              )"
+              aria-label="Hear question in Hindi">
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+
+                <path d="M11 5 6 9H3v6h3l5 4V5z"/>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+
+              </svg>
+
+            </button>
+
+          </div>
+
+
+          <div class="rating">
+
+            <button
+              class="rate"
+              type="button"
+              data-question-id="Q004"
+              data-option-id="Q004_OPT01"
+              data-value="1">
+              1
+            </button>
+
+            <button
+              class="rate"
+              type="button"
+              data-question-id="Q004"
+              data-option-id="Q004_OPT02"
+              data-value="2">
+              2
+            </button>
+
+            <button
+              class="rate"
+              type="button"
+              data-question-id="Q004"
+              data-option-id="Q004_OPT03"
+              data-value="3">
+              3
+            </button>
+
+            <button
+              class="rate"
+              type="button"
+              data-question-id="Q004"
+              data-option-id="Q004_OPT04"
+              data-value="4">
+              4
+            </button>
+
+            <button
+              class="rate"
+              type="button"
+              data-question-id="Q004"
+              data-option-id="Q004_OPT05"
+              data-value="5">
+              5
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================
+           QUESTION 5
+      ========================== -->
+
+      <section
+        class="question-page"
+        data-question-id="Q005"
+        data-step="5">
+
+        <div class="card">
+
+          <div class="question">
+
+            <div class="question-text">
+              Tell us what you felt
+            </div>
+
+            <button
+              class="voice"
+              type="button"
+              onclick="speakHindi(
+                this,
+                'आपने क्या महसूस किया, हमें बताइए।'
+              )"
+              aria-label="Hear question in Hindi">
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+
+                <path d="M11 5 6 9H3v6h3l5 4V5z"/>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+
+              </svg>
+
+            </button>
+
+          </div>
+
 
           <textarea
-            id="openFeedback"
-            rows="5"
-            maxlength="1000"
-            placeholder="Write your thoughts here..."
-          ></textarea>
-
-          <div class="character-count">
-            <span id="characterCount">0</span>/1000
-          </div>
+            id="message"
+            placeholder="Share your thoughts, emotions or suggestions..."></textarea>
 
         </div>
 
-      </div>
+      </section>
 
 
-      <div class="question-footer">
+      <!-- NAVIGATION -->
+      <div class="navigation">
 
         <button
-          id="backButton"
-          class="secondary-button"
+          class="nav-btn back-btn"
+          id="backBtn"
           type="button"
-        >
+          onclick="previousQuestion()">
 
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M19 12H5M11 18l-6-6 6-6"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-
-          <span>Back</span>
+          Back
 
         </button>
 
-
         <button
-          id="continueButton"
-          class="primary-button"
+          class="nav-btn next-btn"
+          id="nextBtn"
           type="button"
-          disabled
-        >
+          onclick="nextQuestion()">
 
-          <span>Continue</span>
-
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M5 12h13M13 6l6 6-6 6"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          Next
 
         </button>
 
       </div>
 
-    </section>
+
+      <div class="note">
+        Your feedback helps Rudra Bhakti understand what truly resonates with you.
+      </div>
+
+    </main>
 
 
-    <!-- =========================
-         SUBMITTING
-    ========================== -->
-
+    <!-- SUCCESS -->
     <section
-      id="submittingScreen"
-      class="screen hidden"
-    >
+      class="card success"
+      id="success">
 
-      <div class="status-content">
+      <div class="success-icon">
 
-        <div class="loader" aria-hidden="true"></div>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
 
-        <h1>
-          Saving your feedback
-        </h1>
+          <path d="m5 12 4 4L19 6"/>
 
-        <p>
-          Please wait a moment.
-        </p>
+        </svg>
 
       </div>
+
+      <h2>
+        Thank you for sharing.
+      </h2>
+
+      <p>
+        Your feeling has been heard.<br>
+        It will help us create more meaningful content for the Rudra Bhakti community.
+      </p>
 
     </section>
 
 
-    <!-- =========================
-         THANK YOU
-    ========================== -->
+    <!-- FOOTER -->
+    <div class="footer">
+      Rudra Bhakti • A space for devotion &amp; feelings
+    </div>
 
-    <section
-      id="thankYouScreen"
-      class="screen hidden"
-      aria-labelledby="thankYouTitle"
-    >
-
-      <div class="status-content">
-
-        <div
-          class="success-icon"
-          aria-hidden="true"
-        >
-
-          <svg
-            viewBox="0 0 48 48"
-            width="32"
-            height="32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="m13 25 8 8 14-17"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-
-        </div>
-
-        <span class="eyebrow">
-          FEEDBACK RECEIVED
-        </span>
-
-        <h1 id="thankYouTitle">
-          Thank you for sharing.
-        </h1>
-
-        <p>
-          Your response has been recorded successfully.
-          Your thoughts help us create more meaningful
-          devotional content.
-        </p>
+  </div>
 
 
-        <!-- FACEBOOK SHARE -->
-
-        <button
-          id="facebookShareButton"
-          class="share-button"
-          type="button"
-        >
-
-          <svg
-            viewBox="0 0 24 24"
-            width="19"
-            height="19"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M14 8h3V4h-3c-3.3 0-5 1.8-5 5v3H6v4h3v4h4v-4h3l1-4h-4V9c0-.7.3-1 1-1Z"
-              fill="currentColor"
-            />
-          </svg>
-
-          <span>
-            Share on Facebook
-          </span>
-
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         ERROR
-    ========================== -->
-
-    <section
-      id="errorScreen"
-      class="screen hidden"
-    >
-
-      <div class="status-content">
-
-        <div
-          class="error-icon"
-          aria-hidden="true"
-        >
-
-          <svg
-            viewBox="0 0 48 48"
-            width="30"
-            height="30"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M24 13v12"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-            />
-
-            <circle
-              cx="24"
-              cy="32"
-              r="1.7"
-              fill="currentColor"
-            />
-
-            <path
-              d="M21.4 6.8 6.8 32.1A5 5 0 0 0 11.1 39h25.8a5 5 0 0 0 4.3-6.9L26.6 6.8a3 3 0 0 0-5.2 0Z"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linejoin="round"
-            />
-          </svg>
-
-        </div>
-
-        <h1>
-          Something went wrong.
-        </h1>
-
-        <p id="errorMessage">
-          We could not load this feedback page.
-          Please try again.
-        </p>
-
-        <button
-          id="retryButton"
-          class="primary-button"
-          type="button"
-        >
-          Try Again
-        </button>
-
-      </div>
-
-    </section>
-
-  </main>
-
-
-  <script type="module" src="app.js"></script>
+  <!-- Main JavaScript -->
+  <script src="js/script.js"></script>
 
 </body>
 </html>
