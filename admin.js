@@ -590,7 +590,14 @@ function renderRow(f) {
                 ${item('Reel', f.reelId ? f.reelId + ' — ' + (f.reelTitle || '') : null)}
                 ${item('Feeling', f.feeling)}
                 ${item('Would watch more', f.wouldWatchMore)}
-                ${item('Connected with', f.connectedWith)}
+                                ${item('Connected with', f.connectedWith)}
+                ${item('Stood out', f.stoodOut)}
+                ${item('Held interest', f.heldInterest)}
+                ${item('Presentation', f.presentation)}
+                ${item('Improve', f.improve)}
+                ${item('Wants more of', f.wantMore)}
+                ${item('Engage again', f.engageAgain)}
+                ${item('Liked part', f.likedPart)}
                 ${f.message ? `
                     <div class="row-item row-message">
                         <span class="row-item-label">Message</span>
