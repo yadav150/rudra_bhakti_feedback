@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rudra Bhakti — Admin Dashboard</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+
+  <!-- LOGIN -->
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="logo">ॐ</div>
+      <h1>Rudra Bhakti</h1>
+      <p>Admin Analysis Dashboard</p>
+
+      <form id="loginForm">
+        <input
+          type="email"
+          id="email"
+          placeholder="Admin email"
+          autocomplete="email"
+          required
+        >
+
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button type="submit">Sign In</button>
+
+        <div id="loginError" class="error"></div>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- DASHBOARD -->
+  <main id="dashboard" class="dashboard hidden">
+
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">RUDRA BHAKTI</span>
+        <h1>Feedback Analytics</h1>
+      </div>
+
+      <button id="logoutBtn" class="logout-btn">
+        Logout
+      </button>
+    </header>
+
+
+    <section class="controls">
+      <label for="reelFilter">Reel</label>
+
+      <select id="reelFilter">
+        <option value="ALL">All Reels</option>
+      </select>
+
+      <button id="refreshBtn">Refresh</button>
+    </section>
+
+
+    <!-- SUMMARY -->
+    <section class="stats-grid">
+
+      <div class="stat-card">
+        <span>Total Responses</span>
+        <strong id="totalResponses">0</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Average Rating</span>
+        <strong id="averageRating">0.0</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Want More Content</span>
+        <strong id="moreContent">0%</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Top Feeling</span>
+        <strong id="topFeeling">—</strong>
+      </div>
+
+    </section>
+
+
+    <!-- ANALYTICS -->
+    <section class="analytics-grid">
+
+      <div class="panel">
+        <h2>How did people feel?</h2>
+        <div id="feelingResults"></div>
+      </div>
+
+      <div class="panel">
+        <h2>More content?</h2>
+        <div id="moreResults"></div>
+      </div>
+
+      <div class="panel">
+        <h2>What connected most?</h2>
+        <div id="connectionResults"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Ratings</h2>
+        <div id="ratingResults"></div>
+      </div>
+
+    </section>
+
+
+    <!-- WRITTEN FEEDBACK -->
+    <section class="panel feedback-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Written Feedback</h2>
+          <p>Messages shared by your audience</p>
+        </div>
+
+        <span id="feedbackCount">0</span>
+      </div>
+
+      <div id="writtenFeedback"></div>
+    </section>
+
+  </main>
+
+
+  <script type="module" src="admin.js"></script>
+
+</body>
+</html>
