@@ -13,7 +13,7 @@
 </head>
 <body>
 
-<!-- ===== LOGIN ===== -->
+<!-- LOGIN -->
 <div class="auth-wrap" id="loginWrap">
     <div class="auth-card">
         <div class="auth-brand">
@@ -21,7 +21,6 @@
             <div class="brand">Admin Panel</div>
             <div class="subtitle">Rudra Bhakti · Reel Feedback</div>
         </div>
-
         <form id="loginForm" class="auth-form" novalidate>
             <div class="field">
                 <label for="loginEmail">Email</label>
@@ -31,21 +30,15 @@
                 <label for="loginPassword">Password</label>
                 <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
             </div>
-
             <p class="form-error" id="loginError" role="alert"></p>
-
-            <button type="submit" class="btn btn-primary">
-                <span id="loginLabel">Sign In</span>
-            </button>
-
+            <button type="submit" class="btn btn-primary"><span id="loginLabel">Sign In</span></button>
             <button type="button" class="link-btn" id="forgotLink">Forgot password?</button>
         </form>
-
         <p class="auth-note">Phase 1 preview — sign in with any demo credentials.</p>
     </div>
 </div>
 
-<!-- ===== FORGOT ===== -->
+<!-- FORGOT -->
 <div class="auth-wrap" id="forgotWrap" hidden>
     <div class="auth-card">
         <div class="auth-brand">
@@ -58,26 +51,20 @@
             <div class="brand">Reset Password</div>
             <div class="subtitle">Enter your admin email</div>
         </div>
-
         <form id="forgotForm" class="auth-form" novalidate>
             <div class="field">
                 <label for="forgotEmail">Email</label>
                 <input type="email" id="forgotEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
             </div>
-
             <p class="form-error" id="forgotError"></p>
             <p class="form-success" id="forgotSuccess"></p>
-
-            <button type="submit" class="btn btn-primary">
-                <span id="forgotLabel">Send Reset Link</span>
-            </button>
-
+            <button type="submit" class="btn btn-primary"><span id="forgotLabel">Send Reset Link</span></button>
             <button type="button" class="link-btn" id="forgotBack">Back to Sign In</button>
         </form>
     </div>
 </div>
 
-<!-- ===== DASHBOARD ===== -->
+<!-- DASHBOARD -->
 <div class="dash" id="dash" hidden>
 
     <header class="dash-header">
@@ -90,6 +77,12 @@
                 </div>
             </div>
             <div class="dash-user">
+                <button type="button" class="btn btn-primary btn-nav-add" id="openAddReel">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    <span>Add Reel</span>
+                </button>
                 <span class="dash-user-email" id="dashUserEmail">admin@rudrabhakti.com</span>
                 <button type="button" class="btn-logout" id="logoutBtn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -103,6 +96,7 @@
 
     <main class="dash-main">
 
+        <!-- EXISTING STATS -->
         <section class="stats">
             <div class="stat">
                 <div class="stat-icon">
@@ -115,7 +109,6 @@
                     <span class="stat-value" id="statTotal">0</span>
                 </div>
             </div>
-
             <div class="stat">
                 <div class="stat-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -127,7 +120,6 @@
                     <span class="stat-value" id="statAvg">0.0</span>
                 </div>
             </div>
-
             <div class="stat">
                 <div class="stat-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -139,7 +131,6 @@
                     <span class="stat-value" id="statFive">0</span>
                 </div>
             </div>
-
             <div class="stat">
                 <div class="stat-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -154,33 +145,317 @@
             </div>
         </section>
 
-        <!-- REEL MANAGEMENT -->
+        <!-- EXISTING REEL MANAGEMENT -->
         <section class="reel-mgmt">
             <div class="reel-mgmt-head">
                 <div>
                     <h2 class="reel-mgmt-title">Reel Management</h2>
                     <p class="reel-mgmt-sub">Add and manage Facebook Reels for feedback collection.</p>
                 </div>
-                <button type="button" class="btn btn-primary" id="openAddReel">
+                <button type="button" class="btn btn-primary" id="openAddReel2">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M12 5v14M5 12h14"/>
                     </svg>
                     Add Reel
                 </button>
             </div>
-
             <div class="reels-list" id="reelsList"></div>
         </section>
 
+        <!-- ===== NEW: ANALYTICS ===== -->
+        <section class="dash-block">
+            <div class="block-title">
+                <h2>Performance Analytics</h2>
+                <p>Aggregate audience response patterns.</p>
+            </div>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-head"><span>Rating Distribution</span></div>
+                    <div class="analytics-body" id="ratingDist">
+                        <div class="chart-empty">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-5"/>
+                            </svg>
+                            <p>No rating data yet</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-head"><span>Recommendation Rate</span></div>
+                    <div class="analytics-body">
+                        <div class="metric-empty">
+                            <span class="metric-value">0%</span>
+                            <span class="metric-label">of audience would recommend</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-head"><span>Future Content Interest</span></div>
+                    <div class="analytics-body">
+                        <div class="metric-empty">
+                            <span class="metric-value">0%</span>
+                            <span class="metric-label">want more content like this</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-head"><span>Response Completion</span></div>
+                    <div class="analytics-body">
+                        <div class="metric-empty">
+                            <span class="metric-value">0%</span>
+                            <span class="metric-label">average completion rate</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== NEW: FEELING ANALYSIS ===== -->
+        <section class="dash-block">
+            <div class="block-title">
+                <h2>Feeling Analysis</h2>
+                <p>Emotional response patterns across all reels.</p>
+            </div>
+            <div class="split-grid">
+                <div class="panel-card">
+                    <div class="panel-head"><span class="panel-title">Most Selected Feeling</span></div>
+                    <div class="panel-body">
+                        <div class="chart-empty">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/>
+                            </svg>
+                            <p>Not enough data yet</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-head"><span class="panel-title">Feeling Distribution</span></div>
+                    <div class="panel-body">
+                        <div class="chart-empty">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><path d="M12 2v10l7 3"/>
+                            </svg>
+                            <p>No feeling data yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== NEW: PERCEPTION ===== -->
+        <section class="dash-block">
+            <div class="block-title">
+                <h2>Audience Perception</h2>
+                <p>Observed response patterns from recommendation and rating signals.</p>
+            </div>
+            <div class="perception-grid">
+                <div class="perception-card">
+                    <div class="perception-icon perception-icon--positive">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <div class="perception-body">
+                        <span class="perception-label">Positive Perception</span>
+                        <span class="perception-value">0%</span>
+                    </div>
+                </div>
+                <div class="perception-card">
+                    <div class="perception-icon perception-icon--neutral">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><path d="M8 15h8"/>
+                        </svg>
+                    </div>
+                    <div class="perception-body">
+                        <span class="perception-label">Neutral Perception</span>
+                        <span class="perception-value">0%</span>
+                    </div>
+                </div>
+                <div class="perception-card">
+                    <div class="perception-icon perception-icon--negative">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><path d="M9 9h.01M15 9h.01"/>
+                        </svg>
+                    </div>
+                    <div class="perception-body">
+                        <span class="perception-label">Negative Perception</span>
+                        <span class="perception-value">0%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== NEW: TRENDS ===== -->
+        <section class="dash-block">
+            <div class="block-title">
+                <h2>Feedback Trends</h2>
+                <p>Time-based patterns in audience response.</p>
+            </div>
+            <div class="panel-card">
+                <div class="panel-head">
+                    <span class="panel-title">Daily Feedback Volume</span>
+                    <span class="panel-meta">Last 14 days</span>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-empty chart-empty--tall">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                        </svg>
+                        <p>Insufficient data for trend analysis</p>
+                        <span>Feedback over time will appear here</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== NEW: REEL PERFORMANCE ===== -->
+        <section class="dash-block">
+            <div class="block-title">
+                <h2>Reel Performance</h2>
+                <p>Comparative performance across all published reels.</p>
+            </div>
+            <div class="panel-card">
+                <div class="panel-body panel-body--flush">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>
+                            </svg>
+                        </div>
+                        <h3>No reel performance data</h3>
+                        <p>Add reels and collect feedback to see comparative insights here.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== NEW: SYSTEM INSIGHTS ===== -->
+        <section class="dash-block">
+            <div class="block-title">
+                <h2>Technical Signals</h2>
+                <p>Device, platform and completion metrics from real submissions only.</p>
+            </div>
+            <div class="perception-grid">
+                <div class="perception-card">
+                    <div class="perception-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>
+                        </svg>
+                    </div>
+                    <div class="perception-body">
+                        <span class="perception-label">Mobile Users</span>
+                        <span class="perception-value">0%</span>
+                    </div>
+                </div>
+                <div class="perception-card">
+                    <div class="perception-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 22h8M12 18v4"/>
+                        </svg>
+                    </div>
+                    <div class="perception-body">
+                        <span class="perception-label">Desktop Users</span>
+                        <span class="perception-value">0%</span>
+                    </div>
+                </div>
+                <div class="perception-card">
+                    <div class="perception-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                    </div>
+                    <div class="perception-body">
+                        <span class="perception-label">Form Completion</span>
+                        <span class="perception-value">0%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== NEW: INSIGHTS ENGINE ===== -->
+        <section class="dash-block">
+            <div class="block-title">
+                <h2>Audience Insights Engine</h2>
+                <p>Generated from aggregate feedback. Only appears when enough data is present.</p>
+            </div>
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.2 1 2v.3h6v-.3c0-.8.4-1.5 1-2A7 7 0 0012 2z"/>
+                        </svg>
+                    </div>
+                    <div class="insight-body">
+                        <span class="insight-label">Top Audience Signal</span>
+                        <span class="insight-value">Not enough data to generate a reliable insight.</span>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/>
+                        </svg>
+                    </div>
+                    <div class="insight-body">
+                        <span class="insight-label">Dominant Feeling</span>
+                        <span class="insight-value">Not enough data to generate a reliable insight.</span>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/>
+                        </svg>
+                    </div>
+                    <div class="insight-body">
+                        <span class="insight-label">Audience Preference</span>
+                        <span class="insight-value">Not enough data to generate a reliable insight.</span>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/>
+                        </svg>
+                    </div>
+                    <div class="insight-body">
+                        <span class="insight-label">Recommendation Strength</span>
+                        <span class="insight-value">Not enough data to generate a reliable insight.</span>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20M2 12h20"/>
+                        </svg>
+                    </div>
+                    <div class="insight-body">
+                        <span class="insight-label">Content Opportunity</span>
+                        <span class="insight-value">Not enough data to generate a reliable insight.</span>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                        </svg>
+                    </div>
+                    <div class="insight-body">
+                        <span class="insight-label">Emerging Trend</span>
+                        <span class="insight-value">Not enough data to generate a reliable insight.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXISTING FEEDBACK TOOLBAR + LIST -->
         <section class="toolbar">
             <div class="search">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="M21 21l-4.35-4.35"/>
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
                 </svg>
                 <input type="search" id="searchInput" placeholder="Search by name, email, or message…" />
             </div>
-
             <select id="filterRating" class="select">
                 <option value="all">All Ratings</option>
                 <option value="5">5 only</option>
@@ -190,14 +465,12 @@
                 <option value="1">1 only</option>
                 <option value="4plus">4 and above</option>
             </select>
-
             <select id="filterDate" class="select">
                 <option value="all">All Time</option>
                 <option value="today">Today</option>
                 <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
             </select>
-
             <select id="sortBy" class="select">
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
@@ -207,9 +480,7 @@
         </section>
 
         <section class="list-wrap">
-            <div class="list-head">
-                <span id="resultCount">0 results</span>
-            </div>
+            <div class="list-head"><span id="resultCount">0 results</span></div>
             <div class="list" id="feedbackList"></div>
         </section>
 
@@ -228,15 +499,12 @@
                 </svg>
             </button>
         </div>
-
         <div class="modal-body">
             <div class="field" id="reelUrlField">
                 <label for="reelUrl">Facebook Reel URL</label>
                 <input type="url" id="reelUrl" placeholder="https://www.facebook.com/reel/..." autocomplete="off" />
             </div>
-
             <p class="form-error" id="reelUrlError" role="alert"></p>
-
             <button type="button" class="btn btn-primary fetch-btn" id="fetchReel">
                 <span class="btn-spinner" aria-hidden="true"></span>
                 <span id="fetchLabel">Fetch Details</span>
@@ -244,7 +512,6 @@
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
             </button>
-
             <div class="reel-preview" id="reelPreview" hidden></div>
         </div>
     </div>
