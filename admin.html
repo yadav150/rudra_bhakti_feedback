@@ -2,449 +2,1291 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Rudra Bhakti — Admin Dashboard</title>
+  <meta
+    name="robots"
+    content="noindex,nofollow"
+  >
+
+  <title>Rudra Bhakti — Admin</title>
 
   <link rel="stylesheet" href="admin.css">
 </head>
 
 <body>
 
-  <!-- =========================
-       LOGIN
-  ========================== -->
+  <div class="admin-app">
 
-  <section id="loginScreen" class="screen login-screen">
+    <!-- =====================================
+         AUTH SCREEN
+         ===================================== -->
 
-    <div class="login-card">
+    <section
+      id="loginScreen"
+      class="admin-screen login-screen"
+    >
 
-      <div class="brand-icon">ॐ</div>
+      <div class="login-card">
 
-      <h1>Rudra Bhakti</h1>
+        <div class="admin-brand">
+          <div
+            class="admin-brand-icon"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 48 48"
+              width="28"
+              height="28"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M24 5v38M12 12c4 4 8 5 12 5s8-1 12-5M10 25c5 4 9 5 14 5s9-1 14-5"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
 
-      <p class="login-subtitle">
-        Admin Dashboard
-      </p>
+          <div>
+            <span class="brand-name">
+              RUDRA BHAKTI
+            </span>
 
-      <form id="loginForm">
+            <span class="brand-subtitle">
+              ADMIN PANEL
+            </span>
+          </div>
+        </div>
 
-        <input
-          id="emailInput"
-          type="email"
-          placeholder="Admin email"
-          autocomplete="username"
-          required
+
+        <div class="login-heading">
+
+          <span class="eyebrow">
+            SECURE ACCESS
+          </span>
+
+          <h1>
+            Admin Dashboard
+          </h1>
+
+          <p>
+            Sign in with your authorized
+            Firebase account to continue.
+          </p>
+
+        </div>
+
+
+        <form
+          id="loginForm"
+          class="login-form"
+          novalidate
         >
 
-        <input
-          id="passwordInput"
-          type="password"
-          placeholder="Password"
-          autocomplete="current-password"
-          required
+          <div class="field-group">
+
+            <label for="adminEmail">
+              Email Address
+            </label>
+
+            <input
+              id="adminEmail"
+              type="email"
+              autocomplete="email"
+              placeholder="Enter your email"
+              required
+            >
+
+            <small
+              id="loginEmailError"
+              class="field-error"
+            ></small>
+
+          </div>
+
+
+          <div class="field-group">
+
+            <label for="adminPassword">
+              Password
+            </label>
+
+            <div class="password-field">
+
+              <input
+                id="adminPassword"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                required
+              >
+
+              <button
+                id="togglePassword"
+                class="field-icon-button"
+                type="button"
+                aria-label="Show password"
+                title="Show password"
+              >
+
+                <svg
+                  id="eyeIcon"
+                  viewBox="0 0 24 24"
+                  width="19"
+                  height="19"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  />
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="2.5"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  />
+                </svg>
+
+              </button>
+
+            </div>
+
+            <small
+              id="loginPasswordError"
+              class="field-error"
+            ></small>
+
+          </div>
+
+
+          <div
+            id="loginError"
+            class="login-error"
+            role="alert"
+          ></div>
+
+
+          <button
+            id="loginButton"
+            class="primary-button"
+            type="submit"
+          >
+            <span>Sign In</span>
+
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 12h13M13 6l6 6-6 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+
+        </form>
+
+
+        <p class="security-note">
+
+          <svg
+            viewBox="0 0 24 24"
+            width="15"
+            height="15"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <rect
+              x="5"
+              y="10"
+              width="14"
+              height="10"
+              rx="2"
+              stroke="currentColor"
+              stroke-width="1.7"
+            />
+
+            <path
+              d="M8 10V7a4 4 0 0 1 8 0v3"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            />
+          </svg>
+
+          Authorized administrators only.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================
+         ADMIN APPLICATION
+         ===================================== -->
+
+    <section
+      id="dashboardScreen"
+      class="admin-screen dashboard-screen hidden"
+    >
+
+      <header class="admin-header">
+
+        <div class="header-left">
+
+          <button
+            id="mobileMenuButton"
+            class="icon-button mobile-menu-button"
+            type="button"
+            aria-label="Open navigation"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="21"
+              height="21"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+
+
+          <div class="header-brand">
+
+            <div
+              class="header-brand-icon"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 48 48"
+                width="22"
+                height="22"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M24 5v38M12 12c4 4 8 5 12 5s8-1 12-5M10 25c5 4 9 5 14 5s9-1 14-5"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+
+            <div>
+              <strong>
+                Rudra Bhakti
+              </strong>
+
+              <span>
+                Admin
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="header-right">
+
+          <div
+            id="adminIdentity"
+            class="admin-identity"
+          >
+            —
+          </div>
+
+          <button
+            id="logoutButton"
+            class="logout-button"
+            type="button"
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              width="17"
+              height="17"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+
+              <path
+                d="M14 8l4 4-4 4M9 12h9"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <span>
+              Sign Out
+            </span>
+
+          </button>
+
+        </div>
+
+      </header>
+
+
+      <div class="admin-layout">
+
+        <!-- =================================
+             SIDEBAR
+             ================================= -->
+
+        <aside
+          id="adminSidebar"
+          class="admin-sidebar"
         >
 
-        <button
-          type="submit"
-          class="primary-btn"
-        >
-          Login
-        </button>
+          <nav
+            class="admin-navigation"
+            aria-label="Admin navigation"
+          >
 
-        <p
-          id="loginError"
-          class="error-text"
-          aria-live="polite"
-        ></p>
+            <button
+              class="nav-item active"
+              type="button"
+              data-section="analyticsSection"
+            >
 
-      </form>
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 19V9M10 19V5M16 19v-7M22 19V3"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
 
-    </div>
+              <span>
+                Analytics
+              </span>
 
-  </section>
+            </button>
 
 
-  <!-- =========================
-       DASHBOARD
-  ========================== -->
+            <button
+              class="nav-item"
+              type="button"
+              data-section="reelsSection"
+            >
 
-  <section
-    id="dashboardScreen"
-    class="screen hidden"
-  >
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <rect
+                  x="4"
+                  y="3"
+                  width="16"
+                  height="18"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
 
-    <!-- TOP BAR -->
+                <path
+                  d="m9 3 3 5M15 3l3 5M8 13h8"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
 
-    <header class="topbar">
+              <span>
+                Reel Management
+              </span>
 
-      <div class="brand-area">
+            </button>
 
-        <h1>Rudra Bhakti</h1>
+          </nav>
 
-        <span>
-          Admin Dashboard
+
+          <div class="sidebar-footer">
+
+            <div class="admin-status">
+
+              <span class="status-dot"></span>
+
+              <span>
+                Secure connection
+              </span>
+
+            </div>
+
+          </div>
+
+        </aside>
+
+
+        <!-- =================================
+             MAIN CONTENT
+             ================================= -->
+
+        <main class="admin-main">
+
+
+          <!-- =================================
+               ANALYTICS
+               ================================= -->
+
+          <section
+            id="analyticsSection"
+            class="admin-section active"
+          >
+
+            <div class="section-heading">
+
+              <div>
+
+                <span class="eyebrow">
+                  PERFORMANCE
+                </span>
+
+                <h1>
+                  Feedback Analytics
+                </h1>
+
+                <p>
+                  Understand how your audience
+                  responds to each Reel.
+                </p>
+
+              </div>
+
+
+              <div class="section-actions">
+
+                <button
+                  id="refreshAnalyticsButton"
+                  class="secondary-button"
+                  type="button"
+                >
+
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="17"
+                    height="17"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M20 11a8 8 0 0 0-14.9-4M4 5v4h4M4 13a8 8 0 0 0 14.9 4M20 19v-4h-4"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+
+                  <span>
+                    Refresh
+                  </span>
+
+                </button>
+
+              </div>
+
+            </div>
+
+
+            <!-- Analytics Filters -->
+
+            <div class="analytics-filters">
+
+              <div class="filter-group">
+
+                <label for="reelFilter">
+                  Reel
+                </label>
+
+                <select id="reelFilter">
+                  <option value="all">
+                    All Reels
+                  </option>
+                </select>
+
+              </div>
+
+
+              <div class="filter-group">
+
+                <label for="ratingFilter">
+                  Rating
+                </label>
+
+                <select id="ratingFilter">
+                  <option value="all">
+                    All Ratings
+                  </option>
+
+                  <option value="RATING_5">
+                    5 — Excellent
+                  </option>
+
+                  <option value="RATING_4">
+                    4 — Very good
+                  </option>
+
+                  <option value="RATING_3">
+                    3 — Good
+                  </option>
+
+                  <option value="RATING_2">
+                    2 — Fair
+                  </option>
+
+                  <option value="RATING_1">
+                    1 — Poor
+                  </option>
+                </select>
+
+              </div>
+
+
+              <div class="filter-group">
+
+                <label for="feedbackDateFilter">
+                  Period
+                </label>
+
+                <select id="feedbackDateFilter">
+                  <option value="all">
+                    All Time
+                  </option>
+
+                  <option value="7">
+                    Last 7 Days
+                  </option>
+
+                  <option value="30">
+                    Last 30 Days
+                  </option>
+
+                  <option value="90">
+                    Last 90 Days
+                  </option>
+                </select>
+
+              </div>
+
+            </div>
+
+
+            <!-- KPI Cards -->
+
+            <div class="stats-grid">
+
+              <article class="stat-card">
+
+                <span class="stat-label">
+                  TOTAL RESPONSES
+                </span>
+
+                <strong
+                  id="totalResponses"
+                  class="stat-value"
+                >
+                  0
+                </strong>
+
+                <span
+                  id="totalResponsesMeta"
+                  class="stat-meta"
+                >
+                  Across all Reels
+                </span>
+
+              </article>
+
+
+              <article class="stat-card">
+
+                <span class="stat-label">
+                  AVERAGE RATING
+                </span>
+
+                <strong
+                  id="averageRating"
+                  class="stat-value"
+                >
+                  —
+                </strong>
+
+                <span class="stat-meta">
+                  Out of 5
+                </span>
+
+              </article>
+
+
+              <article class="stat-card">
+
+                <span class="stat-label">
+                  TOP FEELING
+                </span>
+
+                <strong
+                  id="topFeeling"
+                  class="stat-value stat-text"
+                >
+                  —
+                </strong>
+
+                <span
+                  id="topFeelingCount"
+                  class="stat-meta"
+                >
+                  —
+                </span>
+
+              </article>
+
+
+              <article class="stat-card">
+
+                <span class="stat-label">
+                  MORE CONTENT
+                </span>
+
+                <strong
+                  id="moreContentPercentage"
+                  class="stat-value"
+                >
+                  —
+                </strong>
+
+                <span class="stat-meta">
+                  Strong positive interest
+                </span>
+
+              </article>
+
+            </div>
+
+
+            <!-- Analytics Grid -->
+
+            <div class="analytics-grid">
+
+
+              <!-- Feeling -->
+
+              <article class="analytics-card">
+
+                <div class="card-heading">
+
+                  <div>
+                    <span class="card-label">
+                      AUDIENCE FEELING
+                    </span>
+
+                    <h2>
+                      How viewers felt
+                    </h2>
+                  </div>
+
+                </div>
+
+                <div
+                  id="feelingChart"
+                  class="chart-container"
+                ></div>
+
+              </article>
+
+
+              <!-- More Content -->
+
+              <article class="analytics-card">
+
+                <div class="card-heading">
+
+                  <div>
+                    <span class="card-label">
+                      CONTENT DEMAND
+                    </span>
+
+                    <h2>
+                      More like this?
+                    </h2>
+                  </div>
+
+                </div>
+
+                <div
+                  id="moreContentChart"
+                  class="chart-container"
+                ></div>
+
+              </article>
+
+
+              <!-- Connection -->
+
+              <article class="analytics-card">
+
+                <div class="card-heading">
+
+                  <div>
+                    <span class="card-label">
+                      CONNECTION
+                    </span>
+
+                    <h2>
+                      What resonated
+                    </h2>
+                  </div>
+
+                </div>
+
+                <div
+                  id="connectionChart"
+                  class="chart-container"
+                ></div>
+
+              </article>
+
+
+              <!-- Rating -->
+
+              <article class="analytics-card">
+
+                <div class="card-heading">
+
+                  <div>
+                    <span class="card-label">
+                      QUALITY SCORE
+                    </span>
+
+                    <h2>
+                      Rating distribution
+                    </h2>
+                  </div>
+
+                </div>
+
+                <div
+                  id="ratingChart"
+                  class="chart-container"
+                ></div>
+
+              </article>
+
+            </div>
+
+
+            <!-- Reel Comparison -->
+
+            <article class="analytics-card full-width-card">
+
+              <div class="card-heading">
+
+                <div>
+                  <span class="card-label">
+                    REEL PERFORMANCE
+                  </span>
+
+                  <h2>
+                    Reel-wise comparison
+                  </h2>
+                </div>
+
+              </div>
+
+              <div
+                id="reelComparisonTable"
+                class="table-container"
+              ></div>
+
+            </article>
+
+
+            <!-- Written Feedback -->
+
+            <article class="analytics-card full-width-card">
+
+              <div class="card-heading">
+
+                <div>
+                  <span class="card-label">
+                    AUDIENCE VOICE
+                  </span>
+
+                  <h2>
+                    Written feedback
+                  </h2>
+                </div>
+
+                <span
+                  id="feedbackCountLabel"
+                  class="card-count"
+                >
+                  0 responses
+                </span>
+
+              </div>
+
+              <div
+                id="writtenFeedbackList"
+                class="feedback-list"
+              ></div>
+
+            </article>
+
+          </section>
+
+
+          <!-- =================================
+               REEL MANAGEMENT
+               ================================= -->
+
+          <section
+            id="reelsSection"
+            class="admin-section hidden"
+          >
+
+            <div class="section-heading">
+
+              <div>
+
+                <span class="eyebrow">
+                  CONTENT
+                </span>
+
+                <h1>
+                  Reel Management
+                </h1>
+
+                <p>
+                  Add and manage the Reels connected
+                  to your feedback system.
+                </p>
+
+              </div>
+
+
+              <button
+                id="openAddReelButton"
+                class="primary-button section-primary-button"
+                type="button"
+              >
+
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 5v14M5 12h14"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+
+                <span>
+                  Add New Reel
+                </span>
+
+              </button>
+
+            </div>
+
+
+            <!-- Add Reel Form -->
+
+            <div
+              id="addReelPanel"
+              class="reel-form-panel hidden"
+            >
+
+              <div class="panel-heading">
+
+                <div>
+
+                  <span class="card-label">
+                    NEW REEL
+                  </span>
+
+                  <h2>
+                    Add a Facebook Reel
+                  </h2>
+
+                  <p>
+                    Paste the Facebook Reel URL.
+                    The system will generate a
+                    unique Reel ID.
+                  </p>
+
+                </div>
+
+                <button
+                  id="closeAddReelButton"
+                  class="icon-button"
+                  type="button"
+                  aria-label="Close"
+                >
+
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="19"
+                    height="19"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="m6 6 12 12M18 6 6 18"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+
+                </button>
+
+              </div>
+
+
+              <form
+                id="addReelForm"
+                novalidate
+              >
+
+                <div class="field-group">
+
+                  <label for="facebookReelUrl">
+                    Facebook Reel URL
+                  </label>
+
+                  <input
+                    id="facebookReelUrl"
+                    type="url"
+                    placeholder="https://www.facebook.com/reel/..."
+                    required
+                  >
+
+                  <small
+                    id="reelUrlError"
+                    class="field-error"
+                  ></small>
+
+                </div>
+
+
+                <div
+                  id="reelMetadataPreview"
+                  class="metadata-preview hidden"
+                >
+
+                  <div class="metadata-thumbnail-wrap">
+
+                    <img
+                      id="metadataThumbnail"
+                      src=""
+                      alt=""
+                    >
+
+                  </div>
+
+                  <div class="metadata-info">
+
+                    <span class="card-label">
+                      DETECTED REEL
+                    </span>
+
+                    <h3 id="metadataTitle">
+                      —
+                    </h3>
+
+                    <span id="metadataStatus">
+                      —
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <div
+                  id="reelGeneratedDetails"
+                  class="generated-details hidden"
+                >
+
+                  <div class="generated-field">
+
+                    <span>
+                      Reel ID
+                    </span>
+
+                    <strong id="generatedReelId">
+                      —
+                    </strong>
+
+                  </div>
+
+
+                  <div class="generated-field">
+
+                    <span>
+                      Feedback URL
+                    </span>
+
+                    <div class="copy-field">
+
+                      <input
+                        id="generatedFeedbackUrl"
+                        type="text"
+                        readonly
+                      >
+
+                      <button
+                        id="copyFeedbackUrlButton"
+                        class="icon-button"
+                        type="button"
+                        aria-label="Copy feedback URL"
+                        title="Copy feedback URL"
+                      >
+
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="18"
+                          height="18"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <rect
+                            x="8"
+                            y="8"
+                            width="11"
+                            height="11"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          />
+
+                          <path
+                            d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          />
+                        </svg>
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                <div class="form-actions">
+
+                  <button
+                    id="cancelAddReelButton"
+                    class="secondary-button"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    id="saveReelButton"
+                    class="primary-button"
+                    type="submit"
+                  >
+
+                    <span>
+                      Save Reel
+                    </span>
+
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5 12h13M13 6l6 6-6 6"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+
+                  </button>
+
+                </div>
+
+              </form>
+
+            </div>
+
+
+            <!-- Reel List -->
+
+            <div class="reel-list-card">
+
+              <div class="card-heading">
+
+                <div>
+
+                  <span class="card-label">
+                    YOUR CONTENT
+                  </span>
+
+                  <h2>
+                    Managed Reels
+                  </h2>
+
+                </div>
+
+                <span
+                  id="reelCount"
+                  class="card-count"
+                >
+                  0 Reels
+                </span>
+
+              </div>
+
+
+              <div
+                id="reelList"
+                class="reel-list"
+              ></div>
+
+            </div>
+
+          </section>
+
+        </main>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================
+         GLOBAL LOADING
+         ===================================== -->
+
+    <div
+      id="globalLoading"
+      class="global-loading hidden"
+      aria-hidden="true"
+    >
+
+      <div class="loading-card">
+
+        <div class="loader"></div>
+
+        <span id="loadingMessage">
+          Loading...
         </span>
 
       </div>
 
-      <button
-        id="logoutBtn"
-        class="logout-btn"
-        type="button"
-      >
-        Logout
-      </button>
-
-    </header>
+    </div>
 
 
-    <!-- NAVIGATION -->
+    <!-- =====================================
+         TOAST
+         ===================================== -->
 
-    <nav class="admin-nav">
-
-      <button
-        class="nav-btn active"
-        data-view="analysisView"
-        type="button"
-      >
-        <span>📊</span>
-        Analysis
-      </button>
-
-      <button
-        class="nav-btn"
-        data-view="addReelView"
-        type="button"
-      >
-        <span>➕</span>
-        Add Reel
-      </button>
-
-    </nav>
-
-
-    <!-- =========================
-         ANALYSIS VIEW
-    ========================== -->
-
-    <main
-      id="analysisView"
-      class="admin-view"
+    <div
+      id="toast"
+      class="toast"
+      role="status"
+      aria-live="polite"
     >
 
-      <div class="section-heading">
-
-        <div>
-          <h2>Analysis</h2>
-
-          <p>
-            Understand how your audience responds.
-          </p>
-        </div>
-
-        <div class="filter-box">
-
-          <label for="reelFilter">
-            Reel
-          </label>
-
-          <select id="reelFilter">
-            <option value="ALL">
-              All Reels
-            </option>
-          </select>
-
-        </div>
-
-      </div>
-
-
-      <!-- SUMMARY -->
-
-      <div class="stats-grid">
-
-        <div class="stat-card">
-
-          <span>Total Responses</span>
-
-          <strong id="totalResponses">
-            0
-          </strong>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <span>Average Rating</span>
-
-          <strong id="averageRating">
-            0.0
-          </strong>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <span>Want More Content</span>
-
-          <strong id="wantMore">
-            0%
-          </strong>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <span>Top Feeling</span>
-
-          <strong id="topFeeling">
-            —
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- DISTRIBUTIONS -->
-
-      <div class="analytics-grid">
-
-        <div class="panel">
-
-          <h3>Feeling</h3>
-
-          <div
-            id="feelingDistribution"
-            class="distribution"
-          ></div>
-
-        </div>
-
-
-        <div class="panel">
-
-          <h3>More Content</h3>
-
-          <div
-            id="moreDistribution"
-            class="distribution"
-          ></div>
-
-        </div>
-
-
-        <div class="panel">
-
-          <h3>Connection</h3>
-
-          <div
-            id="connectionDistribution"
-            class="distribution"
-          ></div>
-
-        </div>
-
-
-        <div class="panel">
-
-          <h3>Rating</h3>
-
-          <div
-            id="ratingDistribution"
-            class="distribution"
-          ></div>
-
-        </div>
-
-      </div>
-
-
-      <!-- WRITTEN FEEDBACK -->
-
-      <div class="panel feedback-panel">
-
-        <div class="panel-heading">
-
-          <div>
-            <h3>Written Feedback</h3>
-
-            <p>
-              Messages submitted by your audience.
-            </p>
-          </div>
-
-        </div>
-
-        <div id="writtenFeedback">
-          <p class="empty-state">
-            No written feedback yet.
-          </p>
-        </div>
-
-      </div>
-
-    </main>
-
-
-    <!-- =========================
-         ADD REEL VIEW
-    ========================== -->
-
-    <main
-      id="addReelView"
-      class="admin-view hidden"
-    >
-
-      <div class="section-heading">
-
-        <div>
-
-          <h2>Add Reel</h2>
-
-          <p>
-            Paste the Facebook Reel URL.
-            ID and title are handled automatically.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <!-- ADD FORM -->
-
-      <div class="panel add-reel-panel">
-
-        <form id="reelForm">
-
-          <div class="form-group">
-
-            <label for="facebookUrl">
-              Facebook Reel URL
-            </label>
-
-            <input
-              id="facebookUrl"
-              type="url"
-              placeholder="https://www.facebook.com/reel/..."
-              autocomplete="off"
-              required
-            >
-
-            <small>
-              Only the Facebook Reel URL is required.
-            </small>
-
-          </div>
-
-
-          <!-- AUTOMATIC INFORMATION -->
-
-          <div class="auto-info-grid">
-
-            <div class="auto-field">
-
-              <span>Reel ID</span>
-
-              <strong id="generatedReelId">
-                RB001
-              </strong>
-
-            </div>
-
-
-            <div class="auto-field">
-
-              <span>Reel Title</span>
-
-              <strong id="generatedTitle">
-                Waiting for URL…
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div
-            id="metadataStatus"
-            class="metadata-status"
-            aria-live="polite"
-          ></div>
-
-
-          <div class="form-actions">
-
-            <button
-              id="fetchMetadataBtn"
-              type="button"
-              class="secondary-btn"
-            >
-              Fetch Reel Info
-            </button>
-
-
-            <button
-              id="saveReelBtn"
-              type="submit"
-              class="primary-btn"
-            >
-              Add Reel
-            </button>
-
-          </div>
-
-
-          <p
-            id="reelFormMessage"
-            class="form-message"
-            aria-live="polite"
-          ></p>
-
-        </form>
-
-      </div>
-
-
-      <!-- EXISTING REELS -->
-
-      <div class="panel">
-
-        <div class="panel-heading">
-
-          <div>
-
-            <h3>Existing Reels</h3>
-
-            <p>
-              Manage your published feedback links.
-            </p>
-
-          </div>
-
-        </div>
-
-        <div id="reelList">
-
-          <p class="empty-state">
-            Loading reels…
-          </p>
-
-        </div>
-
-      </div>
-
-    </main>
-
-  </section>
+      <svg
+        id="toastIcon"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path
+          d="m5 12 4 4L19 6"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+
+      <span id="toastMessage">
+        Done
+      </span>
+
+    </div>
+
+  </div>
 
 
   <script
