@@ -8,7 +8,7 @@ import { getDatabase, ref, get, push, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAoPVLSklKARDfdDo6m2zkj1kabJVpsk",
+    apiKey: "AIzaSyAoPVLSklKARDfdDoSm6L2zkj1kabJVpsw",
     authDomain: "rudrabhakti-a1d3e.firebaseapp.com",
     databaseURL: "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com",
     projectId: "rudrabhakti-a1d3e",
