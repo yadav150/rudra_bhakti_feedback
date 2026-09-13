@@ -653,7 +653,25 @@
                 <label for="reelUrl">Facebook Reel URL</label>
                 <input type="url" id="reelUrl" placeholder="https://www.facebook.com/reel/..." autocomplete="off" />
             </div>
-            <p class="form-error" id="reelUrlError" role="alert"></p>
+                        <p class="form-error" id="reelUrlError" role="alert"></p>
+
+            <div class="reel-manual" id="reelManual" hidden>
+                <p class="reel-manual-note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v5M12 16h.01"/>
+                    </svg>
+                    Facebook blocks automatic metadata fetch from browsers. Enter details manually below.
+                </p>
+                <div class="field">
+                    <label for="reelTitleInput">Reel Title</label>
+                    <input type="text" id="reelTitleInput" placeholder="Enter a title for this Reel" maxlength="180" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label for="reelThumbInput">Thumbnail URL (optional)</label>
+                    <input type="url" id="reelThumbInput" placeholder="https://..." autocomplete="off" />
+                </div>
+            </div>
             <button type="button" class="btn btn-primary btn-block fetch-btn" id="fetchReel">
                 <span class="btn-spinner" aria-hidden="true"></span>
                 <span id="fetchLabel">Fetch Details</span>
@@ -666,6 +684,6 @@
     </div>
 </div>
 
-<script src="admin.js"></script>
+<script type="module" src="admin.js"></script>
 </body>
 </html>
