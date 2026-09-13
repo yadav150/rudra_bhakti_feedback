@@ -1,92 +1,14 @@
 /* ============================================================
    RUDRA BHAKTI — ADMIN PANEL
-   Phase 1A : reel management + demo feedback
-   Phase 2 : swap placeholders with Firebase
+   Phase 1C — restructured dashboard, zero-state, no demo data
+   Phase 2 — swap placeholders with Firebase
    ============================================================ */
 
 (function () {
     'use strict';
 
     /* ============================================================
-       DEMO DATA (Phase 1 only)
-       ============================================================ */
-    const DEMO_DATA = [
-        {
-            id: 'f_001',
-            feeling: 'Peaceful',
-            wouldWatchMore: 'Definitely — I love this type of content',
-            connectedWith: 'The Shiva & Parvati emotion',
-            rating: 5,
-            message: 'This Reel brought such a serene energy. Please keep creating more content like this.',
-            isAnonymous: false,
-            name: 'Aarav Sharma',
-            email: 'aarav.sharma@example.com',
-            submittedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-        },
-        {
-            id: 'f_002',
-            feeling: 'Devotional',
-            wouldWatchMore: 'Yes, sometimes',
-            connectedWith: 'The devotional feeling',
-            rating: 4,
-            message: '',
-            isAnonymous: true,
-            name: 'Anonymous',
-            email: 'anonymous@gmail.com',
-            submittedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
-        },
-        {
-            id: 'f_003',
-            feeling: 'Emotional',
-            wouldWatchMore: 'Definitely — I love this type of content',
-            connectedWith: 'Everything together',
-            rating: 5,
-            message: 'Beautifully presented. The visuals and the background music worked together wonderfully.',
-            isAnonymous: false,
-            name: 'Priya Nair',
-            email: 'priya.nair@example.com',
-            submittedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString()
-        },
-        {
-            id: 'f_004',
-            feeling: 'Calm',
-            wouldWatchMore: "I'm not sure",
-            connectedWith: 'The music',
-            rating: 3,
-            message: 'Decent content. Could be a little shorter.',
-            isAnonymous: false,
-            name: 'Rohit Verma',
-            email: 'rohit.v@example.com',
-            submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-            id: 'f_005',
-            feeling: 'Inspired',
-            wouldWatchMore: 'Definitely — I love this type of content',
-            connectedWith: 'The Shiva & Parvati emotion',
-            rating: 5,
-            message: 'I want to learn more about this. Please share more details in future Reels.',
-            isAnonymous: true,
-            name: 'Anonymous',
-            email: 'anonymous@gmail.com',
-            submittedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-            id: 'f_006',
-            feeling: 'Peaceful',
-            wouldWatchMore: 'Yes, sometimes',
-            connectedWith: 'The artwork / visuals',
-            rating: 4,
-            message: '',
-            isAnonymous: false,
-            name: 'Meera Iyer',
-            email: 'meera.iyer@example.com',
-            submittedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-        }
-    ];
-
-    /* ============================================================
-       SERVICE PLACEHOLDERS — Phase 2 hooks
+       SERVICE PLACEHOLDERS — Phase 2 will connect Firebase here
        ============================================================ */
     async function loginAdmin(email, password) {
         await new Promise((r) => setTimeout(r, 500));
@@ -99,26 +21,51 @@
         return { ok: true };
     }
 
+    /* Phase 2: replace with Firebase read of feedback collection */
     async function loadFeedback() {
-        const local = JSON.parse(localStorage.getItem('rrb_feedback') || '[]');
-        const normalized = local.map((f) => ({
-            ...f,
-            isAnonymous: !f.name || f.name === 'Anonymous'
-        }));
-        return [...normalized, ...DEMO_DATA];
+        try {
+            const local = JSON.parse(localStorage.getItem('rrb_feedback') || '[]');
+            return local.map((f) => ({
+                ...f,
+                isAnonymous: !f.name || f.name === 'Anonymous'
+            }));
+        } catch (e) {
+            return [];
+        }
     }
 
+    /* Phase 2: replace with Firebase read of reels collection */
+    async function loadReels() {
+        try {
+            return JSON.parse(localStorage.getItem('rrb_reels') || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    /* ============================================================
+       STATS + ANALYTICS ENGINE (pure functions, no fake data)
+       ============================================================ */
     function calculateStats(list) {
         const total = list.length;
-        const avg = total ? list.reduce((s, f) => s + (Number(f.rating) || 0), 0) / total : 0;
+        if (!total) {
+            return { total: 0, avg: 0, five: 0, today: 0 };
+        }
+        const rated = list.filter((f) => f.rating != null);
+        const avg = rated.length
+            ? rated.reduce((s, f) => s + (Number(f.rating) || 0), 0) / rated.length
+            : 0;
         const five = list.filter((f) => Number(f.rating) === 5).length;
+
         const today = new Date();
         const isToday = (iso) => {
+            if (!iso) return false;
             const d = new Date(iso);
             return d.getFullYear() === today.getFullYear()
                 && d.getMonth() === today.getMonth()
                 && d.getDate() === today.getDate();
         };
+
         return {
             total,
             avg: Math.round(avg * 10) / 10,
@@ -128,28 +75,17 @@
     }
 
     /* ============================================================
-       PHASE 1A — REEL MANAGEMENT
-       Phase 2 : replace fetchReelMetadata() + saveReel() with Firebase
+       REEL MANAGEMENT — service placeholders
        ============================================================ */
-
     const REELS_KEY = 'rrb_reels';
 
     function getSavedReels() {
-        try {
-            return JSON.parse(localStorage.getItem(REELS_KEY) || '[]');
-        } catch (e) {
-            return [];
-        }
+        try { return JSON.parse(localStorage.getItem(REELS_KEY) || '[]'); }
+        catch (e) { return []; }
     }
-
     function setSavedReels(list) {
-        try {
-            localStorage.setItem(REELS_KEY, JSON.stringify(list));
-        } catch (e) {
-            // ignore
-        }
+        try { localStorage.setItem(REELS_KEY, JSON.stringify(list)); } catch (e) {}
     }
-
     function generateReelId() {
         const reels = getSavedReels();
         const nums = reels
@@ -158,25 +94,21 @@
         const next = nums.length ? Math.max(...nums) + 1 : 1;
         return 'RB' + String(next).padStart(3, '0');
     }
-
     function makeThumbnail(seed) {
         const hue = (seed * 47) % 360;
         const hue2 = (hue + 40) % 360;
         const svg =
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" preserveAspectRatio="xMidYMid slice">' +
-                '<defs>' +
-                    '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
-                        '<stop offset="0%" stop-color="hsl(' + hue + ',30%,75%)"/>' +
-                        '<stop offset="100%" stop-color="hsl(' + hue2 + ',35%,45%)"/>' +
-                    '</linearGradient>' +
-                '</defs>' +
+                '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+                    '<stop offset="0%" stop-color="hsl(' + hue + ',30%,75%)"/>' +
+                    '<stop offset="100%" stop-color="hsl(' + hue2 + ',35%,45%)"/>' +
+                '</linearGradient></defs>' +
                 '<rect width="100" height="120" fill="url(#g)"/>' +
                 '<circle cx="50" cy="60" r="18" fill="rgba(255,255,255,0.35)"/>' +
                 '<path d="M44 52 L62 60 L44 68 Z" fill="white"/>' +
             '</svg>';
         return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
-
     function mockTitleFromUrl(url) {
         const titles = [
             'Shiva & Parvati — Eternal Love',
@@ -192,6 +124,7 @@
         return titles[seed % titles.length];
     }
 
+    /* Phase 2: replace with Facebook metadata fetch */
     async function fetchReelMetadata(url) {
         await new Promise((r) => setTimeout(r, 1200));
         if (!url || !/facebook\.com|fb\.com/i.test(url)) {
@@ -208,6 +141,7 @@
         };
     }
 
+    /* Phase 2: replace with Firebase write to reels collection */
     async function saveReel(reel) {
         await new Promise((r) => setTimeout(r, 300));
         const list = getSavedReels();
@@ -241,13 +175,14 @@
     const forgotBack = document.getElementById('forgotBack');
 
     const logoutBtn = document.getElementById('logoutBtn');
-    const dashUserEmail = document.getElementById('dashUserEmail');
 
+    /* Stats */
     const statTotal = document.getElementById('statTotal');
     const statAvg = document.getElementById('statAvg');
     const statFive = document.getElementById('statFive');
     const statToday = document.getElementById('statToday');
 
+    /* Feedback list */
     const searchInput = document.getElementById('searchInput');
     const filterRating = document.getElementById('filterRating');
     const filterDate = document.getElementById('filterDate');
@@ -255,8 +190,14 @@
     const resultCount = document.getElementById('resultCount');
     const feedbackList = document.getElementById('feedbackList');
 
-    /* Reel management */
+    /* Reels */
+    const reelsEmpty = document.getElementById('reelsEmpty');
+    const reelsList = document.getElementById('reelsList');
+
+    /* Add Reel modal */
     const openAddReel = document.getElementById('openAddReel');
+    const drawerAddReel = document.getElementById('drawerAddReel');
+    const emptyAddReel = document.getElementById('emptyAddReel');
     const addReelModal = document.getElementById('addReelModal');
     const addReelBackdrop = document.getElementById('addReelBackdrop');
     const closeAddReel = document.getElementById('closeAddReel');
@@ -265,9 +206,19 @@
     const fetchReel = document.getElementById('fetchReel');
     const fetchLabel = document.getElementById('fetchLabel');
     const reelPreview = document.getElementById('reelPreview');
-    const reelsList = document.getElementById('reelsList');
 
+    /* Mobile drawer */
+    const menuBtn = document.getElementById('menuBtn');
+    const drawer = document.getElementById('drawer');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+    const drawerClose = document.getElementById('drawerClose');
+    const drawerLogout = document.getElementById('drawerLogout');
+    const drawerLinks = document.querySelectorAll('.drawer-link[data-drawer]');
+    const navLinks = document.querySelectorAll('.dash-nav-link[data-nav]');
+
+    /* State */
     let allFeedback = [];
+    let savedReels = [];
     let pendingReel = null;
 
     /* ============================================================
@@ -318,10 +269,8 @@
             return;
         }
 
-        dashUserEmail.textContent = res.user.email;
         showDash();
-        renderReels();
-        await refreshData();
+        await refreshAll();
     });
 
     /* ============================================================
@@ -362,22 +311,99 @@
     /* ============================================================
        LOGOUT
        ============================================================ */
-    logoutBtn.addEventListener('click', async () => {
+    async function handleLogout() {
         await logoutAdmin();
         loginEmail.value = '';
         loginPassword.value = '';
+        closeDrawer();
         showLogin();
-    });
+    }
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+    if (drawerLogout) drawerLogout.addEventListener('click', handleLogout);
 
     /* ============================================================
-       DATA
+       MOBILE DRAWER
        ============================================================ */
-    async function refreshData() {
+    function openDrawer() {
+        drawer.classList.add('is-open');
+        drawerBackdrop.classList.add('is-open');
+        drawer.setAttribute('aria-hidden', 'false');
+        menuBtn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+        drawer.classList.remove('is-open');
+        drawerBackdrop.classList.remove('is-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+
+    if (menuBtn) menuBtn.addEventListener('click', () => {
+        const isOpen = drawer.classList.contains('is-open');
+        isOpen ? closeDrawer() : openDrawer();
+    });
+    if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
+    if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && drawer.classList.contains('is-open')) {
+            closeDrawer();
+        }
+    });
+
+    /* Drawer nav links — close on select */
+    drawerLinks.forEach((link) => {
+        link.addEventListener('click', () => {
+            drawerLinks.forEach((l) => l.classList.remove('is-active'));
+            link.classList.add('is-active');
+            closeDrawer();
+        });
+    });
+
+    /* Desktop nav links — scroll spy targets */
+    navLinks.forEach((link) => {
+        link.addEventListener('click', () => {
+            navLinks.forEach((l) => l.classList.remove('is-active'));
+            link.classList.add('is-active');
+        });
+    });
+
+    /* Scroll spy */
+    window.addEventListener('scroll', () => {
+        if (dash.hidden) return;
+        const sections = document.querySelectorAll('.dash-section');
+        let current = null;
+        sections.forEach((sec) => {
+            const rect = sec.getBoundingClientRect();
+            if (rect.top <= 120 && rect.bottom > 120) {
+                current = sec.id;
+            }
+        });
+        if (current) {
+            navLinks.forEach((l) => {
+                l.classList.toggle('is-active', l.getAttribute('href') === '#' + current);
+            });
+            drawerLinks.forEach((l) => {
+                l.classList.toggle('is-active', l.getAttribute('href') === '#' + current);
+            });
+        }
+    }, { passive: true });
+
+    /* ============================================================
+       REFRESH ALL
+       ============================================================ */
+    async function refreshAll() {
         allFeedback = await loadFeedback();
+        savedReels = await loadReels();
         renderStats();
+        renderReels();
         renderList();
     }
 
+    /* ============================================================
+       STATS
+       ============================================================ */
     function renderStats() {
         const s = calculateStats(allFeedback);
         statTotal.textContent = s.total;
@@ -387,7 +413,91 @@
     }
 
     /* ============================================================
-       FILTER + SORT
+       REELS
+       ============================================================ */
+    function renderReels() {
+        if (!savedReels.length) {
+            reelsEmpty.hidden = false;
+            reelsList.hidden = true;
+            reelsList.innerHTML = '';
+            return;
+        }
+        reelsEmpty.hidden = true;
+        reelsList.hidden = false;
+
+        reelsList.innerHTML = savedReels.map((r) => {
+            const link = reelFeedbackUrl(r.id);
+            return `
+                <div class="reel-row" data-id="${escapeHTML(r.id)}">
+                    <div class="reel-row-thumb">
+                        ${r.thumbnail
+                            ? '<img src="' + r.thumbnail + '" alt="" />'
+                            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></svg>'}
+                    </div>
+                    <div class="reel-row-main">
+                        <div class="reel-row-top">
+                            <span class="reel-row-id">${escapeHTML(r.id)}</span>
+                            <span class="reel-row-title">${escapeHTML(r.title)}</span>
+                        </div>
+                        <div class="reel-row-url">${escapeHTML(r.url)}</div>
+                    </div>
+                    <div class="reel-row-actions">
+                        <a class="reel-row-link" href="${escapeHTML(link)}" target="_blank" rel="noopener">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+                            </svg>
+                            Open
+                        </a>
+                        <button type="button" class="reel-row-link reel-row-copy" data-copy="${escapeHTML(link)}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                            </svg>
+                            Copy Link
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        reelsList.querySelectorAll('[data-copy]').forEach((btn) => {
+            btn.addEventListener('click', () => copyReelLink(btn));
+        });
+    }
+
+    function reelFeedbackUrl(id) {
+        return 'index.html?reel=' + encodeURIComponent(id);
+    }
+
+    async function copyReelLink(btn) {
+        const text = btn.dataset.copy || '';
+        const absolute = new URL(text, window.location.href).href;
+        try {
+            await navigator.clipboard.writeText(absolute);
+            btn.classList.add('is-copied');
+            const original = btn.innerHTML;
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Copied
+            `;
+            setTimeout(() => {
+                btn.classList.remove('is-copied');
+                btn.innerHTML = original;
+            }, 1800);
+        } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = absolute;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (_) {}
+            document.body.removeChild(ta);
+        }
+    }
+
+    /* ============================================================
+       FEEDBACK LIST
        ============================================================ */
     function getFiltered() {
         let list = [...allFeedback];
@@ -429,23 +539,20 @@
         return list;
     }
 
-    /* ============================================================
-       RENDER LIST
-       ============================================================ */
     function renderList() {
         const list = getFiltered();
         resultCount.textContent = list.length + ' result' + (list.length === 1 ? '' : 's');
 
         if (!list.length) {
             feedbackList.innerHTML = `
-                <div class="empty">
-                    <div class="empty-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
                         </svg>
                     </div>
-                    <h3>No feedback found</h3>
-                    <p>Try adjusting your search or filters.</p>
+                    <h3>No feedback yet</h3>
+                    <p>Feedback will appear here once users start responding to your reels.</p>
                 </div>
             `;
             return;
@@ -471,7 +578,6 @@
                         ${safe(f.rating)} / 5
                     </span>
                 </div>
-
                 <div class="row-grid">
                     ${item('Reel', f.reelId ? f.reelId + ' — ' + (f.reelTitle || '') : null)}
                     ${item('Feeling', f.feeling)}
@@ -484,7 +590,6 @@
                         </div>
                     ` : ''}
                 </div>
-
                 <div class="row-foot">
                     <span>Submitted: ${safe(dateStr)}</span>
                     <span>ID: ${safe(f.id)}</span>
@@ -504,9 +609,8 @@
     }
 
     /* ============================================================
-       REEL MANAGEMENT — UI
+       ADD REEL MODAL
        ============================================================ */
-
     function openReelModal() {
         addReelModal.hidden = false;
         document.body.style.overflow = 'hidden';
@@ -600,9 +704,7 @@
         reelPreview.hidden = false;
 
         const saveBtn = document.getElementById('saveReelBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', handleSaveReel);
-        }
+        if (saveBtn) saveBtn.addEventListener('click', handleSaveReel);
     }
 
     async function handleSaveReel() {
@@ -624,100 +726,18 @@
             return;
         }
 
+        savedReels = await loadReels();
         renderReels();
         closeReelModal();
     }
 
-    function reelFeedbackUrl(id) {
-        return 'index.html?reel=' + encodeURIComponent(id);
-    }
-
-    function renderReels() {
-        if (!reelsList) return;
-        const reels = getSavedReels();
-
-        if (!reels.length) {
-            reelsList.innerHTML = `
-                <div class="reels-empty">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="4" width="20" height="16" rx="2"/>
-                        <path d="M10 9l5 3-5 3z"/>
-                    </svg>
-                    <p>No reels added yet. Click "Add Reel" to get started.</p>
-                </div>
-            `;
-            return;
-        }
-
-        reelsList.innerHTML = reels.map((r) => {
-            const link = reelFeedbackUrl(r.id);
-            return `
-                <div class="reel-row" data-id="${escapeHTML(r.id)}">
-                    <div class="reel-row-thumb">
-                        ${r.thumbnail
-                            ? '<img src="' + r.thumbnail + '" alt="" />'
-                            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></svg>'}
-                    </div>
-                    <div class="reel-row-main">
-                        <div class="reel-row-top">
-                            <span class="reel-row-id">${escapeHTML(r.id)}</span>
-                            <span class="reel-row-title">${escapeHTML(r.title)}</span>
-                        </div>
-                        <div class="reel-row-url">${escapeHTML(r.url)}</div>
-                    </div>
-                    <div class="reel-row-actions">
-                        <a class="reel-row-link" href="${escapeHTML(link)}" target="_blank" rel="noopener">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-                            </svg>
-                            Open
-                        </a>
-                        <button type="button" class="reel-row-link reel-row-copy" data-copy="${escapeHTML(link)}">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2"/>
-                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                            </svg>
-                            Copy Link
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        reelsList.querySelectorAll('[data-copy]').forEach((btn) => {
-            btn.addEventListener('click', () => copyReelLink(btn));
-        });
-    }
-
-    async function copyReelLink(btn) {
-        const text = btn.dataset.copy || '';
-        const absolute = new URL(text, window.location.href).href;
-        try {
-            await navigator.clipboard.writeText(absolute);
-            btn.classList.add('is-copied');
-            const original = btn.innerHTML;
-            btn.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                Copied
-            `;
-            setTimeout(() => {
-                btn.classList.remove('is-copied');
-                btn.innerHTML = original;
-            }, 1800);
-        } catch (e) {
-            const ta = document.createElement('textarea');
-            ta.value = absolute;
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand('copy'); } catch (_) {}
-            document.body.removeChild(ta);
-        }
-    }
-
-    /* ---- Reel Bindings ---- */
+    /* Bind all Add Reel triggers */
     if (openAddReel) openAddReel.addEventListener('click', openReelModal);
+    if (drawerAddReel) drawerAddReel.addEventListener('click', () => {
+        closeDrawer();
+        setTimeout(openReelModal, 220);
+    });
+    if (emptyAddReel) emptyAddReel.addEventListener('click', openReelModal);
     if (closeAddReel) closeAddReel.addEventListener('click', closeReelModal);
     if (addReelBackdrop) addReelBackdrop.addEventListener('click', closeReelModal);
     if (fetchReel) fetchReel.addEventListener('click', handleFetchReel);
@@ -747,7 +767,6 @@
             hour: '2-digit', minute: '2-digit'
         });
     }
-
     function escapeHTML(value) {
         return String(value)
             .replace(/&/g, '&amp;')
@@ -765,6 +784,8 @@
         el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', renderList);
     });
 
+    /* ===== INIT ===== */
     renderReels();
+    renderList();
     showLogin();
 })();
