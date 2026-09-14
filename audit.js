@@ -51,6 +51,7 @@ let snapshots = [];
 let currentPeriod = '7d';
 let currentCompare = 'previous';
 let currentReelFilter = 'all';
+let compareLabSelection = new Set();
 let unsubFeedback = null;
 let unsubReels = null;
 let unsubHistory = null;
@@ -1249,6 +1250,125 @@ function renderQuality() {
         </div>
     `).join('');
 }
+/* ============================================================
+   RENDER — REEL COMPARISON LAB
+   ============================================================ */
+function renderReelComparisonLab() {
+    const chipsEl = $('compareLabChips');
+    const resultEl = $('compareLabResult');
+    if (!chipsEl || !resultEl) return;
+
+    if (!savedReels.length) {
+        chipsEl.innerHTML = '';
+        resultEl.innerHTML = `<div class="chart-empty"><p>No reels to compare.</p></div>`;
+        return;
+    }
+
+    /* Chips */
+    chipsEl.innerHTML = savedReels.map((r) => `
+        <button type="button" class="compare-lab-chip${compareLabSelection.has(r.id) ? ' is-active' : ''}" data-id="${escapeHTML(r.id)}">
+            ${escapeHTML(r.id)}
+        </button>
+    `).join('');
+
+    chipsEl.querySelectorAll('.compare-lab-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+            const id = chip.dataset.id;
+            if (compareLabSelection.has(id)) {
+                compareLabSelection.delete(id);
+            } else {
+                if (compareLabSelection.size >= 4) {
+                    alert('Maximum 4 reels can be compared.');
+                    return;
+                }
+                compareLabSelection.add(id);
+            }
+            renderReelComparisonLab();
+        });
+    });
+
+    if (compareLabSelection.size < 2) {
+        resultEl.innerHTML = `<div class="chart-empty"><p>Select at least 2 reels to compare.</p></div>`;
+        return;
+    }
+
+    const range = periodRange(currentPeriod);
+    const ids = Array.from(compareLabSelection);
+    const rows = ids.map((id) => {
+        const reel = savedReels.find((r) => r.id === id);
+        return { id, title: reel?.title || '', stats: computeReelStats(id, range) };
+    });
+
+    /* Metrics to compare */
+    const metrics = [
+        { label: 'Responses', get: (s) => s ? s.total : 0, numeric: true },
+        { label: 'Avg Rating', get: (s) => s ? Number(s.avg.toFixed(2)) : 0, display: (s) => s ? s.avg.toFixed(2) + '/5' : '—', numeric: true },
+        { label: 'Recommendation', get: (s) => s ? s.recommend : 0, display: (s) => s ? s.recommend + '%' : '—', numeric: true },
+        { label: 'Repeat Intent', get: (s) => s ? s.repeat : 0, display: (s) => s ? s.repeat + '%' : '—', numeric: true },
+        { label: 'Written Feedback', get: (s) => s ? s.written : 0, numeric: true },
+        { label: 'Confidence', get: (s) => s ? s.confidence.level : '—', numeric: false },
+        { label: 'Classification', get: (s) => s ? classifyReel(s).label : 'Insufficient Data', numeric: false }
+    ];
+
+    /* Find best/worst per numeric metric */
+    const bestWorst = {};
+    metrics.forEach((m) => {
+        if (!m.numeric) return;
+        const values = rows.map((r) => m.get(r.stats));
+        const valid = values.filter((v) => v != null && !isNaN(v));
+        if (!valid.length) return;
+        bestWorst[m.label] = { best: Math.max(...valid), worst: Math.min(...valid) };
+    });
+
+    let table = '<table class="compare-lab-table"><thead><tr><th>Metric</th>';
+    rows.forEach((r) => { table += `<th>${escapeHTML(r.id)}</th>`; });
+    table += '</tr></thead><tbody>';
+
+    metrics.forEach((m) => {
+        table += `<tr><td>${escapeHTML(m.label)}</td>`;
+        rows.forEach((r) => {
+            const v = m.get(r.stats);
+            const display = m.display ? m.display(r.stats) : (v == null ? '—' : String(v));
+            let cls = '';
+            if (m.numeric && bestWorst[m.label] && rows.length > 1) {
+                const nums = rows.map((rr) => m.get(rr.stats));
+                const best = bestWorst[m.label].best;
+                const worst = bestWorst[m.label].worst;
+                if (best !== worst) {
+                    if (v === best) cls = 'best';
+                    else if (v === worst) cls = 'worst';
+                }
+            }
+            table += `<td class="${cls}">${escapeHTML(display)}</td>`;
+        });
+        table += '</tr>';
+    });
+    table += '</tbody></table>';
+
+    /* Auto-generated summary */
+    const summary = [];
+    const ratedRows = rows.filter((r) => r.stats && r.stats.total >= settings.minSample);
+    if (ratedRows.length >= 2) {
+        const best = ratedRows.slice().sort((a, b) => b.stats.avg - a.stats.avg)[0];
+        const worst = ratedRows.slice().sort((a, b) => a.stats.avg - b.stats.avg)[0];
+        summary.push(`<div><strong>Strongest:</strong> ${escapeHTML(best.id)} — avg rating ${best.stats.avg.toFixed(2)}/5 with ${best.stats.recommend}% recommendation.</div>`);
+        if (best.id !== worst.id) {
+            summary.push(`<div><strong>Weakest:</strong> ${escapeHTML(worst.id)} — avg rating ${worst.stats.avg.toFixed(2)}/5 with ${worst.stats.recommend}% recommendation.</div>`);
+        }
+
+        /* Shared recommend / repeat leaders */
+        const recLeader = ratedRows.slice().sort((a, b) => b.stats.recommend - a.stats.recommend)[0];
+        if (recLeader.id !== best.id) {
+            summary.push(`<div><strong>Highest recommendation:</strong> ${escapeHTML(recLeader.id)} at ${recLeader.stats.recommend}%.</div>`);
+        }
+        const repLeader = ratedRows.slice().sort((a, b) => b.stats.repeat - a.stats.repeat)[0];
+        summary.push(`<div><strong>Highest repeat intent:</strong> ${escapeHTML(repLeader.id)} at ${repLeader.stats.repeat}%.</div>`);
+    } else {
+        summary.push('<div>Not enough data in the current period to make reliable comparisons. Sample size below minimum threshold for at least 2 reels.</div>');
+    }
+
+    resultEl.innerHTML = table + `<div class="compare-lab-summary">${summary.join('')}</div>`;
+}
 
 /* ============================================================
    RENDER — INSIGHT LIFECYCLE
@@ -1884,10 +2004,11 @@ function renderAll() {
     renderPortfolio();
     renderRecommendations();
     renderRoadmap();
-        renderHistory();
+       renderHistory();
     renderQuality();
     renderLifecycle();
     renderOutcomes();
+    renderReelComparisonLab();
 }
 /* ============================================================
    AUTH
