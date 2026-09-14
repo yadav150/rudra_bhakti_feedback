@@ -1,19 +1,50 @@
-const FB_GRAPH_VERSION = 'v18.0';
+const CRAWLER_UAS = [
+    'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'
+];
 
 function isFacebookReelUrl(url) {
     try {
         const u = new URL(url);
         const host = u.hostname.toLowerCase();
         const ok = host === 'facebook.com' || host === 'www.facebook.com'
-            || host === 'm.facebook.com' || host === 'fb.watch'
-            || host.endsWith('.facebook.com');
+            || host === 'm.facebook.com' || host === 'mbasic.facebook.com'
+            || host === 'fb.watch' || host.endsWith('.facebook.com');
         if (!ok) return false;
-        return /\/reel\//i.test(u.pathname) || host === 'fb.watch';
+        return /\/reel\//i.test(u.pathname) || /\/videos\//i.test(u.pathname) || host === 'fb.watch';
     } catch { return false; }
 }
+
 function normalizeUrl(url) {
-    try { const u = new URL(url); u.hash = ''; u.search = ''; return u.toString(); }
+    try { const u = new URL(url); u.hash = ''; return u.toString(); }
     catch { return url; }
+}
+
+function pickMeta(html, prop) {
+    const patterns = [
+        new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i'),
+        new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`, 'i'),
+        new RegExp(`<meta[^>]+name=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i'),
+        new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${prop}["']`, 'i')
+    ];
+    for (const p of patterns) {
+        const m = html.match(p);
+        if (m && m[1]) return decodeHtml(m[1].trim());
+    }
+    return '';
+}
+
+function pickTitle(html) {
+    const m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    return m && m[1] ? decodeHtml(m[1].trim()) : '';
+}
+
+function decodeHtml(str) {
+    return String(str)
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&#x27;/g, "'")
+        .replace(/&apos;/g, "'").replace(/&nbsp;/g, ' ');
 }
 
 exports.handler = async (event) => {
@@ -23,41 +54,55 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json'
     };
+
     if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers };
-    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'method_not_allowed' }) };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'method_not_allowed', message: 'POST only.' }) };
 
     let body = {};
     try { body = JSON.parse(event.body || '{}'); } catch {}
 
     const rawUrl = (body.url || '').trim();
-    if (!rawUrl) return { statusCode: 400, headers, body: JSON.stringify({ error: 'missing_url', message: 'Please enter a Facebook Reel URL.' }) };
+    if (!rawUrl) return { statusCode: 400, headers, body: JSON.stringify({ error: 'invalid_url', message: 'Please enter a Facebook Reel URL.' }) };
     if (!isFacebookReelUrl(rawUrl)) return { statusCode: 400, headers, body: JSON.stringify({ error: 'invalid_url', message: 'This is not a valid Facebook Reel URL.' }) };
 
-    const token = process.env.FB_ACCESS_TOKEN;
-    if (!token) return { statusCode: 500, headers, body: JSON.stringify({ error: 'server_config', message: 'Server is not configured with a Facebook access token.' }) };
-
-    const cleanUrl = normalizeUrl(rawUrl);
-    const endpoints = [
-        `https://graph.facebook.com/${FB_GRAPH_VERSION}/oembed_post`,
-        `https://graph.facebook.com/${FB_GRAPH_VERSION}/oembed_video`
-    ];
+    const target = normalizeUrl(rawUrl);
     let lastError = null;
 
-    for (const endpoint of endpoints) {
+    for (const ua of CRAWLER_UAS) {
         try {
-            const apiUrl = `${endpoint}?url=${encodeURIComponent(cleanUrl)}&access_token=${encodeURIComponent(token)}`;
-            const r = await fetch(apiUrl);
-            const data = await r.json().catch(() => ({}));
-            if (data.error) { lastError = data.error.message; continue; }
-            const title = (data.title || data.author_name || '').trim();
-            const thumbnail = (data.thumbnail_url || data.image || '').trim();
-            const canonical = (data.url || data.provider_url || cleanUrl).trim();
-            if (!title && !thumbnail) { lastError = 'Meta returned no usable metadata.'; continue; }
-            return { statusCode: 200, headers, body: JSON.stringify({ ok: true, title, thumbnail, url: canonical, author: data.author_name || '', provider: 'facebook_graph_oembed' }) };
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12000);
+
+            const r = await fetch(target, {
+                method: 'GET',
+                redirect: 'follow',
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': ua,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9'
+                }
+            });
+
+            clearTimeout(timeout);
+
+            if (!r.ok) { lastError = `Facebook returned status ${r.status}.`; continue; }
+
+            const html = await r.text();
+            const title = pickMeta(html, 'og:title') || pickTitle(html);
+            const thumbnail = pickMeta(html, 'og:image');
+            const desc = pickMeta(html, 'og:description');
+            const canonical = pickMeta(html, 'og:url') || target;
+
+            const badTitles = /^(facebook|log in|login|watch)/i;
+            if (!title && !thumbnail) { lastError = 'Facebook did not return usable metadata.'; continue; }
+            if (badTitles.test(title) && !thumbnail) { lastError = 'Facebook served a login wall.'; continue; }
+
+            return { statusCode: 200, headers, body: JSON.stringify({ ok: true, title, thumbnail, description: desc, url: canonical, provider: 'server_og_parse' }) };
         } catch (err) {
-            lastError = err.message || 'Network error.';
+            lastError = err.name === 'AbortError' ? 'Facebook did not respond in time.' : (err.message || 'Network error.');
         }
     }
 
-    return { statusCode: 502, headers, body: JSON.stringify({ error: 'meta_unavailable', message: lastError || 'Metadata not available via Meta API.' }) };
+    return { statusCode: 502, headers, body: JSON.stringify({ error: 'meta_unavailable', message: lastError || 'Could not retrieve Reel metadata.' }) };
 };
