@@ -55,6 +55,8 @@ let unsubFeedback = null;
 let unsubReels = null;
 let unsubHistory = null;
 let unsubSettings = null;
+let unsubRecoStatus = null;
+let recoStatuses = {};
 
 const $ = (id) => document.getElementById(id);
 
@@ -153,6 +155,18 @@ function inRange(ts, start, end) {
     if (!ts) return false;
     const t = new Date(ts).getTime();
     return t >= start && t <= end;
+}
+/* ============================================================
+   RECOMMENDATION KEY
+   ============================================================ */
+function recoKey(r) {
+    /* Stable key from finding + primary tag */
+    const src = (r.finding || '') + '|' + ((r.tags && r.tags[0]) || '');
+    let hash = 0;
+    for (let i = 0; i < src.length; i++) {
+        hash = ((hash << 5) - hash + src.charCodeAt(i)) | 0;
+    }
+    return 'r' + Math.abs(hash).toString(36);
 }
 
 /* ============================================================
@@ -843,25 +857,174 @@ function renderRecommendations() {
         wrap.innerHTML = `<div class="chart-empty"><p>No recommendations yet — collect more feedback to generate evidence-based actions.</p></div>`;
         return;
     }
-    wrap.innerHTML = recos.map((r) => `
-        <div class="audit-reco">
-            <div class="audit-reco-head">
-                <span class="audit-reco-priority audit-reco-priority--${r.priority.toLowerCase()}">${escapeHTML(r.priority)}</span>
-                <span class="audit-reco-cat">${escapeHTML(r.category)}</span>
-                <span class="audit-reco-title">${escapeHTML(r.finding)}</span>
+    wrap.innerHTML = recos.map((r) => {
+        const key = recoKey(r);
+        const status = recoStatuses[key]?.status || 'not-started';
+        return `
+            <div class="audit-reco" data-reco-key="${escapeHTML(key)}">
+                <div class="audit-reco-head">
+                    <span class="audit-reco-priority audit-reco-priority--${r.priority.toLowerCase()}">${escapeHTML(r.priority)}</span>
+                    <span class="audit-reco-cat">${escapeHTML(r.category)}</span>
+                    <span class="audit-reco-title">${escapeHTML(r.finding)}</span>
+                </div>
+                <div class="audit-reco-body">
+                    <div><strong>Evidence:</strong> ${escapeHTML(r.evidence)}</div>
+                    <div><strong>Interpretation:</strong> ${escapeHTML(r.interpretation)}</div>
+                    <div><strong>Recommended action:</strong> ${escapeHTML(r.action)}</div>
+                    <div class="muted"><strong>Monitor:</strong> ${escapeHTML(r.monitor)}</div>
+                </div>
+                <div class="audit-reco-tags">
+                    <span class="audit-reco-tag">Confidence: ${escapeHTML(r.confidence)}</span>
+                    ${r.tags.map((t) => `<span class="audit-reco-tag">${escapeHTML(t)}</span>`).join('')}
+                </div>
+                <div class="audit-reco-status-row">
+                    <label>Status</label>
+                    <select class="audit-reco-status-select" data-key="${escapeHTML(key)}">
+                        <option value="not-started" ${status === 'not-started' ? 'selected' : ''}>Not Started</option>
+                        <option value="in-progress" ${status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="completed" ${status === 'completed' ? 'selected' : ''}>Completed</option>
+                        <option value="deferred" ${status === 'deferred' ? 'selected' : ''}>Deferred</option>
+                        <option value="rejected" ${status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                </div>
             </div>
-            <div class="audit-reco-body">
-                <div><strong>Evidence:</strong> ${escapeHTML(r.evidence)}</div>
-                <div><strong>Interpretation:</strong> ${escapeHTML(r.interpretation)}</div>
-                <div><strong>Recommended action:</strong> ${escapeHTML(r.action)}</div>
-                <div class="muted"><strong>Monitor:</strong> ${escapeHTML(r.monitor)}</div>
+        `;
+    }).join('');
+
+    /* Bind dropdowns */
+    wrap.querySelectorAll('.audit-reco-status-select').forEach((sel) => {
+        sel.addEventListener('change', () => {
+            const key = sel.dataset.key;
+            const newStatus = sel.value;
+            const reco = recos.find((r) => recoKey(r) === key);
+            updateRecoStatus(key, newStatus, reco);
+        });
+    });
+}
+
+/* ============================================================
+   RECOMMENDATION OUTCOME
+   ============================================================ */
+async function updateRecoStatus(key, status, reco) {
+    try {
+        const existing = recoStatuses[key] || {};
+        const payload = {
+            status,
+            finding: reco?.finding || existing.finding || '',
+            category: reco?.category || existing.category || '',
+            priority: reco?.priority || existing.priority || '',
+            updatedAt: Date.now()
+        };
+
+        /* Capture baseline when first moved to In Progress or Completed */
+        if (!existing.baseline && (status === 'in-progress' || status === 'completed')) {
+            const range = periodRange('30d');
+            const list = filterFeedback(allFeedback, range, currentReelFilter);
+            const c = calcMetrics(list);
+            payload.baseline = {
+                capturedAt: Date.now(),
+                healthScore: c.healthScore,
+                satisfaction: c.satisfaction,
+                recommend: c.recommend,
+                future: c.future,
+                repeat: c.repeat,
+                sample: c.total
+            };
+        } else if (existing.baseline) {
+            payload.baseline = existing.baseline;
+        }
+
+        await set(ref(db, 'auditRecos/' + key), payload);
+    } catch (err) {
+        console.error('Update reco status error:', err);
+    }
+}
+
+function renderOutcomes() {
+    const listEl = $('outcomesList');
+    const emptyEl = $('outcomesEmpty');
+    if (!listEl || !emptyEl) return;
+
+    const entries = Object.entries(recoStatuses)
+        .map(([key, v]) => ({ key, ...v }))
+        .filter((v) => v.status && v.status !== 'not-started')
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+    if (!entries.length) {
+        emptyEl.hidden = false;
+        listEl.hidden = true;
+        return;
+    }
+    emptyEl.hidden = true;
+    listEl.hidden = false;
+
+    const currentRange = periodRange('30d');
+    const currentList = filterFeedback(allFeedback, currentRange, currentReelFilter);
+    const current = calcMetrics(currentList);
+
+    listEl.innerHTML = entries.map((e) => {
+        const baseline = e.baseline || null;
+        const hasBaseline = baseline && baseline.sample >= settings.minSample;
+        const currentHasData = current.total >= settings.minSample;
+
+        /* Comparison cells */
+        const cells = [];
+        let verdict = { text: 'Awaiting sufficient post-action data.', cls: 'insufficient' };
+
+        if (hasBaseline && currentHasData) {
+            const metrics = [
+                { key: 'healthScore', label: 'Health Score' },
+                { key: 'satisfaction', label: 'Satisfaction' },
+                { key: 'recommend', label: 'Recommendation' },
+                { key: 'future', label: 'Future Interest' },
+                { key: 'repeat', label: 'Repeat Intent' }
+            ];
+            metrics.forEach((m) => {
+                const b = baseline[m.key];
+                const c = current[m.key];
+                const d = c - b;
+                const dir = d > 2 ? 'up' : d < -2 ? 'down' : 'flat';
+                cells.push(`
+                    <div class="outcome-cell">
+                        <span class="outcome-cell-label">${escapeHTML(m.label)}</span>
+                        <span class="outcome-cell-value">${Math.round(c)}</span>
+                        <span class="outcome-cell-delta ${dir}">${d > 0 ? '+' : ''}${Math.round(d)} vs baseline</span>
+                    </div>
+                `);
+            });
+
+            /* Verdict from health score */
+            const hDelta = current.healthScore - baseline.healthScore;
+            if (Math.abs(hDelta) < settings.significantChange * 0.5) {
+                verdict = { text: 'No significant change since action.', cls: 'neutral' };
+            } else if (hDelta > 0) {
+                verdict = { text: `Improved by ${Math.round(hDelta)} points since action.`, cls: 'improved' };
+            } else {
+                verdict = { text: `Declined by ${Math.abs(Math.round(hDelta))} points since action.`, cls: 'declined' };
+            }
+        } else if (!baseline) {
+            verdict = { text: 'No baseline captured yet — set status to In Progress or Completed to capture baseline.', cls: 'insufficient' };
+        } else {
+            verdict = { text: 'Not enough post-action data yet. Keep collecting.', cls: 'insufficient' };
+        }
+
+        return `
+            <div class="outcome-row">
+                <div class="outcome-head">
+                    <span class="outcome-status outcome-status--${e.status}">${escapeHTML(e.status.replace('-', ' '))}</span>
+                    <span class="outcome-title">${escapeHTML(e.finding || 'Recommendation')}</span>
+                </div>
+                <div class="outcome-meta">
+                    ${e.category ? `<span>${escapeHTML(e.category)}</span>` : ''}
+                    ${e.priority ? `<span>${escapeHTML(e.priority)}</span>` : ''}
+                    <span>Updated ${escapeHTML(formatDate(e.updatedAt))}</span>
+                    ${baseline ? `<span>Baseline: ${baseline.sample} responses</span>` : ''}
+                </div>
+                ${cells.length ? `<div class="outcome-comparison">${cells.join('')}</div>` : ''}
+                <div class="outcome-verdict outcome-verdict--${verdict.cls}">${escapeHTML(verdict.text)}</div>
             </div>
-            <div class="audit-reco-tags">
-                <span class="audit-reco-tag">Confidence: ${escapeHTML(r.confidence)}</span>
-                ${r.tags.map((t) => `<span class="audit-reco-tag">${escapeHTML(t)}</span>`).join('')}
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 /* ============================================================
@@ -1614,6 +1777,7 @@ function renderAll() {
         renderHistory();
     renderQuality();
     renderLifecycle();
+    renderOutcomes();
 }
 /* ============================================================
    AUTH
@@ -1698,10 +1862,19 @@ function startListeners() {
         renderAll();
     });
 
-    unsubHistory = onValue(ref(db, 'auditHistory'), (snap) => {
+        unsubHistory = onValue(ref(db, 'auditHistory'), (snap) => {
         snapshots = [];
         snap.forEach((child) => snapshots.push({ id: child.key, ...child.val() }));
         renderHistory();
+    });
+
+    unsubRecoStatus = onValue(ref(db, 'auditRecos'), (snap) => {
+        recoStatuses = {};
+        snap.forEach((child) => {
+            recoStatuses[child.key] = child.val() || {};
+        });
+        renderRecommendations();
+        renderOutcomes();
     });
 }
 
@@ -1709,9 +1882,9 @@ function stopListeners() {
     if (unsubReels) { unsubReels(); unsubReels = null; }
     if (unsubFeedback) { unsubFeedback(); unsubFeedback = null; }
     if (unsubSettings) { unsubSettings(); unsubSettings = null; }
-    if (unsubHistory) { unsubHistory(); unsubHistory = null; }
+       if (unsubHistory) { unsubHistory(); unsubHistory = null; }
+    if (unsubRecoStatus) { unsubRecoStatus(); unsubRecoStatus = null; }
 }
-
 function populateReelFilter() {
     if (!reelFilter) return;
     const current = reelFilter.value;
