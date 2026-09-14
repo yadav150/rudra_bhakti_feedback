@@ -52,6 +52,8 @@ let currentPeriod = '7d';
 let currentCompare = 'previous';
 let currentReelFilter = 'all';
 let compareLabSelection = new Set();
+let experimentGroupA = new Set();
+let experimentGroupB = new Set();
 let unsubFeedback = null;
 let unsubReels = null;
 let unsubHistory = null;
@@ -1371,6 +1373,147 @@ function renderReelComparisonLab() {
 }
 
 /* ============================================================
+   RENDER — EXPERIMENT INTELLIGENCE
+   ============================================================ */
+function renderExperiment() {
+    const chipsA = $('experimentChipsA');
+    const chipsB = $('experimentChipsB');
+    const resultEl = $('experimentResult');
+    if (!chipsA || !chipsB || !resultEl) return;
+
+    if (!savedReels.length) {
+        chipsA.innerHTML = '';
+        chipsB.innerHTML = '';
+        resultEl.innerHTML = `<div class="chart-empty"><p>Add reels to enable experiments.</p></div>`;
+        return;
+    }
+
+    /* Chips for Group A */
+    chipsA.innerHTML = savedReels.map((r) => `
+        <button type="button" class="experiment-chip${experimentGroupA.has(r.id) ? ' is-active' : ''}" data-group="A" data-id="${escapeHTML(r.id)}">
+            ${escapeHTML(r.id)}
+        </button>
+    `).join('');
+
+    /* Chips for Group B */
+    chipsB.innerHTML = savedReels.map((r) => `
+        <button type="button" class="experiment-chip${experimentGroupB.has(r.id) ? ' is-active in-group-b' : ''}" data-group="B" data-id="${escapeHTML(r.id)}">
+            ${escapeHTML(r.id)}
+        </button>
+    `).join('');
+
+    /* Bind */
+    [chipsA, chipsB].forEach((el) => {
+        el.querySelectorAll('.experiment-chip').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                const id = chip.dataset.id;
+                const group = chip.dataset.group;
+                const set = group === 'A' ? experimentGroupA : experimentGroupB;
+                const other = group === 'A' ? experimentGroupB : experimentGroupA;
+                if (set.has(id)) {
+                    set.delete(id);
+                } else {
+                    if (other.has(id)) other.delete(id);
+                    set.add(id);
+                }
+                renderExperiment();
+            });
+        });
+    });
+
+    if (experimentGroupA.size < 1 || experimentGroupB.size < 1) {
+        resultEl.innerHTML = `<div class="chart-empty"><p>Select at least 1 reel in each group.</p></div>`;
+        return;
+    }
+
+    /* Compute aggregate stats for each group */
+    const range = periodRange(currentPeriod);
+
+    const computeGroup = (ids) => {
+        const feedbackList = allFeedback.filter((f) => {
+            if (!ids.has(f.reelId)) return false;
+            if (!inRange(f.submittedAt, range.start, range.end)) return false;
+            return true;
+        });
+        return { feedbackList, metrics: calcMetrics(feedbackList) };
+    };
+
+    const groupA = computeGroup(experimentGroupA);
+    const groupB = computeGroup(experimentGroupB);
+    const mA = groupA.metrics;
+    const mB = groupB.metrics;
+
+    /* Determine significance threshold */
+    const minSample = settings.minSample;
+    const hasEnoughA = mA.total >= minSample;
+    const hasEnoughB = mB.total >= minSample;
+    const hasBoth = hasEnoughA && hasEnoughB;
+
+    /* Rows */
+    const metrics = [
+        { label: 'Responses', a: mA.total, b: mB.total, higherIsBetter: true },
+        { label: 'Avg Rating', a: Number(mA.avgRating.toFixed(2)), b: Number(mB.avgRating.toFixed(2)), display: (v) => v.toFixed(2), higherIsBetter: true },
+        { label: 'Satisfaction', a: mA.satisfaction, b: mB.satisfaction, display: (v) => v + '%', higherIsBetter: true },
+        { label: 'Recommendation', a: mA.recommend, b: mB.recommend, display: (v) => v + '%', higherIsBetter: true },
+        { label: 'Future Interest', a: mA.future, b: mB.future, display: (v) => v + '%', higherIsBetter: true },
+        { label: 'Repeat Intent', a: mA.repeat, b: mB.repeat, display: (v) => v + '%', higherIsBetter: true },
+        { label: 'Health Score', a: mA.healthScore, b: mB.healthScore, display: (v) => String(v), higherIsBetter: true }
+    ];
+
+    let table = '<table class="experiment-table"><thead><tr><th>Metric</th><th>Group A</th><th>Group B</th></tr></thead><tbody>';
+    metrics.forEach((m) => {
+        const aVal = m.a;
+        const bVal = m.b;
+        let clsA = '', clsB = '';
+        if (hasBoth && aVal !== bVal) {
+            const aWins = m.higherIsBetter ? aVal > bVal : aVal < bVal;
+            clsA = aWins ? 'win-a' : '';
+            clsB = aWins ? '' : 'win-b';
+        }
+        const dispA = m.display ? m.display(aVal) : String(aVal);
+        const dispB = m.display ? m.display(bVal) : String(bVal);
+        table += `<tr><td>${escapeHTML(m.label)}</td><td class="${clsA}">${escapeHTML(dispA)}</td><td class="${clsB}">${escapeHTML(dispB)}</td></tr>`;
+    });
+    table += '</tbody></table>';
+
+    /* Verdict */
+    let verdict, verdictCls;
+    if (!hasBoth) {
+        verdict = `Insufficient evidence. Group A has ${mA.total} responses, Group B has ${mB.total}. Minimum ${minSample} required in each group for a reliable comparison.`;
+        verdictCls = 'insufficient';
+    } else {
+        const aHealth = mA.healthScore;
+        const bHealth = mB.healthScore;
+        const diff = bHealth - aHealth;
+        const threshold = settings.significantChange;
+        if (Math.abs(diff) < threshold) {
+            verdict = `No meaningful difference. Health scores are ${aHealth} vs ${bHealth} (${diff >= 0 ? '+' : ''}${diff}), within the ${threshold}-point significance threshold.`;
+            verdictCls = 'tie';
+        } else if (diff > 0) {
+            verdict = `Group B performs better by ${diff} health-score points (${bHealth} vs ${aHealth}). Evidence supports Group B as the stronger pattern.`;
+            verdictCls = 'b-wins';
+        } else {
+            verdict = `Group A performs better by ${Math.abs(diff)} health-score points (${aHealth} vs ${bHealth}). Evidence supports Group A as the stronger pattern.`;
+            verdictCls = 'a-wins';
+        }
+    }
+
+    /* Notes */
+    const notes = [];
+    notes.push(`Group A contains ${experimentGroupA.size} reel${experimentGroupA.size === 1 ? '' : 's'}: ${Array.from(experimentGroupA).join(', ')}.`);
+    notes.push(`Group B contains ${experimentGroupB.size} reel${experimentGroupB.size === 1 ? '' : 's'}: ${Array.from(experimentGroupB).join(', ')}.`);
+    notes.push(`Period: ${currentPeriod}. Significance threshold: ${settings.significantChange} points.`);
+
+    resultEl.innerHTML = `
+        <div class="experiment-verdict experiment-verdict--${verdictCls}">
+            ${escapeHTML(verdict)}
+        </div>
+        ${table}
+        <div class="experiment-notes">${notes.map(escapeHTML).join('<br>')}</div>
+    `;
+}
+
+/* ============================================================
    RENDER — INSIGHT LIFECYCLE
    ============================================================ */
 function renderLifecycle() {
@@ -2007,8 +2150,9 @@ function renderAll() {
        renderHistory();
     renderQuality();
     renderLifecycle();
-    renderOutcomes();
+       renderOutcomes();
     renderReelComparisonLab();
+    renderExperiment();
 }
 /* ============================================================
    AUTH
