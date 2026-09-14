@@ -71,6 +71,17 @@ function applyReelToPage() {
     if (thumbEl && activeReel.thumbnail) {
         thumbEl.innerHTML = '<img src="' + activeReel.thumbnail + '" alt="" />';
     }
+
+    const card = document.querySelector('.reel');
+    if (card) {
+        if (activeReel.url) {
+            card.style.cursor = 'pointer';
+            card.onclick = () => window.open(activeReel.url, '_blank', 'noopener');
+        } else {
+            card.style.cursor = '';
+            card.onclick = null;
+        }
+    }
 }
 
 loadActiveReel();
