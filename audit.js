@@ -2504,9 +2504,11 @@ function attachSessionListeners() {
 function startListeners() {
     stopListeners();
 
-    unsubReels = onValue(ref(db, 'reels'), (snap) => {
+        unsubReels = onValue(ref(db, 'reels'), (snap) => {
         savedReels = [];
-        snap.forEach((child) => savedReels.push({ id: child.key, ...child.val() }));
+        snap.forEach((child) => {
+            savedReels.push({ id: child.key, ...child.val() });
+        });
         savedReels.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         populateReelFilter();
         renderAll();
@@ -2535,9 +2537,11 @@ function startListeners() {
         renderAll();
     });
 
-        unsubHistory = onValue(ref(db, 'auditHistory'), (snap) => {
+            unsubHistory = onValue(ref(db, 'auditHistory'), (snap) => {
         snapshots = [];
-        snap.forEach((child) => snapshots.push({ id: child.key, ...child.val() }));
+        snap.forEach((child) => {
+            snapshots.push({ id: child.key, ...child.val() });
+        });
         renderHistory();
     });
 
