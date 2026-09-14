@@ -152,6 +152,13 @@ let pendingReel = null;
 let unsubscribeReels = null;
 let unsubscribeFeedback = null;
 let selectedCompare = new Set();
+const REELS_PER_PAGE = 5;
+const FEEDBACK_PER_PAGE = 10;
+const REEL_INTEL_PER_PAGE = 5;
+
+let reelsPage = 1;
+let feedbackPage = 1;
+let reelIntelPage = 1;
 
 /* ============================================================
    SCREEN CONTROL
@@ -359,7 +366,7 @@ function startRealtimeListeners() {
         snap.forEach((child) => {
             savedReels.push({ id: child.key, ...child.val() });
         });
-        savedReels.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        savedReels.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         renderReels();
         renderAllIntelligence();
     }, (err) => console.error('Reels listener error:', err));
@@ -452,6 +459,25 @@ function emptyState(icon, title, desc) {
         </div>
     `;
 }
+function renderPagination(containerId, current, total, onChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (total <= 1) {
+        container.hidden = true;
+        container.innerHTML = '';
+        return;
+    }
+    container.hidden = false;
+    container.innerHTML = `
+        <button type="button" class="pg-btn" data-pg="prev" ${current === 1 ? 'disabled' : ''}>Prev</button>
+        <span class="pg-info">Page ${current} of ${total}</span>
+        <button type="button" class="pg-btn" data-pg="next" ${current === total ? 'disabled' : ''}>Next</button>
+    `;
+    const prev = container.querySelector('[data-pg="prev"]');
+    const next = container.querySelector('[data-pg="next"]');
+    if (prev) prev.addEventListener('click', () => onChange(current - 1));
+    if (next) next.addEventListener('click', () => onChange(current + 1));
+}
 
 /* ============================================================
    STATS
@@ -540,11 +566,21 @@ function renderReels() {
         reelsEmpty.hidden = false;
         reelsList.hidden = true;
         reelsList.innerHTML = '';
+        const pg = document.getElementById('reelsPagination');
+        if (pg) pg.hidden = true;
         return;
     }
     reelsEmpty.hidden = true;
     reelsList.hidden = false;
-    reelsList.innerHTML = savedReels.map((r) => {
+
+    const totalPages = Math.max(1, Math.ceil(savedReels.length / REELS_PER_PAGE));
+    if (reelsPage > totalPages) reelsPage = totalPages;
+    if (reelsPage < 1) reelsPage = 1;
+
+    const start = (reelsPage - 1) * REELS_PER_PAGE;
+    const pageItems = savedReels.slice(start, start + REELS_PER_PAGE);
+
+    reelsList.innerHTML = pageItems.map((r) => {
         const link = reelFeedbackUrl(r.id);
         const thumb = r.thumbnail
             ? '<img src="' + escapeAttr(r.thumbnail) + '" alt="" />'
@@ -577,8 +613,14 @@ function renderReels() {
             </div>
         `;
     }).join('');
+
     reelsList.querySelectorAll('[data-copy]').forEach((btn) => {
         btn.addEventListener('click', () => copyReelLink(btn));
+    });
+
+    renderPagination('reelsPagination', reelsPage, totalPages, (p) => {
+        reelsPage = p;
+        renderReels();
     });
 }
 function reelFeedbackUrl(id) {
@@ -645,6 +687,7 @@ function renderList() {
     if (!feedbackList) return;
     const list = getFiltered();
     if (resultCount) resultCount.textContent = list.length + ' result' + (list.length === 1 ? '' : 's');
+
     if (!list.length) {
         feedbackList.innerHTML = `
             <div class="empty-state">
@@ -657,9 +700,25 @@ function renderList() {
                 <p>Feedback will appear here once users start responding to your reels.</p>
             </div>
         `;
+        const pg = document.getElementById('feedbackPagination');
+        if (pg) pg.hidden = true;
         return;
     }
-    feedbackList.innerHTML = list.map(renderRow).join('');
+
+    const totalPages = Math.max(1, Math.ceil(list.length / FEEDBACK_PER_PAGE));
+    if (feedbackPage > totalPages) feedbackPage = totalPages;
+    if (feedbackPage < 1) feedbackPage = 1;
+
+    const start = (feedbackPage - 1) * FEEDBACK_PER_PAGE;
+    const pageItems = list.slice(start, start + FEEDBACK_PER_PAGE);
+
+    feedbackList.innerHTML = pageItems.map(renderRow).join('');
+
+    renderPagination('feedbackPagination', feedbackPage, totalPages, (p) => {
+        feedbackPage = p;
+        renderList();
+        window.scrollTo({ top: feedbackList.offsetTop - 100, behavior: 'smooth' });
+    });
 }
 function renderRow(f) {
     const safe = (v) => escapeHTML(v == null ? '' : String(v));
@@ -881,12 +940,21 @@ function renderReelIntelligence() {
         reelIntelEmpty.hidden = false;
         reelIntelList.hidden = true;
         reelIntelList.innerHTML = '';
+        const pg = document.getElementById('reelIntelPagination');
+        if (pg) pg.hidden = true;
         return;
     }
     reelIntelEmpty.hidden = true;
     reelIntelList.hidden = false;
 
-    const rows = savedReels.map((r) => {
+    const totalPages = Math.max(1, Math.ceil(savedReels.length / REEL_INTEL_PER_PAGE));
+    if (reelIntelPage > totalPages) reelIntelPage = totalPages;
+    if (reelIntelPage < 1) reelIntelPage = 1;
+
+    const start = (reelIntelPage - 1) * REEL_INTEL_PER_PAGE;
+    const pageItems = savedReels.slice(start, start + REEL_INTEL_PER_PAGE);
+
+    const rows = pageItems.map((r) => {
         const stats = computeReelStats(r.id);
         const label = labelForReel(stats);
         if (!stats) {
@@ -937,6 +1005,11 @@ function renderReelIntelligence() {
     }).join('');
 
     reelIntelList.innerHTML = rows;
+
+    renderPagination('reelIntelPagination', reelIntelPage, totalPages, (p) => {
+        reelIntelPage = p;
+        renderReelIntelligence();
+    });
 }
 
 /* ============================================================
@@ -1957,7 +2030,10 @@ document.addEventListener('keydown', (e) => {
 
 [searchInput, filterRating, filterDate, sortBy].forEach((el) => {
     if (!el) return;
-    el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', renderList);
+    el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
+        feedbackPage = 1;
+        renderList();
+    });
 });
 
 /* Initial render */
