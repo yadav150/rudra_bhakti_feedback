@@ -1,9 +1,13 @@
 /* ============================================================
-   Serverless: Facebook Reel Metadata Proxy
-   Uses Meta Graph API oEmbed endpoint (server-side only)
+   Serverless: Facebook Reel Metadata Resolver (no Meta App required)
+   Fetches the public page HTML server-side and extracts OG tags.
    ============================================================ */
 
-const FB_GRAPH_VERSION = 'v18.0';
+const CRAWLER_UAS = [
+    'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'
+];
 
 function isFacebookReelUrl(url) {
     try {
@@ -12,24 +16,51 @@ function isFacebookReelUrl(url) {
         const ok = host === 'facebook.com'
             || host === 'www.facebook.com'
             || host === 'm.facebook.com'
+            || host === 'mbasic.facebook.com'
             || host === 'fb.watch'
             || host.endsWith('.facebook.com');
         if (!ok) return false;
-        return /\/reel\//i.test(u.pathname) || host === 'fb.watch';
-    } catch {
-        return false;
-    }
+        return /\/reel\//i.test(u.pathname) || /\/videos\//i.test(u.pathname) || host === 'fb.watch';
+    } catch { return false; }
 }
 
 function normalizeUrl(url) {
     try {
         const u = new URL(url);
         u.hash = '';
-        u.search = '';
         return u.toString();
-    } catch {
-        return url;
+    } catch { return url; }
+}
+
+function pickMeta(html, prop) {
+    const patterns = [
+        new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i'),
+        new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`, 'i'),
+        new RegExp(`<meta[^>]+name=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i'),
+        new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${prop}["']`, 'i')
+    ];
+    for (const p of patterns) {
+        const m = html.match(p);
+        if (m && m[1]) return decodeHtml(m[1].trim());
     }
+    return '';
+}
+
+function pickTitle(html) {
+    const m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    return m && m[1] ? decodeHtml(m[1].trim()) : '';
+}
+
+function decodeHtml(str) {
+    return String(str)
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#0?39;/g, "'")
+        .replace(/&#x27;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&nbsp;/g, ' ');
 }
 
 export default async function handler(req, res) {
@@ -39,7 +70,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'OPTIONS') return res.status(204).end();
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'method_not_allowed' });
+        return res.status(405).json({ error: 'method_not_allowed', message: 'POST only.' });
     }
 
     let body = req.body;
@@ -48,55 +79,61 @@ export default async function handler(req, res) {
     }
 
     const rawUrl = (body?.url || '').trim();
-
     if (!rawUrl) {
-        return res.status(400).json({
-            error: 'missing_url',
-            message: 'Please enter a Facebook Reel URL.'
-        });
+        return res.status(400).json({ error: 'invalid_url', message: 'Please enter a Facebook Reel URL.' });
     }
     if (!isFacebookReelUrl(rawUrl)) {
-        return res.status(400).json({
-            error: 'invalid_url',
-            message: 'This is not a valid Facebook Reel URL.'
-        });
+        return res.status(400).json({ error: 'invalid_url', message: 'This is not a valid Facebook Reel URL.' });
     }
 
-    const token = process.env.FB_ACCESS_TOKEN;
-    if (!token) {
-        return res.status(500).json({
-            error: 'server_config',
-            message: 'Server is not configured with a Facebook access token. Contact the administrator.'
-        });
-    }
-
-    const cleanUrl = normalizeUrl(rawUrl);
-
-    // Try oEmbed post first, then oEmbed video
-    const endpoints = [
-        `https://graph.facebook.com/${FB_GRAPH_VERSION}/oembed_post`,
-        `https://graph.facebook.com/${FB_GRAPH_VERSION}/oembed_video`
-    ];
+    const target = normalizeUrl(rawUrl);
 
     let lastError = null;
 
-    for (const endpoint of endpoints) {
+    for (const ua of CRAWLER_UAS) {
         try {
-            const apiUrl = `${endpoint}?url=${encodeURIComponent(cleanUrl)}&access_token=${encodeURIComponent(token)}`;
-            const r = await fetch(apiUrl, { method: 'GET' });
-            const data = await r.json().catch(() => ({}));
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12000);
 
-            if (data.error) {
-                lastError = data.error.message || 'Meta API error';
+            const response = await fetch(target, {
+                method: 'GET',
+                redirect: 'follow',
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': ua,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Cache-Control': 'no-cache'
+                }
+            });
+
+            clearTimeout(timeout);
+
+            if (!response.ok) {
+                lastError = `Facebook returned status ${response.status}.`;
                 continue;
             }
 
-            const title = (data.title || data.author_name || '').trim();
-            const thumbnail = (data.thumbnail_url || data.image || '').trim();
-            const canonical = (data.url || data.provider_url || cleanUrl).trim();
+            const html = await response.text();
 
+            const ogTitle = pickMeta(html, 'og:title');
+            const ogImage = pickMeta(html, 'og:image');
+            const ogDesc = pickMeta(html, 'og:description');
+            const ogUrl = pickMeta(html, 'og:url');
+            const pageTitle = pickTitle(html);
+
+            const title = ogTitle || pageTitle || '';
+            const thumbnail = ogImage || '';
+            const canonical = ogUrl || target;
+
+            // Reject login-wall / generic responses
+            const badTitles = /^(facebook|log in|login|watch)/i;
             if (!title && !thumbnail) {
-                lastError = 'Meta returned no usable metadata for this Reel.';
+                lastError = 'Facebook did not return usable metadata for this Reel.';
+                continue;
+            }
+            if (badTitles.test(title) && !thumbnail) {
+                lastError = 'Facebook served a login wall instead of Reel metadata.';
                 continue;
             }
 
@@ -104,17 +141,21 @@ export default async function handler(req, res) {
                 ok: true,
                 title,
                 thumbnail,
+                description: ogDesc,
                 url: canonical,
-                author: data.author_name || '',
-                provider: 'facebook_graph_oembed'
+                provider: 'server_og_parse'
             });
         } catch (err) {
-            lastError = err.message || 'Network error contacting Meta.';
+            if (err.name === 'AbortError') {
+                lastError = 'Facebook did not respond in time.';
+            } else {
+                lastError = err.message || 'Network error.';
+            }
         }
     }
 
     return res.status(502).json({
         error: 'meta_unavailable',
-        message: lastError || 'Metadata is not available for this Reel via the Meta API.'
+        message: lastError || 'Could not retrieve Reel metadata. Facebook may be blocking the request.'
     });
 }
