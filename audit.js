@@ -926,6 +926,168 @@ function renderHistory() {
 }
 
 /* ============================================================
+   RENDER — DATA QUALITY AUDIT
+   ============================================================ */
+function renderQuality() {
+    const summaryEl = $('qualitySummary');
+    const listEl = $('qualityIssues');
+    if (!summaryEl || !listEl) return;
+
+    const issues = [];
+    const totalRecords = allFeedback.length;
+
+    /* 1. Invalid ratings */
+    const invalidRatings = allFeedback.filter((f) => {
+        const r = Number(f.rating);
+        return f.rating != null && (isNaN(r) || r < 1 || r > 5);
+    });
+    if (invalidRatings.length) {
+        issues.push({
+            severity: 'high',
+            title: 'Invalid rating values',
+            desc: 'Ratings must be between 1 and 5.',
+            count: invalidRatings.length,
+            ids: invalidRatings.slice(0, 5).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* 2. Missing reel reference */
+    const reelIds = new Set(savedReels.map((r) => r.id));
+    const orphanRefs = allFeedback.filter((f) => f.reelId && !reelIds.has(f.reelId));
+    if (orphanRefs.length) {
+        issues.push({
+            severity: 'medium',
+            title: 'Feedback references missing reels',
+            desc: 'Some feedback points to reels that no longer exist.',
+            count: orphanRefs.length,
+            ids: orphanRefs.slice(0, 5).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* 3. Missing reel ID */
+    const noReelId = allFeedback.filter((f) => !f.reelId);
+    if (noReelId.length) {
+        issues.push({
+            severity: 'high',
+            title: 'Feedback with no reel reference',
+            desc: 'These responses cannot be attributed to any reel.',
+            count: noReelId.length,
+            ids: noReelId.slice(0, 5).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* 4. Missing timestamps */
+    const noTimestamp = allFeedback.filter((f) => !f.submittedAt);
+    if (noTimestamp.length) {
+        issues.push({
+            severity: 'medium',
+            title: 'Feedback with missing timestamp',
+            desc: 'These responses cannot be placed in the time sequence.',
+            count: noTimestamp.length,
+            ids: noTimestamp.slice(0, 5).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* 5. Future timestamps (suspicious) */
+    const now = Date.now();
+    const futureTs = allFeedback.filter((f) => {
+        const t = new Date(f.submittedAt).getTime();
+        return !isNaN(t) && t > now + 60000;
+    });
+    if (futureTs.length) {
+        issues.push({
+            severity: 'high',
+            title: 'Feedback with future timestamps',
+            desc: 'Timestamp is ahead of current time — possible clock or data issue.',
+            count: futureTs.length,
+            ids: futureTs.slice(0, 5).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* 6. Duplicate submissions (same reel + same timestamp rounded to minute + same rating) */
+    const seen = {};
+    const duplicates = [];
+    allFeedback.forEach((f) => {
+        if (!f.reelId || !f.submittedAt) return;
+        const t = new Date(f.submittedAt).getTime();
+        if (isNaN(t)) return;
+        const key = f.reelId + '|' + Math.floor(t / 60000) + '|' + (f.rating || '');
+        if (seen[key]) {
+            duplicates.push(f.id);
+        } else {
+            seen[key] = true;
+        }
+    });
+    if (duplicates.length) {
+        issues.push({
+            severity: 'low',
+            title: 'Potential duplicate submissions',
+            desc: 'Same reel, same minute, same rating — worth reviewing.',
+            count: duplicates.length,
+            ids: duplicates.slice(0, 5).join(', ')
+        });
+    }
+
+    /* 7. Empty feedback (no answers selected) */
+    const empties = allFeedback.filter((f) => {
+        return !f.rating && !f.feeling && !f.stoodOut && !f.heldInterest &&
+               !f.presentation && !f.improve && !f.wantMore && !f.engageAgain &&
+               !f.likedPart && !f.message;
+    });
+    if (empties.length) {
+        issues.push({
+            severity: 'medium',
+            title: 'Completely empty submissions',
+            desc: 'No answers and no written feedback — likely abandoned forms.',
+            count: empties.length,
+            ids: empties.slice(0, 5).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* Summary stats */
+    const totalIssues = issues.reduce((s, i) => s + i.count, 0);
+    const qualityScore = totalRecords
+        ? Math.max(0, Math.round(((totalRecords - totalIssues) / totalRecords) * 100))
+        : 100;
+
+    summaryEl.innerHTML = `
+        <div class="quality-stat ${qualityScore >= 95 ? 'quality-stat--good' : qualityScore >= 80 ? 'quality-stat--warn' : 'quality-stat--bad'}">
+            <span class="quality-stat-value">${qualityScore}%</span>
+            <span class="quality-stat-label">Data Quality</span>
+        </div>
+        <div class="quality-stat">
+            <span class="quality-stat-value">${totalRecords}</span>
+            <span class="quality-stat-label">Total Records</span>
+        </div>
+        <div class="quality-stat ${totalIssues === 0 ? 'quality-stat--good' : 'quality-stat--warn'}">
+            <span class="quality-stat-value">${totalIssues}</span>
+            <span class="quality-stat-label">Issues Found</span>
+        </div>
+        <div class="quality-stat">
+            <span class="quality-stat-value">${issues.length}</span>
+            <span class="quality-stat-label">Issue Types</span>
+        </div>
+    `;
+
+    if (!issues.length) {
+        listEl.innerHTML = `<div class="chart-empty"><p>No data quality issues detected.</p></div>`;
+        return;
+    }
+
+    listEl.innerHTML = issues.map((i) => `
+        <div class="quality-issue-row">
+            <div class="quality-issue-sev quality-issue-sev--${i.severity}"></div>
+            <div class="quality-issue-body">
+                <div class="quality-issue-title">${escapeHTML(i.title)}</div>
+                <div class="quality-issue-desc">${escapeHTML(i.desc)}</div>
+                ${i.ids ? `<div class="quality-issue-ids">IDs: ${escapeHTML(i.ids)}${i.count > 5 ? ' …' : ''}</div>` : ''}
+            </div>
+            <div class="quality-issue-count">${i.count}</div>
+        </div>
+    `).join('');
+}
+
+/* ============================================================
    RENDER — ASK YOUR DATA
    ============================================================ */
 const ASK_QUESTIONS = [
@@ -1343,8 +1505,8 @@ function renderAll() {
     renderRecommendations();
     renderRoadmap();
     renderHistory();
+    renderQuality();
 }
-
 /* ============================================================
    AUTH
    ============================================================ */
