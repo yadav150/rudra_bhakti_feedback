@@ -556,6 +556,19 @@
                 </div>
             </div>
         </section>
+                <!-- ANOMALY DETECTION -->
+        <section class="dash-section" id="aud-anomaly">
+            <div class="section-head">
+                <h2>Anomaly Detection</h2>
+                <p>Suspicious patterns flagged from real submission data.</p>
+            </div>
+            <div class="panel-card">
+                <div class="panel-body panel-body--flush">
+                    <div id="anomalySummary" class="quality-summary"></div>
+                    <div class="alert-list" id="anomalyIssues"></div>
+                </div>
+            </div>
+        </section>
 
         <!-- SETTINGS -->
         <section class="dash-section">
@@ -638,6 +651,25 @@
         </section>
 
     </main>
+</div>
+    <!-- SESSION TIMEOUT MODAL -->
+<div class="modal modal--center" id="sessionModal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-card modal-card--sm">
+        <div class="modal-body modal-body--confirm">
+            <div class="confirm-icon confirm-icon--danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+            </div>
+            <h2 class="confirm-title">Session expiring</h2>
+            <p class="confirm-text">You will be logged out in <strong id="sessionCountdown">2:00</strong> due to inactivity.</p>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-primary" id="sessionStay">Stay Signed In</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Logout modal (reuses admin) -->
