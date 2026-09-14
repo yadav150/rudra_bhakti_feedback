@@ -1088,6 +1088,113 @@ function renderQuality() {
 }
 
 /* ============================================================
+   RENDER — INSIGHT LIFECYCLE
+   ============================================================ */
+function renderLifecycle() {
+    const listEl = $('lifecycleList');
+    const emptyEl = $('lifecycleEmpty');
+    if (!listEl || !emptyEl) return;
+
+    /* Need at least 2 snapshots to determine a trend */
+    const sorted = [...snapshots].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+    if (sorted.length < 2) {
+        emptyEl.hidden = false;
+        listEl.hidden = true;
+        return;
+    }
+    emptyEl.hidden = true;
+    listEl.hidden = false;
+
+    /* Take up to last 5 snapshots */
+    const recent = sorted.slice(-5);
+    const first = recent[0];
+    const last = recent[recent.length - 1];
+
+    /* Metrics tracked */
+    const metrics = [
+        { key: 'healthScore', name: 'Content Health Score' },
+        { key: 'satisfaction', name: 'Satisfaction' },
+        { key: 'recommend', name: 'Recommendation' },
+        { key: 'future', name: 'Future Interest' },
+        { key: 'repeat', name: 'Repeat Intent' }
+    ];
+
+    const rows = metrics.map((m) => {
+        const values = recent
+            .map((s) => Number(s[m.key]))
+            .filter((v) => !isNaN(v));
+
+        if (values.length < 2) return null;
+
+        const start = values[0];
+        const end = values[values.length - 1];
+        const diff = end - start;
+        const magnitude = Math.abs(diff);
+        const threshold = settings.significantChange || 10;
+
+        /* Determine trajectory */
+        let state, arrow, trend;
+        if (magnitude < threshold * 0.5) {
+            state = 'Confirmed';
+            arrow = 'flat';
+            trend = 'Stable across recent snapshots.';
+        } else if (diff > 0 && start < 60) {
+            state = 'Emerging';
+            arrow = 'up';
+            trend = 'Early positive movement.';
+        } else if (diff > 0 && magnitude < threshold * 2) {
+            state = 'Strengthening';
+            arrow = 'up';
+            trend = 'Consistent improvement across snapshots.';
+        } else if (diff > 0) {
+            state = 'Strengthening';
+            arrow = 'up';
+            trend = 'Strong upward trend confirmed.';
+        } else if (diff < 0 && end > settings.poorRating * 20) {
+            state = 'Weakening';
+            arrow = 'down';
+            trend = 'Declining but still above poor-performance floor.';
+        } else {
+            state = 'Unsupported';
+            arrow = 'down';
+            trend = 'Declining into unsupported territory.';
+        }
+
+        return {
+            name: m.name,
+            state, arrow, trend,
+            values: values.map((v) => Math.round(v)),
+            diff
+        };
+    }).filter(Boolean);
+
+    if (!rows.length) {
+        listEl.innerHTML = `<div class="chart-empty"><p>Not enough stable metrics to classify lifecycle.</p></div>`;
+        return;
+    }
+
+    listEl.innerHTML = rows.map((r) => `
+        <div class="lifecycle-row">
+            <div class="lifecycle-body">
+                <div class="lifecycle-name">${escapeHTML(r.name)}</div>
+                <div class="lifecycle-trend">${escapeHTML(r.trend)}</div>
+                <div class="lifecycle-values">
+                    ${r.values.map((v) => `<span>${v}</span>`).join('')}
+                    <span>Δ ${r.diff > 0 ? '+' : ''}${Math.round(r.diff)}</span>
+                </div>
+            </div>
+            <div class="lifecycle-arrow lifecycle-arrow--${r.arrow}">
+                ${r.arrow === 'up' ? '↑' : r.arrow === 'down' ? '↓' : '→'}
+            </div>
+            <div class="lifecycle-state lifecycle-state--${r.state.toLowerCase()}">
+                ${escapeHTML(r.state)}
+            </div>
+        </div>
+    `).join('');
+}
+
+/* ============================================================
    RENDER — ASK YOUR DATA
    ============================================================ */
 const ASK_QUESTIONS = [
@@ -1504,8 +1611,9 @@ function renderAll() {
     renderPortfolio();
     renderRecommendations();
     renderRoadmap();
-    renderHistory();
+        renderHistory();
     renderQuality();
+    renderLifecycle();
 }
 /* ============================================================
    AUTH
