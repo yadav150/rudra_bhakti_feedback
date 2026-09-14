@@ -51,6 +51,11 @@ let snapshots = [];
 let currentPeriod = '7d';
 let currentCompare = 'previous';
 let currentReelFilter = 'all';
+let customRangeStart = null;
+let customRangeEnd = null;
+let sessionTimer = null;
+let sessionWarnTimer = null;
+let sessionCountdownInterval = null;
 let compareLabSelection = new Set();
 let experimentGroupA = new Set();
 let experimentGroupB = new Set();
@@ -88,6 +93,10 @@ const logoutCancel = $('logoutCancel');
 const logoutConfirm = $('logoutConfirm');
 
 const periodSelect = $('periodSelect');
+const customRangeGroup = $('customRangeGroup');
+const customEndGroup = $('customEndGroup');
+const customStartInput = $('customStart');
+const customEndInput = $('customEnd');
 const compareSelect = $('compareSelect');
 const reelFilter = $('reelFilter');
 const snapshotBtn = $('snapshotBtn');
@@ -133,26 +142,51 @@ function confidenceFor(sample) {
 function periodRange(period) {
     const now = Date.now();
     const day = 86400000;
+
+    if (period === 'custom') {
+        if (customRangeStart && customRangeEnd) {
+            const s = new Date(customRangeStart);
+            s.setHours(0, 0, 0, 0);
+            const e = new Date(customRangeEnd);
+            e.setHours(23, 59, 59, 999);
+            const days = Math.max(1, Math.round((e.getTime() - s.getTime()) / day));
+            return { start: s.getTime(), end: e.getTime(), days };
+        }
+        /* Fallback to 7 days if custom not set */
+        return { start: now - 7 * day, end: now, days: 7 };
+    }
+
     if (period === 'today') {
-        const d = new Date(); d.setHours(0,0,0,0);
+        const d = new Date(); d.setHours(0, 0, 0, 0);
         return { start: d.getTime(), end: now, days: 1 };
     }
-    if (period === '7d') return { start: now - 7*day, end: now, days: 7 };
-    if (period === '30d') return { start: now - 30*day, end: now, days: 30 };
-    if (period === '90d') return { start: now - 90*day, end: now, days: 90 };
+    if (period === '7d') return { start: now - 7 * day, end: now, days: 7 };
+    if (period === '30d') return { start: now - 30 * day, end: now, days: 30 };
+    if (period === '90d') return { start: now - 90 * day, end: now, days: 90 };
     return { start: 0, end: now, days: 999 };
 }
 function previousPeriodRange(period) {
     const now = Date.now();
     const day = 86400000;
-    if (period === 'today') {
-        const d = new Date(); d.setHours(0,0,0,0);
-        return { start: d.getTime() - day, end: d.getTime() };
+    if (period === 'custom') {
+        if (customRangeStart && customRangeEnd) {
+            const s = new Date(customRangeStart);
+            s.setHours(0, 0, 0, 0);
+            const e = new Date(customRangeEnd);
+            e.setHours(23, 59, 59, 999);
+            const span = e.getTime() - s.getTime();
+            return { start: s.getTime() - span - 1, end: s.getTime() - 1 };
+        }
+        return { start: now - 14 * day, end: now - 7 * day };
     }
-    if (period === '7d') return { start: now - 14*day, end: now - 7*day };
-    if (period === '30d') return { start: now - 60*day, end: now - 30*day };
-    if (period === '90d') return { start: now - 180*day, end: now - 90*day };
-    return { start: 0, end: now - 90*day };
+    if (period === 'today') {
+        const d = new Date(); d.setHours(0, 0, 0, 0);
+        return { start: d.getTime() - day, end: d.getTime() - 1 };
+    }
+    if (period === '7d') return { start: now - 14 * day, end: now - 7 * day };
+    if (period === '30d') return { start: now - 60 * day, end: now - 30 * day };
+    if (period === '90d') return { start: now - 180 * day, end: now - 90 * day };
+    return { start: 0, end: now - 90 * day };
 }
 function inRange(ts, start, end) {
     if (!ts) return false;
@@ -269,9 +303,12 @@ function renderExecutive() {
     const c = calcMetrics(current);
     const p = calcMetrics(previous);
 
-    const scopeText = $('execScopeText');
+        const scopeText = $('execScopeText');
     if (scopeText) {
-        scopeText.textContent = `${c.total} responses · ${savedReels.length} reels · Period: ${currentPeriod} · Comparison: ${currentCompare === 'previous' ? 'previous period' : 'all-time'}`;
+        const periodLabel = currentPeriod === 'custom'
+            ? `Custom (${customRangeStart || '?'} → ${customRangeEnd || '?'})`
+            : currentPeriod;
+        scopeText.textContent = `${c.total} responses · ${savedReels.length} reels · Period: ${periodLabel} · Comparison: ${currentCompare === 'previous' ? 'previous period' : 'all-time'}`;
     }
 
     const hs = $('healthScore');
@@ -1253,6 +1290,187 @@ function renderQuality() {
     `).join('');
 }
 /* ============================================================
+   RENDER — ANOMALY DETECTION
+   ============================================================ */
+function renderAnomaly() {
+    const summaryEl = $('anomalySummary');
+    const listEl = $('anomalyIssues');
+    if (!summaryEl || !listEl) return;
+
+    const issues = [];
+    const now = Date.now();
+    const day = 86400000;
+    const last7 = allFeedback.filter((f) => {
+        const t = new Date(f.submittedAt).getTime();
+        return !isNaN(t) && t > now - 7 * day;
+    });
+
+    /* 1. Rapid-fire submissions: 5+ feedbacks within 60 seconds */
+    const sorted = [...allFeedback].sort((a, b) => {
+        const ta = new Date(a.submittedAt).getTime();
+        const tb = new Date(b.submittedAt).getTime();
+        return ta - tb;
+    });
+    const rapidGroups = [];
+    let window = [];
+    sorted.forEach((f) => {
+        const t = new Date(f.submittedAt).getTime();
+        if (isNaN(t)) return;
+        window = window.filter((w) => t - new Date(w.submittedAt).getTime() < 60000);
+        window.push(f);
+        if (window.length >= 5) {
+            /* Check if this window is already captured */
+            const lastGroup = rapidGroups[rapidGroups.length - 1];
+            if (!lastGroup || lastGroup[0].id !== window[0].id) {
+                rapidGroups.push([...window]);
+            }
+        }
+    });
+    if (rapidGroups.length) {
+        const ids = rapidGroups.flat().map((f) => f.id).slice(0, 8);
+        issues.push({
+            severity: 'high',
+            title: 'Rapid-fire submission clusters',
+            desc: `${rapidGroups.length} cluster${rapidGroups.length === 1 ? '' : 's'} of 5+ submissions within 60 seconds. Possible bot or repeated manual testing.`,
+            count: rapidGroups.flat().length,
+            ids: ids.join(', ')
+        });
+    }
+
+    /* 2. Identical answers: same 5+ answers on same reel from same "device" */
+    const combos = {};
+    allFeedback.forEach((f) => {
+        if (!f.reelId) return;
+        const key = [
+            f.reelId,
+            f.rating || '',
+            f.feeling || '',
+            f.stoodOut || '',
+            f.heldInterest || '',
+            f.presentation || '',
+            f.improve || '',
+            f.wantMore || '',
+            f.engageAgain || '',
+            f.likedPart || ''
+        ].join('|');
+        /* Only consider if at least 3 answers present */
+        const answerCount = [f.rating, f.feeling, f.stoodOut, f.heldInterest, f.presentation, f.improve, f.wantMore, f.engageAgain, f.likedPart]
+            .filter((v) => v != null && v !== '').length;
+        if (answerCount < 3) return;
+        if (!combos[key]) combos[key] = [];
+        combos[key].push(f.id);
+    });
+    const identicalGroups = Object.values(combos).filter((g) => g.length >= 5);
+    if (identicalGroups.length) {
+        const ids = identicalGroups.flat().slice(0, 8);
+        issues.push({
+            severity: 'high',
+            title: 'Identical answer patterns',
+            desc: `${identicalGroups.length} combination${identicalGroups.length === 1 ? '' : 's'} of identical answers repeated 5+ times.`,
+            count: identicalGroups.flat().length,
+            ids: ids.join(', ')
+        });
+    }
+
+    /* 3. Off-hours burst: 10+ submissions between 2 AM – 5 AM IST in last 7 days */
+    const offHours = last7.filter((f) => {
+        const d = new Date(f.submittedAt);
+        const h = d.getHours();
+        return h >= 2 && h < 5;
+    });
+    if (offHours.length >= 10) {
+        issues.push({
+            severity: 'medium',
+            title: 'Off-hours submission burst',
+            desc: `${offHours.length} submissions between 2 AM–5 AM in the last 7 days. Unusual for organic audience.`,
+            count: offHours.length,
+            ids: offHours.slice(0, 8).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* 4. Same-minute duplicate from same reel */
+    const minuteMap = {};
+    allFeedback.forEach((f) => {
+        if (!f.reelId || !f.submittedAt) return;
+        const t = new Date(f.submittedAt).getTime();
+        if (isNaN(t)) return;
+        const key = f.reelId + '|' + Math.floor(t / 60000);
+        if (!minuteMap[key]) minuteMap[key] = [];
+        minuteMap[key].push(f.id);
+    });
+    const minuteDupes = Object.values(minuteMap).filter((g) => g.length >= 3);
+    if (minuteDupes.length) {
+        issues.push({
+            severity: 'medium',
+            title: 'Multiple submissions in same minute',
+            desc: `${minuteDupes.length} minute${minuteDupes.length === 1 ? '' : 's'} where 3+ feedbacks landed on the same reel.`,
+            count: minuteDupes.flat().length,
+            ids: minuteDupes.flat().slice(0, 8).join(', ')
+        });
+    }
+
+    /* 5. Very short completion with max ratings: possible bot */
+    const botPattern = allFeedback.filter((f) => {
+        const answerCount = [f.rating, f.feeling, f.stoodOut, f.heldInterest, f.presentation, f.improve, f.wantMore, f.engageAgain, f.likedPart]
+            .filter((v) => v != null && v !== '').length;
+        const allMax = Number(f.rating) === 5
+            && (f.presentation || '').toLowerCase().startsWith('excellent')
+            && (f.heldInterest || '').toLowerCase().startsWith('yes, completely')
+            && (f.engageAgain || '').toLowerCase().startsWith('very likely');
+        return allMax && answerCount >= 5;
+    });
+    if (botPattern.length >= 5) {
+        issues.push({
+            severity: 'medium',
+            title: 'Uniform maximum-rating submissions',
+            desc: `${botPattern.length} submissions with all positive/maximum answers. Could be genuine enthusiasm or coordinated activity.`,
+            count: botPattern.length,
+            ids: botPattern.slice(0, 8).map((f) => f.id).join(', ')
+        });
+    }
+
+    /* Summary */
+    const totalFlagged = new Set(issues.flatMap((i) => i.ids.split(', ').filter(Boolean))).size;
+    const totalFeedback = allFeedback.length;
+    const anomalyRate = totalFeedback ? Math.round((totalFlagged / totalFeedback) * 100) : 0;
+
+    summaryEl.innerHTML = `
+        <div class="quality-stat ${issues.length === 0 ? 'quality-stat--good' : 'quality-stat--warn'}">
+            <span class="quality-stat-value">${issues.length}</span>
+            <span class="quality-stat-label">Anomaly Types</span>
+        </div>
+        <div class="quality-stat">
+            <span class="quality-stat-value">${totalFlagged}</span>
+            <span class="quality-stat-label">Flagged Records</span>
+        </div>
+        <div class="quality-stat">
+            <span class="quality-stat-value">${totalFeedback}</span>
+            <span class="quality-stat-label">Total Feedback</span>
+        </div>
+        <div class="quality-stat ${anomalyRate >= 10 ? 'quality-stat--bad' : anomalyRate >= 5 ? 'quality-stat--warn' : 'quality-stat--good'}">
+            <span class="quality-stat-value">${anomalyRate}%</span>
+            <span class="quality-stat-label">Anomaly Rate</span>
+        </div>
+    `;
+
+    if (!issues.length) {
+        listEl.innerHTML = `<div class="chart-empty"><p>No suspicious patterns detected.</p></div>`;
+        return;
+    }
+
+    listEl.innerHTML = issues.map((i) => `
+        <div class="quality-issue-row">
+            <div class="quality-issue-sev quality-issue-sev--${i.severity}"></div>
+            <div class="quality-issue-body">
+                <div class="quality-issue-title">${escapeHTML(i.title)}</div>
+                <div class="quality-issue-desc">${escapeHTML(i.desc)}</div>
+                ${i.ids ? `<div class="quality-issue-ids">IDs: ${escapeHTML(i.ids)}${i.count > 8 ? ' …' : ''}</div>` : ''}
+            </div>
+            <div class="quality-issue-count">${i.count}</div>
+        </div>
+    `).join('');
+}
+/* ============================================================
    RENDER — REEL COMPARISON LAB
    ============================================================ */
 function renderReelComparisonLab() {
@@ -1901,7 +2119,10 @@ function exportCSV() {
         ]);
     });
 
-    const filename = `rudrabhakti-audit-${currentPeriod}-${new Date().toISOString().slice(0,10)}.csv`;
+        const suffix = currentPeriod === 'custom'
+        ? `${customRangeStart}_to_${customRangeEnd}`
+        : currentPeriod;
+    const filename = `rudrabhakti-audit-${suffix}-${new Date().toISOString().slice(0,10)}.csv`;
     downloadCSV(filename, rows);
 }
 
@@ -2131,7 +2352,10 @@ async function exportPDF() {
         doc.text(`Page ${i} of ${totalPages}`, pageW - 40, pageH - 20, { align: 'right' });
     }
 
-    doc.save(`rudrabhakti-audit-${currentPeriod}-${new Date().toISOString().slice(0, 10)}.pdf`);
+        const pdfSuffix = currentPeriod === 'custom'
+        ? `${customRangeStart}_to_${customRangeEnd}`
+        : currentPeriod;
+    doc.save(`rudrabhakti-audit-${pdfSuffix}-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 /* ============================================================
    RENDER — EVERYTHING
@@ -2151,8 +2375,9 @@ function renderAll() {
     renderQuality();
     renderLifecycle();
        renderOutcomes();
-    renderReelComparisonLab();
+        renderReelComparisonLab();
     renderExperiment();
+    renderAnomaly();
 }
 /* ============================================================
    AUTH
@@ -2167,15 +2392,19 @@ function showDash() {
 }
 
 onAuthStateChanged(auth, (user) => {
-    if (!user || user.uid !== ADMIN_UID) {
+        if (!user || user.uid !== ADMIN_UID) {
         if (user && user.uid !== ADMIN_UID) signOut(auth);
+        clearSessionTimers();
+        hideSessionModal();
         stopListeners();
         showLogin();
         return;
     }
-    if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
+        if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
     showDash();
     startListeners();
+    resetSessionTimers();
+    attachSessionListeners();
 });
 
 loginForm.addEventListener('submit', async (e) => {
@@ -2199,6 +2428,75 @@ loginForm.addEventListener('submit', async (e) => {
         loginLabel.textContent = 'Sign In';
     }
 });
+/* ============================================================
+   SESSION TIMEOUT (30 min inactivity, warn at 28 min)
+   ============================================================ */
+const SESSION_IDLE_MS = 30 * 60 * 1000;
+const SESSION_WARN_MS = 28 * 60 * 1000;
+const SESSION_COUNTDOWN_SEC = 120;
+
+function clearSessionTimers() {
+    if (sessionTimer) { clearTimeout(sessionTimer); sessionTimer = null; }
+    if (sessionWarnTimer) { clearTimeout(sessionWarnTimer); sessionWarnTimer = null; }
+    if (sessionCountdownInterval) { clearInterval(sessionCountdownInterval); sessionCountdownInterval = null; }
+}
+
+function hideSessionModal() {
+    const modal = document.getElementById('sessionModal');
+    if (modal) modal.hidden = true;
+}
+
+function showSessionModal() {
+    const modal = document.getElementById('sessionModal');
+    if (!modal) return;
+    modal.hidden = false;
+
+    let remaining = SESSION_COUNTDOWN_SEC;
+    const countEl = document.getElementById('sessionCountdown');
+    const updateCountdown = () => {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        if (countEl) countEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    };
+    updateCountdown();
+
+    sessionCountdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(sessionCountdownInterval);
+            sessionCountdownInterval = null;
+            performSessionLogout();
+        } else {
+            updateCountdown();
+        }
+    }, 1000);
+}
+
+async function performSessionLogout() {
+    clearSessionTimers();
+    hideSessionModal();
+    try { await signOut(auth); } catch (err) { console.error(err); }
+}
+
+function resetSessionTimers() {
+    clearSessionTimers();
+    hideSessionModal();
+
+    sessionWarnTimer = setTimeout(() => {
+        showSessionModal();
+    }, SESSION_WARN_MS);
+
+    sessionTimer = setTimeout(() => {
+        performSessionLogout();
+    }, SESSION_IDLE_MS);
+}
+
+function attachSessionListeners() {
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach((evt) => {
+        document.addEventListener(evt, resetSessionTimers, { passive: true });
+    });
+}
 
 /* ============================================================
    LISTENERS
@@ -2291,6 +2589,12 @@ if (logoutConfirm) logoutConfirm.addEventListener('click', async () => {
 });
 if (logoutBackdrop) logoutBackdrop.addEventListener('click', closeLogoutModal);
 
+/* Session stay-signed-in */
+const sessionStayBtn = document.getElementById('sessionStay');
+if (sessionStayBtn) sessionStayBtn.addEventListener('click', () => {
+    resetSessionTimers();
+});
+
 function openDrawer() {
     drawer.classList.add('is-open');
     drawerBackdrop.classList.add('is-open');
@@ -2330,6 +2634,37 @@ navLinks.forEach((link) => {
    ============================================================ */
 if (periodSelect) periodSelect.addEventListener('change', () => {
     currentPeriod = periodSelect.value;
+    const isCustom = currentPeriod === 'custom';
+    if (customRangeGroup) customRangeGroup.hidden = !isCustom;
+    if (customEndGroup) customEndGroup.hidden = !isCustom;
+    if (isCustom && !customRangeStart) {
+        /* Default: last 7 days */
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 6);
+        if (customStartInput) customStartInput.value = start.toISOString().slice(0, 10);
+        if (customEndInput) customEndInput.value = end.toISOString().slice(0, 10);
+        customRangeStart = customStartInput.value;
+        customRangeEnd = customEndInput.value;
+    }
+    renderAll();
+});
+
+/* Custom date inputs */
+if (customStartInput) customStartInput.addEventListener('change', () => {
+    customRangeStart = customStartInput.value;
+    if (customRangeEnd && customRangeStart > customRangeEnd) {
+        customRangeEnd = customRangeStart;
+        if (customEndInput) customEndInput.value = customRangeEnd;
+    }
+    renderAll();
+});
+if (customEndInput) customEndInput.addEventListener('change', () => {
+    customRangeEnd = customEndInput.value;
+    if (customRangeStart && customRangeEnd < customRangeStart) {
+        customRangeStart = customRangeEnd;
+        if (customStartInput) customStartInput.value = customRangeStart;
+    }
     renderAll();
 });
 if (compareSelect) compareSelect.addEventListener('change', () => {
