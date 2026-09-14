@@ -184,7 +184,7 @@
         <!-- FILTERS BAR -->
         <section class="dash-section">
             <div class="audit-filters">
-                <div class="audit-filter-group">
+                                <div class="audit-filter-group">
                     <label for="periodSelect">Period</label>
                     <select id="periodSelect" class="select">
                         <option value="today">Today</option>
@@ -192,7 +192,16 @@
                         <option value="30d">Last 30 days</option>
                         <option value="90d">Last 90 days</option>
                         <option value="all">All time</option>
+                        <option value="custom">Custom range</option>
                     </select>
+                </div>
+                <div class="audit-filter-group" id="customRangeGroup" hidden>
+                    <label for="customStart">From</label>
+                    <input type="date" id="customStart" class="select" />
+                </div>
+                <div class="audit-filter-group" id="customEndGroup" hidden>
+                    <label for="customEnd">To</label>
+                    <input type="date" id="customEnd" class="select" />
                 </div>
                 <div class="audit-filter-group">
                     <label for="compareSelect">Compare to</label>
