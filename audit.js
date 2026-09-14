@@ -1643,9 +1643,27 @@ function exportCSV() {
 }
 
 /* ============================================================
-   EXPORT — PDF
+   EXPORT — PDF (with captured charts)
    ============================================================ */
-function exportPDF() {
+async function captureElement(el) {
+    if (!el || !window.html2canvas) return null;
+    try {
+        const canvas = await window.html2canvas(el, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: el.scrollWidth,
+            windowHeight: el.scrollHeight
+        });
+        return canvas.toDataURL('image/png');
+    } catch (err) {
+        console.warn('Chart capture failed:', err);
+        return null;
+    }
+}
+
+async function exportPDF() {
     if (!window.jspdf) {
         alert('PDF library not loaded.');
         return;
@@ -1653,6 +1671,7 @@ function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     let y = 60;
 
     /* Header */
@@ -1672,7 +1691,7 @@ function exportPDF() {
     const list = filterFeedback(allFeedback, range, currentReelFilter);
     const c = calcMetrics(list);
 
-    /* Executive Summary */
+    /* Executive Summary text */
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text('Executive Summary', 40, y);
@@ -1691,18 +1710,51 @@ function exportPDF() {
         doc.text(`Emotional Response: ${c.emotion}%   ·   Written Feedback: ${c.written}`, 40, y); y += 20;
     }
 
+    /* Capture charts — Executive grid and summary */
+    const execSection = document.getElementById('aud-executive');
+    if (execSection) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        if (y > pageH - 300) { doc.addPage(); y = 60; }
+        doc.text('Executive Dashboard Snapshot', 40, y);
+        y += 16;
+
+        const imgData = await captureElement(execSection);
+        if (imgData) {
+            const imgProps = doc.getImageProperties(imgData);
+            const maxW = pageW - 80;
+            const maxH = pageH - y - 60;
+            const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
+            const drawW = imgProps.width * ratio;
+            const drawH = imgProps.height * ratio;
+
+            if (y + drawH > pageH - 60) {
+                doc.addPage();
+                y = 60;
+            }
+            doc.addImage(imgData, 'PNG', 40, y, drawW, drawH);
+            y += drawH + 20;
+        } else {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text('(Dashboard image unavailable — see tables below)', 40, y);
+            y += 20;
+        }
+    }
+
     /* Reel Table */
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
+    if (y > pageH - 200) { doc.addPage(); y = 60; }
     doc.text('Reel Performance', 40, y);
     y += 16;
 
     const reelRows = savedReels.map((r) => {
         const s = computeReelStats(r.id, range);
-        if (!s) return [r.id, r.title || '', 0, '—', '—', '—', 'Insufficient'];
+        if (!s) return [r.id, (r.title || '').slice(0, 30), 0, '—', '—', '—', 'Insufficient'];
         return [
             r.id,
-            r.title || '',
+            (r.title || '').slice(0, 30),
             s.total,
             s.avg.toFixed(2),
             s.recommend + '%',
@@ -1714,7 +1766,7 @@ function exportPDF() {
     if (reelRows.length) {
         doc.autoTable({
             startY: y,
-            head: [['Reel ID', 'Title', 'Responses', 'Avg Rating', 'Recommend', 'Repeat', 'Class']],
+            head: [['Reel ID', 'Title', 'Resp', 'Avg Rating', 'Recommend', 'Repeat', 'Class']],
             body: reelRows,
             styles: { fontSize: 9, cellPadding: 4 },
             headStyles: { fillColor: [32, 32, 32], textColor: 255 },
@@ -1728,12 +1780,39 @@ function exportPDF() {
         y += 20;
     }
 
-    /* Recommendations */
+    /* Risk / Opportunity capture */
+    const riskSection = document.getElementById('aud-risks');
+    if (riskSection) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        if (y > pageH - 200) { doc.addPage(); y = 60; }
+        doc.text('Risk Snapshot', 40, y);
+        y += 16;
+
+        const riskImg = await captureElement(riskSection);
+        if (riskImg) {
+            const imgProps = doc.getImageProperties(riskImg);
+            const maxW = pageW - 80;
+            const maxH = pageH - y - 60;
+            const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
+            const drawW = imgProps.width * ratio;
+            const drawH = imgProps.height * ratio;
+
+            if (y + drawH > pageH - 60) {
+                doc.addPage();
+                y = 60;
+            }
+            doc.addImage(riskImg, 'PNG', 40, y, drawW, drawH);
+            y += drawH + 20;
+        }
+    }
+
+    /* Recommendations Table */
     const recos = buildRecommendations();
     if (recos.length) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(13);
-        if (y > 720) { doc.addPage(); y = 60; }
+        if (y > pageH - 200) { doc.addPage(); y = 60; }
         doc.text('Recommendations', 40, y);
         y += 16;
 
@@ -1752,14 +1831,45 @@ function exportPDF() {
         y = doc.lastAutoTable.finalY + 20;
     }
 
-    /* Footer */
+    /* Data Quality summary */
+    const qualitySection = document.getElementById('aud-quality');
+    if (qualitySection) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        if (y > pageH - 200) { doc.addPage(); y = 60; }
+        doc.text('Data Quality', 40, y);
+        y += 16;
+
+        const qImg = await captureElement(qualitySection);
+        if (qImg) {
+            const imgProps = doc.getImageProperties(qImg);
+            const maxW = pageW - 80;
+            const maxH = pageH - y - 60;
+            const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
+            const drawW = imgProps.width * ratio;
+            const drawH = imgProps.height * ratio;
+
+            if (y + drawH > pageH - 60) {
+                doc.addPage();
+                y = 60;
+            }
+            doc.addImage(qImg, 'PNG', 40, y, drawW, drawH);
+            y += drawH + 20;
+        }
+    }
+
+    /* Footer on every page */
+    const totalPages = doc.getNumberOfPages();
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8);
-    doc.text('Confidential — Rudra Bhakti internal audit report.', pageW / 2, 810, { align: 'center' });
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.text('Confidential — Rudra Bhakti internal audit report.', pageW / 2, pageH - 20, { align: 'center' });
+        doc.text(`Page ${i} of ${totalPages}`, pageW - 40, pageH - 20, { align: 'right' });
+    }
 
-    doc.save(`rudrabhakti-audit-${currentPeriod}-${new Date().toISOString().slice(0,10)}.pdf`);
+    doc.save(`rudrabhakti-audit-${currentPeriod}-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
-
 /* ============================================================
    RENDER — EVERYTHING
    ============================================================ */
@@ -1967,7 +2077,20 @@ if (reelFilter) reelFilter.addEventListener('change', () => {
 });
 if (snapshotBtn) snapshotBtn.addEventListener('click', saveSnapshot);
 if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportCSV);
-if (exportPdfBtn) exportPdfBtn.addEventListener('click', exportPDF);
+if (exportPdfBtn) exportPdfBtn.addEventListener('click', async () => {
+    const original = exportPdfBtn.innerHTML;
+    exportPdfBtn.disabled = true;
+    exportPdfBtn.innerHTML = '<span>Generating…</span>';
+    try {
+        await exportPDF();
+    } catch (err) {
+        console.error('PDF error:', err);
+        alert('Failed to generate PDF. Please try again.');
+    } finally {
+        exportPdfBtn.disabled = false;
+        exportPdfBtn.innerHTML = original;
+    }
+});
 
 /* ============================================================
    SETTINGS BINDINGS
