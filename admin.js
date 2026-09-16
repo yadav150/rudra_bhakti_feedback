@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — ADMIN PANEL
-   Executive dashboard only
+   Executive dashboard + auth + page loader
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -26,11 +26,12 @@ const db = getDatabase(app);
 
 const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
 
+const $ = (id) => document.getElementById(id);
+
 /* ============================================================
    DOM
    ============================================================ */
-const $ = (id) => document.getElementById(id);
-
+const pageLoader = $('pageLoader');
 const loginWrap = $('loginWrap');
 const forgotWrap = $('forgotWrap');
 const dash = $('dash');
@@ -83,6 +84,22 @@ let allFeedback = [];
 let savedReels = [];
 let unsubscribeReels = null;
 let unsubscribeFeedback = null;
+let pageRevealed = false;
+
+/* ============================================================
+   PAGE REVEAL (smooth blur-out, no CLS)
+   ============================================================ */
+function revealPage() {
+    if (pageRevealed) return;
+    pageRevealed = true;
+    document.body.classList.remove('is-loading');
+    if (pageLoader) pageLoader.classList.add('is-hidden');
+}
+
+/* Safety: if auth takes too long, reveal anyway */
+setTimeout(() => {
+    if (!pageRevealed) revealPage();
+}, 4000);
 
 /* ============================================================
    SCREEN CONTROL
@@ -110,16 +127,19 @@ onAuthStateChanged(auth, (user) => {
     if (!user) {
         stopRealtimeListeners();
         showLogin();
+        revealPage();
         return;
     }
     if (user.uid !== ADMIN_UID) {
         signOut(auth);
         showLogin();
         loginError.textContent = 'This account is not authorized to access the admin panel.';
+        revealPage();
         return;
     }
     if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
     showDash();
+    revealPage();
     startRealtimeListeners();
 });
 
@@ -303,7 +323,7 @@ function pct(n, d) {
 }
 
 /* ============================================================
-   REEL STATS (used by Executive + Action Center)
+   REEL STATS
    ============================================================ */
 function computeReelStats(reelId) {
     const items = allFeedback.filter((f) => f.reelId === reelId);
@@ -513,6 +533,6 @@ function renderActionCenter() {
 }
 
 /* ============================================================
-   INIT
+   INIT — show login underneath loader until auth resolves
    ============================================================ */
 showLogin();
