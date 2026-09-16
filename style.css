@@ -275,21 +275,28 @@ img,svg{display:block;max-width:100%;}
 
 /* TEXT */
 
-textarea{
+textarea,
+input[type="text"],
+input[type="email"]{
   width:100%;
-  min-height:150px;
   border:1px solid var(--border);
   background:var(--soft);
   border-radius:16px;
   padding:16px;
-  resize:vertical;
   outline:none;
   font:inherit;
   font-size:14px;
   color:var(--text);
 }
 
-textarea:focus{border-color:#555;}
+textarea{
+  min-height:150px;
+  resize:vertical;
+}
+
+textarea:focus,
+input[type="text"]:focus,
+input[type="email"]:focus{border-color:#555;}
 
 /* NAVIGATION */
 
@@ -388,3 +395,15 @@ textarea:focus{border-color:#555;}
   .reel-info h2{font-size:15px;}
   .rating{gap:6px;}
 }
+/*-----------skip-----*/
+.skip-btn{
+  align-self:flex-start;
+  padding:6px 0;
+  color:var(--muted);
+  font-size:13px;
+  text-decoration:underline;
+  background:none;
+  border:none;
+}
+
+.skip-btn:hover{color:var(--text);}
