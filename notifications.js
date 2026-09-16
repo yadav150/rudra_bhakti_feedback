@@ -1,10 +1,10 @@
 /* ============================================================
    RUDRA BHAKTI — NOTIFICATIONS
-   Real-time feedback alerts. Fully dynamic from Firebase.
+   Native integration. Silent auth. Blue loader (zero CLS).
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail }
+import { getAuth, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getDatabase, ref, onValue, set, update }
     from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
@@ -29,35 +29,41 @@ const BASE_TITLE = 'Notifications — Rudra Bhakti Admin';
 const PER_PAGE = 15;
 
 /* ============================================================
+   PAGE LOADER
+   ============================================================ */
+let __loaderDone = false;
+
+function markReady() {
+    if (__loaderDone) return;
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => loader.classList.add('is-hidden'));
+    });
+}
+
+function hideLoaderNow() {
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('is-hidden');
+}
+
+setTimeout(markReady, 2000);
+
+/* ============================================================
    DOM
    ============================================================ */
 const $ = (id) => document.getElementById(id);
 
-const loginWrap = $('loginWrap');
-const forgotWrap = $('forgotWrap');
 const dash = $('dash');
-
-const loginForm = $('loginForm');
-const loginEmail = $('loginEmail');
-const loginPassword = $('loginPassword');
-const loginError = $('loginError');
-const loginLabel = $('loginLabel');
-const forgotLink = $('forgotLink');
-const forgotForm = $('forgotForm');
-const forgotEmail = $('forgotEmail');
-const forgotError = $('forgotError');
-const forgotSuccess = $('forgotSuccess');
-const forgotLabel = $('forgotLabel');
-const forgotBack = $('forgotBack');
 const logoutBtn = $('logoutBtn');
 const drawerUserEmail = $('drawerUserEmail');
-
 const menuBtn = $('menuBtn');
 const drawer = $('drawer');
 const drawerBackdrop = $('drawerBackdrop');
 const drawerClose = $('drawerClose');
 const drawerLogout = $('drawerLogout');
-
 const logoutModal = $('logoutModal');
 const logoutBackdrop = $('logoutBackdrop');
 const logoutCancel = $('logoutCancel');
@@ -85,120 +91,33 @@ let unsubRead = null;
 
 let firstFeedbackSnapshot = true;
 let lastMaxTs = 0;
-
 let currentPage = 1;
 
-/* ============================================================
-   SCREEN CONTROL
-   ============================================================ */
-function showLogin() {
-    loginWrap.hidden = false;
-    forgotWrap.hidden = true;
-    dash.hidden = true;
-}
-function showForgot() {
-    loginWrap.hidden = true;
-    forgotWrap.hidden = false;
-    dash.hidden = true;
-}
-function showDash() {
-    loginWrap.hidden = true;
-    forgotWrap.hidden = true;
-    dash.hidden = false;
-}
+let reelsFired = false;
+let feedbackFired = false;
+let readFired = false;
 
 /* ============================================================
-   AUTH
+   AUTH — silent
    ============================================================ */
 onAuthStateChanged(auth, (user) => {
-    if (!user) {
+    if (!user || user.uid !== ADMIN_UID) {
         stopListeners();
-        showLogin();
-        return;
-    }
-    if (user.uid !== ADMIN_UID) {
-        signOut(auth);
-        showLogin();
-        loginError.textContent = 'This account is not authorized to access the admin panel.';
+        hideLoaderNow();
+        window.location.replace('admin.html');
         return;
     }
     if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
-    showDash();
+    dash.hidden = false;
     startListeners();
 });
 
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginError.textContent = '';
-    const email = loginEmail.value.trim();
-    const password = loginPassword.value;
-    if (!email || !password) {
-        loginError.textContent = 'Please enter both email and password.';
-        return;
-    }
-    loginLabel.textContent = 'Signing in…';
-    const btn = loginForm.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-        console.error('Login error:', err);
-        let msg = 'Invalid email or password.';
-        if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please try again later.';
-        if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
-        loginError.textContent = msg;
-    } finally {
-        loginLabel.textContent = 'Sign In';
-        btn.disabled = false;
-    }
-});
-
-forgotLink.addEventListener('click', () => {
-    forgotEmail.value = loginEmail.value.trim();
-    forgotError.textContent = '';
-    forgotSuccess.textContent = '';
-    showForgot();
-});
-forgotBack.addEventListener('click', () => showLogin());
-
-forgotForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    forgotError.textContent = '';
-    forgotSuccess.textContent = '';
-    const email = forgotEmail.value.trim();
-    if (!email) {
-        forgotError.textContent = 'Please enter your email.';
-        return;
-    }
-    forgotLabel.textContent = 'Sending…';
-    const btn = forgotForm.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    try {
-        await sendPasswordResetEmail(auth, email);
-        forgotSuccess.textContent = 'If that email is registered, a reset link has been sent.';
-        forgotForm.reset();
-    } catch (err) {
-        if (err.code === 'auth/too-many-requests') {
-            forgotError.textContent = 'Too many attempts. Please try again later.';
-        } else if (err.code === 'auth/invalid-email') {
-            forgotError.textContent = 'Please enter a valid email address.';
-        } else {
-            forgotSuccess.textContent = 'If that email is registered, a reset link has been sent.';
-            forgotForm.reset();
-        }
-    } finally {
-        forgotLabel.textContent = 'Send Reset Link';
-        btn.disabled = false;
-    }
-});
-
 /* ============================================================
-   LOGOUT
+   LOGOUT / DRAWER
    ============================================================ */
 function openLogoutModal() {
     logoutModal.hidden = false;
     document.body.style.overflow = 'hidden';
-    setTimeout(() => logoutCancel?.focus(), 80);
 }
 function closeLogoutModal() {
     logoutModal.hidden = true;
@@ -208,13 +127,8 @@ async function performLogout() {
     closeLogoutModal();
     try {
         await signOut(auth);
-        loginEmail.value = '';
-        loginPassword.value = '';
-        closeDrawer();
         document.title = BASE_TITLE;
-    } catch (err) {
-        console.error('Logout error:', err);
-    }
+    } catch (err) { console.error(err); }
 }
 if (logoutBtn) logoutBtn.addEventListener('click', openLogoutModal);
 if (drawerLogout) drawerLogout.addEventListener('click', () => {
@@ -228,9 +142,6 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && logoutModal && !logoutModal.hidden) closeLogoutModal();
 });
 
-/* ============================================================
-   DRAWER
-   ============================================================ */
 function openDrawer() {
     drawer.classList.add('is-open');
     drawerBackdrop.classList.add('is-open');
@@ -250,12 +161,9 @@ if (menuBtn) menuBtn.addEventListener('click', () => {
 });
 if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
 if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawer.classList.contains('is-open')) closeDrawer();
-});
 
 /* ============================================================
-   REALTIME LISTENERS
+   LISTENERS
    ============================================================ */
 function startListeners() {
     stopListeners();
@@ -267,8 +175,14 @@ function startListeners() {
         snap.forEach((child) => {
             savedReels.push({ id: child.key, ...child.val() });
         });
+        reelsFired = true;
         renderAll();
-    }, (err) => console.error('Reels listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('Reels listener error:', err);
+        reelsFired = true;
+        maybeMarkReady();
+    });
 
     unsubFeedback = onValue(ref(db, 'feedback'), (snap) => {
         const items = [];
@@ -288,8 +202,14 @@ function startListeners() {
 
         items.sort((a, b) => (Number(b.submittedAt) || 0) - (Number(a.submittedAt) || 0));
         allFeedback = items;
+        feedbackFired = true;
         renderAll();
-    }, (err) => console.error('Feedback listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('Feedback listener error:', err);
+        feedbackFired = true;
+        maybeMarkReady();
+    });
 
     unsubRead = onValue(ref(db, 'adminNotifications/readIds'), (snap) => {
         readIds = new Set();
@@ -298,14 +218,24 @@ function startListeners() {
                 readIds.add(child.key);
             });
         }
+        readFired = true;
         renderAll();
-    }, (err) => console.error('ReadIds listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('ReadIds listener error:', err);
+        readFired = true;
+        maybeMarkReady();
+    });
 }
 
 function stopListeners() {
     if (unsubReels) { unsubReels(); unsubReels = null; }
     if (unsubFeedback) { unsubFeedback(); unsubFeedback = null; }
     if (unsubRead) { unsubRead(); unsubRead = null; }
+}
+
+function maybeMarkReady() {
+    if (reelsFired && feedbackFired && readFired) markReady();
 }
 
 /* ============================================================
@@ -356,7 +286,6 @@ function ensureAudio() {
         if (!Ctx) return null;
         audioCtx = new Ctx();
     } catch (e) {
-        console.warn('AudioContext init failed:', e);
         return null;
     }
     return audioCtx;
@@ -365,9 +294,7 @@ function ensureAudio() {
 function playBeep() {
     const ctx = ensureAudio();
     if (!ctx) return;
-    if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
-    }
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
     try {
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
@@ -382,19 +309,16 @@ function playBeep() {
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.35);
-    } catch (e) {
-        console.warn('Beep failed:', e);
-    }
+    } catch (e) { /* silent */ }
 }
 
-/* User gesture se audio unlock */
 document.addEventListener('click', () => {
     const ctx = ensureAudio();
     if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
-}, { once: false, passive: true });
+}, { passive: true });
 
 /* ============================================================
-   RENDER ALL
+   RENDER
    ============================================================ */
 function renderAll() {
     updateTitle();
@@ -420,9 +344,6 @@ function updateStats() {
     if (notifUnread) notifUnread.textContent = unread + ' unread';
 }
 
-/* ============================================================
-   FILTERS
-   ============================================================ */
 function getFiltered() {
     let list = [...allFeedback];
     const f = filterNotif?.value || 'all';
@@ -439,9 +360,6 @@ function getFiltered() {
     return list;
 }
 
-/* ============================================================
-   RENDER LIST
-   ============================================================ */
 function renderList() {
     if (!notifList || !notifEmpty) return;
 
@@ -481,7 +399,7 @@ function renderList() {
 
     notifList.innerHTML = items.map(renderNotif).join('');
 
-        notifList.querySelectorAll('[data-notif-id]').forEach((el) => {
+    notifList.querySelectorAll('[data-notif-id]').forEach((el) => {
         el.addEventListener('click', () => {
             const id = el.dataset.notifId;
             if (id && !readIds.has(id)) markRead(id);
@@ -513,12 +431,15 @@ function renderNotif(f) {
 
     const safe = (v) => escapeHTML(v == null ? '' : String(v));
 
-    const feelingVal = f.feeling ? safe(f.feeling) : '';
     const fromVal = safe(f.name || 'Anonymous');
     const messageVal = (f.message || '').trim();
 
     const metaItems = [];
-    if (feelingVal) metaItems.push(rowItem('Feeling', feelingVal));
+    if (f.feeling) metaItems.push(rowItem('Feeling', safe(f.feeling)));
+    if (f.more) metaItems.push(rowItem('Would watch more', safe(f.more)));
+    metaItems.push(rowItem('Rating', safe(rating) + ' / 5'));
+    if (f.wantMore) metaItems.push(rowItem('Wants more of', safe(f.wantMore)));
+    if (f.engageAgain) metaItems.push(rowItem('Engage again', safe(f.engageAgain)));
     metaItems.push(rowItem('From', fromVal));
 
     return `
@@ -537,12 +458,6 @@ function renderNotif(f) {
                     ${reelTitle ? `<span class="notif-sub">${safe(reelTitle)}</span>` : ''}
                 </div>
                 ${isUnread ? '<span class="notif-new">New</span>' : ''}
-                <span class="row-rating">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/>
-                    </svg>
-                    ${safe(rating)} / 5
-                </span>
             </div>
             <div class="row-grid">
                 ${metaItems.join('')}
@@ -553,12 +468,12 @@ function renderNotif(f) {
                     </div>
                 ` : ''}
             </div>
-                        <div class="row-foot">
+            <div class="row-foot">
                 <span>${safe(timeAgo(f.submittedAt))}</span>
                 <span>${safe(formatDate(f.submittedAt))}</span>
             </div>
-            <button type="button" class="notif-see-more" data-see-more="${safe(f.id)}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button type="button" class="btn btn-ghost" data-see-more="${safe(f.id)}" style="align-self:flex-start;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
                 <span>See more</span>
@@ -618,19 +533,13 @@ async function markAllRead() {
         updates['adminNotifications/readIds/' + f.id] = stamp;
     });
 
-    const original = markAllReadBtn?.innerHTML;
-    if (markAllReadBtn) {
-        markAllReadBtn.disabled = true;
-    }
+    if (markAllReadBtn) markAllReadBtn.disabled = true;
     try {
         await update(ref(db), updates);
     } catch (err) {
         console.error('Mark all read failed:', err);
     } finally {
-        if (markAllReadBtn) {
-            markAllReadBtn.disabled = false;
-            if (original) markAllReadBtn.innerHTML = original;
-        }
+        if (markAllReadBtn) markAllReadBtn.disabled = false;
     }
 }
 
@@ -646,6 +555,3 @@ if (filterNotif) {
 if (markAllReadBtn) {
     markAllReadBtn.addEventListener('click', markAllRead);
 }
-
-/* Initial state */
-showLogin();
