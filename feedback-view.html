@@ -20,16 +20,6 @@
     font-family:Inter,system-ui,sans-serif;
     box-shadow:0 12px 45px rgba(0,0,0,.045);
 }
-    .capture-scroll{
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 6px;
-}
-.capture-area{
-    width: 800px;
-    max-width: none;
-}
 .capture-brand{
     display:flex;align-items:center;gap:14px;
     padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:28px;
@@ -48,6 +38,7 @@
     padding:10px 18px;background:var(--dark);color:#fff;border-radius:99px;
     font-size:15px;font-weight:800;margin-bottom:28px;
 }
+    .capture-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:6px}.capture-area{width:800px;max-width:none}
 .capture-rating svg{width:18px;height:18px;}
 .capture-foot{
     display:flex;justify-content:space-between;align-items:center;
@@ -277,29 +268,31 @@
                 </div>
 
                 <!-- CAPTURE AREA (4K image render) -->
-                <div class="capture-area" id="captureArea">
-                    <div class="capture-brand">
-                        <div class="capture-logo" aria-hidden="true">ॐ</div>
-                        <div class="capture-brand-text">
-                            <strong>Rudra Bhakti</strong>
-                            <small>Feedback Review</small>
+                <div class="capture-scroll">
+                    <div class="capture-area" id="captureArea">
+                        <div class="capture-brand">
+                            <div class="capture-logo" aria-hidden="true">ॐ</div>
+                            <div class="capture-brand-text">
+                                <strong>Rudra Bhakti</strong>
+                                <small>Feedback Review</small>
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="captureReel" style="margin-bottom:20px;"></div>
-                    <div id="captureRating"></div>
-                    <div class="row-grid" id="captureGrid" style="margin-bottom:20px;"></div>
+                        <div id="captureReel" style="margin-bottom:20px;"></div>
+                        <div id="captureRating"></div>
+                        <div class="row-grid" id="captureGrid" style="margin-bottom:20px;"></div>
 
-                    <div id="captureMessage" hidden>
-                        <div class="row-item row-message" style="grid-column:1/-1;">
-                            <span class="row-item-label">Message</span>
-                            <span class="row-item-value" id="captureMessageText" style="text-align:justify;line-height:1.65;"></span>
+                        <div id="captureMessage" hidden>
+                            <div class="row-item row-message" style="grid-column:1/-1;">
+                                <span class="row-item-label">Message</span>
+                                <span class="row-item-value" id="captureMessageText" style="text-align:justify;line-height:1.65;"></span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="capture-foot">
-                        <span id="captureDate">—</span>
-                        <span>rudrabhakti · devotional feedback</span>
+                        <div class="capture-foot">
+                            <span id="captureDate">—</span>
+                            <span>rudrabhakti · devotional feedback</span>
+                        </div>
                     </div>
                 </div>
 
