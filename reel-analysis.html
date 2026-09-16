@@ -13,6 +13,11 @@
 </head>
 <body>
 
+<!-- PAGE LOADER -->
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+    <div class="page-loader-spinner"></div>
+</div>
+
 <div class="dash" id="dash" hidden>
 
     <header class="dash-header">
@@ -21,7 +26,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Reel Analysis</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
 
@@ -86,6 +91,7 @@
         </div>
     </header>
 
+    <!-- MOBILE DRAWER -->
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
     <aside class="drawer" id="drawer" aria-hidden="true">
         <div class="drawer-head">
@@ -93,7 +99,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Reel Analysis</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
             <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
@@ -173,37 +179,7 @@
             </div>
         </section>
 
-        <!-- LOADING / EMPTY -->
-        <section class="dash-section" id="stateSection">
-            <div class="panel-card">
-                <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="loadingState">
-                        <div class="empty-state-icon">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                            </svg>
-                        </div>
-                        <h3>Loading analysis</h3>
-                        <p>Please wait while we fetch reel data.</p>
-                    </div>
-                    <div class="empty-state" id="noReelsState" hidden>
-                        <div class="empty-state-icon">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                                <path d="M10 9l5 3-5 3z"/>
-                            </svg>
-                        </div>
-                        <h3>No reels added yet</h3>
-                        <p>Add reels from the dashboard to begin analysis.</p>
-                        <a href="admin.html" class="btn btn-primary" style="margin-top:18px;">
-                            <span>Go to Dashboard</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ANALYSIS -->
+        <!-- CONTENT -->
         <div id="analysisWrap" hidden>
 
             <!-- HERO -->
@@ -322,6 +298,30 @@
             </section>
 
         </div>
+
+        <!-- EMPTY STATE -->
+        <div id="noReelsState" hidden>
+            <section class="dash-section">
+                <div class="panel-card">
+                    <div class="panel-body panel-body--flush">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                    <path d="M10 9l5 3-5 3z"/>
+                                </svg>
+                            </div>
+                            <h3>No reels added yet</h3>
+                            <p>Add reels from the dashboard to begin analysis.</p>
+                            <a href="reels.html" class="btn btn-primary" style="margin-top:18px;">
+                                <span>Go to Reels</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
     </main>
 </div>
 
