@@ -13,6 +13,11 @@
 </head>
 <body>
 
+<!-- PAGE LOADER -->
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+    <div class="page-loader-spinner"></div>
+</div>
+
 <div class="dash" id="dash" hidden>
 
     <header class="dash-header">
@@ -21,7 +26,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Reels</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
 
@@ -72,12 +77,6 @@
             </nav>
 
             <div class="dash-account">
-                <button type="button" class="btn btn-primary" id="openAddReel">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    <span>Add Reel</span>
-                </button>
                 <button type="button" class="btn-icon" id="logoutBtn" aria-label="Logout" title="Logout">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
@@ -100,7 +99,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Reels</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
             <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
@@ -185,7 +184,7 @@
 
             <div class="panel-card">
                 <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="reelsEmpty">
+                    <div class="empty-state" id="reelsEmpty" hidden>
                         <div class="empty-state-icon">
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -215,7 +214,7 @@
             </div>
             <div class="panel-card">
                 <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="reelIntelEmpty">
+                    <div class="empty-state" id="reelIntelEmpty" hidden>
                         <div class="empty-state-icon">
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 3v18h18"/>
