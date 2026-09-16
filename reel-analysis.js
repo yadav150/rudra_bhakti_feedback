@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — REEL ANALYSIS
-   Native integration. Silent auth. Uses only admin.css.
+   Native integration. Silent auth. Blue loader (zero CLS).
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -27,9 +27,34 @@ const db = getDatabase(app);
 const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
 const RECOMMENDATION_THRESHOLD = 10;
 
+/* ============================================================
+   PAGE LOADER
+   ============================================================ */
+let __loaderDone = false;
+
+function markReady() {
+    if (__loaderDone) return;
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => loader.classList.add('is-hidden'));
+    });
+}
+
+function hideLoaderNow() {
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('is-hidden');
+}
+
+setTimeout(markReady, 2000);
+
+/* ============================================================
+   DOM
+   ============================================================ */
 const $ = (id) => document.getElementById(id);
 
-/* ===== DOM ===== */
 const dash = $('dash');
 const logoutBtn = $('logoutBtn');
 const drawerUserEmail = $('drawerUserEmail');
@@ -44,7 +69,6 @@ const logoutCancel = $('logoutCancel');
 const logoutConfirm = $('logoutConfirm');
 
 const reelSelect = $('reelSelect');
-const loadingState = $('loadingState');
 const noReelsState = $('noReelsState');
 const analysisWrap = $('analysisWrap');
 
@@ -61,12 +85,16 @@ const writtenGrid = $('writtenGrid');
 const writtenThemes = $('writtenThemes');
 const recommendationBlock = $('recommendationBlock');
 
-/* ===== STATE ===== */
+/* ============================================================
+   STATE
+   ============================================================ */
 let allReels = [];
 let allFeedback = [];
 let activeReelId = null;
 let unsubReels = null;
 let unsubFeedback = null;
+let reelsFired = false;
+let feedbackFired = false;
 
 /* ============================================================
    AUTH — silent
@@ -74,6 +102,7 @@ let unsubFeedback = null;
 onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== ADMIN_UID) {
         stopListeners();
+        hideLoaderNow();
         window.location.replace('admin.html');
         return;
     }
@@ -141,21 +170,37 @@ function startListeners() {
             allReels.push({ id: child.key, ...child.val() });
         });
         allReels.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+        reelsFired = true;
         handleReelsUpdate();
-    }, (err) => console.error('Reels listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('Reels listener error:', err);
+        reelsFired = true;
+        maybeMarkReady();
+    });
 
     unsubFeedback = onValue(ref(db, 'feedback'), (snap) => {
         allFeedback = [];
         snap.forEach((child) => {
             allFeedback.push({ id: child.key, ...child.val() });
         });
+        feedbackFired = true;
         if (activeReelId) renderAnalysis();
-    }, (err) => console.error('Feedback listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('Feedback listener error:', err);
+        feedbackFired = true;
+        maybeMarkReady();
+    });
 }
 
 function stopListeners() {
     if (unsubReels) { unsubReels(); unsubReels = null; }
     if (unsubFeedback) { unsubFeedback(); unsubFeedback = null; }
+}
+
+function maybeMarkReady() {
+    if (reelsFired && feedbackFired) markReady();
 }
 
 /* ============================================================
@@ -244,8 +289,6 @@ function chartEmpty(title, text) {
    REEL SELECTION
    ============================================================ */
 function handleReelsUpdate() {
-    loadingState.hidden = true;
-
     if (!allReels.length) {
         noReelsState.hidden = false;
         analysisWrap.hidden = true;
@@ -421,7 +464,7 @@ function getReelItems(reelId) {
     return allFeedback.filter((f) => f.reelId === reelId);
 }
 
-/* ---- HERO (uses .reel-row) ---- */
+/* ---- HERO ---- */
 function renderHero(stats) {
     const r = stats.reel;
     const thumb = r.thumbnail
@@ -446,7 +489,7 @@ function renderHero(stats) {
     `;
 }
 
-/* ---- KPIs (uses .stats + .stat) ---- */
+/* ---- KPIs ---- */
 function renderKPIs(stats) {
     if (!stats.total) {
         kpiGrid.innerHTML = `<div style="grid-column:1/-1;">${chartEmpty('No responses yet', 'KPIs will appear once feedback arrives.')}</div>`;
@@ -504,7 +547,7 @@ function ratingLabel(avg) {
     return 'Below expectations';
 }
 
-/* ---- BEHAVIOR (uses .exec-grid + .exec-card) ---- */
+/* ---- BEHAVIOR ---- */
 function renderBehavior(stats) {
     if (!stats.total) {
         behaviorGrid.innerHTML = `<div style="grid-column:1/-1;">${chartEmpty('No behavior data yet')}</div>`;
@@ -564,7 +607,7 @@ function renderBehavior(stats) {
     `).join('');
 }
 
-/* ---- TIMELINE (uses .dist-list + .dist-bar) ---- */
+/* ---- TIMELINE ---- */
 function renderTimeline(stats) {
     const keys = Object.keys(stats.days);
     if (!keys.length) {
@@ -584,7 +627,7 @@ function renderTimeline(stats) {
         const width = Math.round((v / max) * 100);
         const isPeak = v === peakVal && v > 0;
         return `
-            <div class="dist-bar"${isPeak ? ' style="--peak:1"' : ''}>
+            <div class="dist-bar">
                 <span class="dist-label" style="font-size:11px;">${escapeHTML(k.slice(5))}</span>
                 <div class="dist-track"><div class="dist-fill" style="width:${width}%;${isPeak ? 'background:#2563eb;' : ''}"></div></div>
                 <span class="dist-count">${v}</span>
@@ -593,7 +636,7 @@ function renderTimeline(stats) {
     }).join('')}</div>`;
 }
 
-/* ---- HOUR (uses .dist-list + .dist-bar) ---- */
+/* ---- HOUR ---- */
 function renderHourChart(stats) {
     if (!stats.total) {
         hourChart.innerHTML = chartEmpty('No timing data');
@@ -615,7 +658,7 @@ function renderHourChart(stats) {
     }).join('')}</div>`;
 }
 
-/* ---- WEEKDAY (uses .dist-list + .dist-bar) ---- */
+/* ---- WEEKDAY ---- */
 function renderWeekdayChart(stats) {
     if (!stats.total) {
         weekdayChart.innerHTML = chartEmpty('No weekday data');
@@ -639,7 +682,7 @@ function renderWeekdayChart(stats) {
     }).join('')}</div>`;
 }
 
-/* ---- FEELING (uses .dist-list + .dist-bar) ---- */
+/* ---- FEELING ---- */
 function renderFeeling(stats) {
     if (!stats.feelings.length) {
         feelingChart.innerHTML = chartEmpty('No feeling data yet');
@@ -661,7 +704,7 @@ function renderFeeling(stats) {
     }).join('')}</div>`;
 }
 
-/* ---- INTENT (uses .perception-grid + .perception-card) ---- */
+/* ---- INTENT ---- */
 function renderIntent(stats) {
     if (!stats.total) {
         intentGrid.innerHTML = `<div style="grid-column:1/-1;">${chartEmpty('No intent data yet')}</div>`;
@@ -728,7 +771,7 @@ function renderIntent(stats) {
     `).join('');
 }
 
-/* ---- WRITTEN (uses .analytics-grid + .analytics-card) ---- */
+/* ---- WRITTEN ---- */
 function renderWritten(stats) {
     if (!stats.total) {
         writtenGrid.innerHTML = `<div style="grid-column:1/-1;">${chartEmpty('No written feedback yet')}</div>`;
@@ -979,6 +1022,3 @@ function buildActionList(stats) {
 
     return list.slice(0, 4);
 }
-
-/* Start hidden until auth resolves */
-dash.hidden = true;
