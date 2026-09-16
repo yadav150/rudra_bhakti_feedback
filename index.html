@@ -47,24 +47,19 @@
         <section class="question-card" id="questionCard">
 
             <!-- ===== SCREEN 1 — IDENTITY (optional) ===== -->
-            <div class="question-screen active" data-question="1">
-                <div class="question-head">
-                    <div>
-                        <div class="question-number">Before we begin</div>
-                        <div class="question-title">May we know who's sharing?</div>
-                    </div>
-                </div>
-                <p class="field-help">Both fields are optional. Leave blank to stay anonymous.</p>
-                <div class="field-group">
-                    <label class="field-label" for="userName">Name</label>
-                    <input class="field-input" type="text" id="userName" placeholder="Your name" maxlength="60" autocomplete="name" />
-                </div>
-                <div class="field-group">
-                    <label class="field-label" for="userEmail">Email</label>
-                    <input class="field-input" type="email" id="userEmail" placeholder="your@email.com" maxlength="120" autocomplete="email" />
-                </div>
-                <button type="button" class="skip-btn" id="skipIdentity">Skip — stay anonymous</button>
-            </div>
+<div class="question-screen active" data-question="1">
+    <div class="question-head">
+        <div>
+            <div class="question-number">Before we begin</div>
+            <div class="question-title">May we know who's sharing?</div>
+        </div>
+    </div>
+    <div class="stack">
+        <input type="text" id="userName" placeholder="Name (optional)" maxlength="60" autocomplete="name" />
+        <input type="email" id="userEmail" placeholder="Email (optional)" maxlength="120" autocomplete="email" />
+        <button type="button" class="skip-btn" id="skipIdentity">Skip — stay anonymous</button>
+    </div>
+</div>
 
             <!-- ===== SCREEN 2 — feeling ===== -->
             <div class="question-screen" data-question="2">
