@@ -73,6 +73,12 @@ function hideLoaderNow() {
     if (loader) loader.classList.add('is-hidden');
 }
 
+function showLoaderNow() {
+    __loaderDone = false;
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.remove('is-hidden');
+}
+
 /* Safety net — never keep user waiting more than 2s */
 setTimeout(markReady, 2000);
 
@@ -187,14 +193,17 @@ loginForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    loginLabel.textContent = 'Signing in…';
+       loginLabel.textContent = 'Signing in…';
     const btn = loginForm.querySelector('button[type="submit"]');
     btn.disabled = true;
+    showLoaderNow();
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
+        /* Loader stays visible — markReady() hides it after data loads */
     } catch (err) {
         console.error('Login error:', err);
+        hideLoaderNow();
         let msg = 'Invalid email or password.';
         if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please try again later.';
         if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
