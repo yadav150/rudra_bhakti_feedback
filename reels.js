@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — REELS
-   Silent auth + page loader + no CLS
+   Native integration. Silent auth. Blue loader (zero CLS).
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -28,10 +28,35 @@ const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
 const REELS_PER_PAGE = 5;
 const REEL_INTEL_PER_PAGE = 5;
 
+/* ============================================================
+   PAGE LOADER
+   ============================================================ */
+let __loaderDone = false;
+
+function markReady() {
+    if (__loaderDone) return;
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => loader.classList.add('is-hidden'));
+    });
+}
+
+function hideLoaderNow() {
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('is-hidden');
+}
+
+setTimeout(markReady, 2000);
+
+/* ============================================================
+   DOM
+   ============================================================ */
 const $ = (id) => document.getElementById(id);
 
-/* ===== DOM ===== */
-const pageLoader = $('pageLoader');
+const dash = $('dash');
 const logoutBtn = $('logoutBtn');
 const drawerUserEmail = $('drawerUserEmail');
 const menuBtn = $('menuBtn');
@@ -51,6 +76,7 @@ const reelIntelList = $('reelIntelList');
 const compareSelect = $('compareSelect');
 const compareResult = $('compareResult');
 
+const openAddReel = $('openAddReel');
 const drawerAddReel = $('drawerAddReel');
 const emptyAddReel = $('emptyAddReel');
 const addReelModal = $('addReelModal');
@@ -65,7 +91,9 @@ const fetchReel = $('fetchReel');
 const fetchLabel = $('fetchLabel');
 const reelPreview = $('reelPreview');
 
-/* ===== STATE ===== */
+/* ============================================================
+   STATE
+   ============================================================ */
 let allFeedback = [];
 let savedReels = [];
 let pendingReel = null;
@@ -74,30 +102,21 @@ let unsubReels = null;
 let unsubFeedback = null;
 let reelsPage = 1;
 let reelIntelPage = 1;
-let pageRevealed = false;
+let reelsFired = false;
+let feedbackFired = false;
 
 /* ============================================================
-   PAGE REVEAL
-   ============================================================ */
-function revealPage() {
-    if (pageRevealed) return;
-    pageRevealed = true;
-    document.body.classList.remove('is-loading');
-    if (pageLoader) pageLoader.classList.add('is-hidden');
-}
-setTimeout(() => { if (!pageRevealed) revealPage(); }, 4000);
-
-/* ============================================================
-   AUTH
+   AUTH — silent
    ============================================================ */
 onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== ADMIN_UID) {
         stopListeners();
-        window.location.replace('/admin.html');
+        hideLoaderNow();
+        window.location.replace('admin.html');
         return;
     }
     if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
-    revealPage();
+    dash.hidden = false;
     startListeners();
 });
 
@@ -160,24 +179,40 @@ function startListeners() {
             savedReels.push({ id: child.key, ...child.val() });
         });
         savedReels.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+        reelsFired = true;
         renderReels();
         renderReelIntelligence();
         renderReelComparison();
-    }, (err) => console.error('Reels listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('Reels listener error:', err);
+        reelsFired = true;
+        maybeMarkReady();
+    });
 
     unsubFeedback = onValue(ref(db, 'feedback'), (snap) => {
         allFeedback = [];
         snap.forEach((child) => {
             allFeedback.push({ id: child.key, ...child.val() });
         });
+        feedbackFired = true;
         renderReelIntelligence();
         renderReelComparison();
-    }, (err) => console.error('Feedback listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('Feedback listener error:', err);
+        feedbackFired = true;
+        maybeMarkReady();
+    });
 }
 
 function stopListeners() {
     if (unsubReels) { unsubReels(); unsubReels = null; }
     if (unsubFeedback) { unsubFeedback(); unsubFeedback = null; }
+}
+
+function maybeMarkReady() {
+    if (reelsFired && feedbackFired) markReady();
 }
 
 /* ============================================================
@@ -294,7 +329,7 @@ function renderReels() {
 }
 
 function reelFeedbackUrl(id) {
-    return '/index.html?reel=' + encodeURIComponent(id);
+    return 'index.html?reel=' + encodeURIComponent(id);
 }
 
 async function copyReelLink(btn) {
@@ -328,7 +363,7 @@ function computeReelStats(reelId) {
     const avg = rated.length ? rated.reduce((s, f) => s + Number(f.rating || 0), 0) / rated.length : 0;
 
     const recYes = items.filter((f) => {
-        const v = (f.more || '').toLowerCase();
+        const v = (f.more || f.wouldWatchMore || '').toLowerCase();
         return v.startsWith('definitely') || v.startsWith('yes');
     }).length;
     const recommend = pct(recYes, total);
@@ -693,6 +728,7 @@ async function generateNextReelId() {
 /* ============================================================
    BINDINGS
    ============================================================ */
+if (openAddReel) openAddReel.addEventListener('click', openReelModal);
 if (drawerAddReel) drawerAddReel.addEventListener('click', () => {
     closeDrawer();
     setTimeout(openReelModal, 220);
