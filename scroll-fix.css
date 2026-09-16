@@ -1,20 +1,30 @@
 /* ============================================================
    RUDRA BHAKTI — SCROLL FIX (only for feedback-view.html)
-   Targets classes only. No html/body rules.
+   Only classes targeted. No html/body rules.
    ============================================================ */
 
-/* Main content — clip overflow so nothing escapes to body */
+/* Main — clip overflow, keep grid track shrinkable */
 .dash-main {
-    overflow-x: hidden;
+    overflow-x: clip;
     grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
 }
 
-/* Capture area — only horizontal scroller */
+/* Every wrapper between .dash-main and .capture-scroll must shrink */
+.dash-main .dash-section,
+#viewWrap {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Capture area — the ONLY horizontal scroller */
 .capture-scroll {
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 6px;
+    width: 100%;
+    max-width: 100%;
 }
 
 .capture-scroll::-webkit-scrollbar { height: 6px; }
