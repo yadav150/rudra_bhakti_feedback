@@ -1496,3 +1496,4 @@ a{color:inherit;text-decoration:none;}
   color:var(--muted);
   font-weight:600;
 }
+html, body { overflow-x: hidden; }
