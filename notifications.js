@@ -481,10 +481,20 @@ function renderList() {
 
     notifList.innerHTML = items.map(renderNotif).join('');
 
-    notifList.querySelectorAll('[data-notif-id]').forEach((el) => {
+        notifList.querySelectorAll('[data-notif-id]').forEach((el) => {
         el.addEventListener('click', () => {
             const id = el.dataset.notifId;
             if (id && !readIds.has(id)) markRead(id);
+        });
+    });
+
+    notifList.querySelectorAll('[data-see-more]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.seeMore;
+            if (!id) return;
+            if (!readIds.has(id)) markRead(id);
+            window.location.href = 'feedback-view.html?id=' + encodeURIComponent(id);
         });
     });
 
@@ -543,10 +553,16 @@ function renderNotif(f) {
                     </div>
                 ` : ''}
             </div>
-            <div class="row-foot">
+                        <div class="row-foot">
                 <span>${safe(timeAgo(f.submittedAt))}</span>
                 <span>${safe(formatDate(f.submittedAt))}</span>
             </div>
+            <button type="button" class="notif-see-more" data-see-more="${safe(f.id)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                <span>See more</span>
+            </button>
         </article>
     `;
 }
