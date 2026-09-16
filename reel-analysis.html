@@ -10,7 +10,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css" />
-<link rel="stylesheet" href="reel-analysis.css" />
 </head>
 <body>
 
@@ -29,9 +28,32 @@
             <nav class="dash-nav dash-nav--desktop" aria-label="Dashboard navigation">
                 <a href="admin.html" class="dash-nav-link">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                        <rect x="3" y="3" width="7" height="9"/>
+                        <rect x="14" y="3" width="7" height="5"/>
+                        <rect x="14" y="12" width="7" height="9"/>
+                        <rect x="3" y="16" width="7" height="5"/>
                     </svg>
-                    <span>Dashboard</span>
+                    <span>Executive</span>
+                </a>
+                <a href="reels.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <path d="M10 9l5 3-5 3z"/>
+                    </svg>
+                    <span>Reels</span>
+                </a>
+                <a href="feedback.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                    <span>Feedback</span>
+                </a>
+                <a href="reel-analysis.html" class="dash-nav-link is-active">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 3v18h18"/>
+                        <path d="M7 15l4-4 3 3 5-5"/>
+                    </svg>
+                    <span>Reel Analysis</span>
                 </a>
                 <a href="notifications.html" class="dash-nav-link">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -40,12 +62,12 @@
                     </svg>
                     <span>Notifications</span>
                 </a>
-                <a href="reel-analysis.html" class="dash-nav-link is-active">
+                <a href="audit.html" class="dash-nav-link">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 3v18h18"/>
-                        <path d="M7 15l4-4 3 3 5-5"/>
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                     </svg>
-                    <span>Reel Analysis</span>
+                    <span>Audit Report</span>
                 </a>
             </nav>
 
@@ -84,9 +106,32 @@
         <nav class="drawer-nav" aria-label="Mobile navigation">
             <a href="admin.html" class="drawer-link">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                    <rect x="3" y="3" width="7" height="9"/>
+                    <rect x="14" y="3" width="7" height="5"/>
+                    <rect x="14" y="12" width="7" height="9"/>
+                    <rect x="3" y="16" width="7" height="5"/>
                 </svg>
-                <span>Dashboard</span>
+                <span>Executive</span>
+            </a>
+            <a href="reels.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="M10 9l5 3-5 3z"/>
+                </svg>
+                <span>Reels</span>
+            </a>
+            <a href="feedback.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+                <span>Feedback</span>
+            </a>
+            <a href="reel-analysis.html" class="drawer-link is-active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 15l4-4 3 3 5-5"/>
+                </svg>
+                <span>Reel Analysis</span>
             </a>
             <a href="notifications.html" class="drawer-link">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -95,12 +140,12 @@
                 </svg>
                 <span>Notifications</span>
             </a>
-            <a href="reel-analysis.html" class="drawer-link is-active">
+            <a href="audit.html" class="drawer-link">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 3v18h18"/>
-                    <path d="M7 15l4-4 3 3 5-5"/>
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                 </svg>
-                <span>Reel Analysis</span>
+                <span>Audit Report</span>
             </a>
         </nav>
 
@@ -117,18 +162,18 @@
 
     <main class="dash-main">
 
-        <!-- SECTION: REEL SELECTOR -->
+        <!-- REEL SELECTOR -->
         <section class="dash-section">
             <div class="section-head">
                 <h2>Reel Analysis</h2>
                 <p>Per-reel feedback behavior, timing, engagement and strategic guidance.</p>
             </div>
             <div class="toolbar">
-                <select class="select" id="reelSelect" style="flex:1;min-width:220px;"></select>
+                <select id="reelSelect" class="select" style="flex:1;min-width:220px;"></select>
             </div>
         </section>
 
-        <!-- SECTION: LOADING / EMPTY -->
+        <!-- LOADING / EMPTY -->
         <section class="dash-section" id="stateSection">
             <div class="panel-card">
                 <div class="panel-body panel-body--flush">
@@ -158,15 +203,15 @@
             </div>
         </section>
 
-        <!-- ANALYSIS CONTENT -->
+        <!-- ANALYSIS -->
         <div id="analysisWrap" hidden>
 
-            <!-- SECTION: REEL IDENTITY -->
+            <!-- HERO -->
             <section class="dash-section">
                 <div class="panel-card" id="reelHeroCard"></div>
             </section>
 
-            <!-- SECTION: KEY SIGNALS -->
+            <!-- KEY SIGNALS -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Key Signals</h3>
@@ -175,7 +220,7 @@
                 <div class="stats" id="kpiGrid"></div>
             </section>
 
-            <!-- SECTION: RESPONSE BEHAVIOR -->
+            <!-- RESPONSE BEHAVIOR -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Response Behavior</h3>
@@ -184,7 +229,7 @@
                 <div class="exec-grid" id="behaviorGrid"></div>
             </section>
 
-            <!-- SECTION: TIMELINE -->
+            <!-- TIMELINE -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Response Timeline</h3>
@@ -201,13 +246,13 @@
                 </div>
             </section>
 
-            <!-- SECTION: TIMING -->
+            <!-- TIMING -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Timing Patterns</h3>
                     <p>When your audience engages. Times shown in IST.</p>
                 </div>
-                <div class="split-grid-2">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                     <div class="panel-card">
                         <div class="panel-head">
                             <span class="panel-title">Hour of Day</span>
@@ -228,7 +273,7 @@
                 </div>
             </section>
 
-            <!-- SECTION: EMOTIONAL SIGNATURE -->
+            <!-- FEELING -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Emotional Signature</h3>
@@ -241,7 +286,7 @@
                 </div>
             </section>
 
-            <!-- SECTION: INTENT -->
+            <!-- INTENT -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Intent Signals</h3>
@@ -250,7 +295,7 @@
                 <div class="perception-grid" id="intentGrid"></div>
             </section>
 
-            <!-- SECTION: WRITTEN ENGAGEMENT -->
+            <!-- WRITTEN -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Written Engagement</h3>
@@ -267,7 +312,7 @@
                 </div>
             </section>
 
-            <!-- SECTION: FINAL RECOMMENDATION -->
+            <!-- RECOMMENDATION -->
             <section class="dash-section">
                 <div class="section-head section-head--sub">
                     <h3>Final Recommendation</h3>
@@ -280,6 +325,7 @@
     </main>
 </div>
 
+<!-- LOGOUT CONFIRM MODAL -->
 <div class="modal modal--center" id="logoutModal" hidden>
     <div class="modal-backdrop" id="logoutBackdrop"></div>
     <div class="modal-card modal-card--sm" role="dialog" aria-modal="true" aria-labelledby="logoutHeading">
