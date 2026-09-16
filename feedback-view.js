@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — FEEDBACK VIEW
-   Native integration. Silent auth. 4K image share.
+   Native integration. Silent auth. Blue loader (zero CLS). 4K share.
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -27,9 +27,34 @@ const db = getDatabase(app);
 const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
 const TARGET_WIDTH = 3840; /* 4K */
 
+/* ============================================================
+   PAGE LOADER
+   ============================================================ */
+let __loaderDone = false;
+
+function markReady() {
+    if (__loaderDone) return;
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => loader.classList.add('is-hidden'));
+    });
+}
+
+function hideLoaderNow() {
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('is-hidden');
+}
+
+setTimeout(markReady, 2000);
+
+/* ============================================================
+   DOM
+   ============================================================ */
 const $ = (id) => document.getElementById(id);
 
-/* ===== DOM ===== */
 const dash = $('dash');
 const logoutBtn = $('logoutBtn');
 const backBtn = $('backBtn');
@@ -44,7 +69,6 @@ const logoutBackdrop = $('logoutBackdrop');
 const logoutCancel = $('logoutCancel');
 const logoutConfirm = $('logoutConfirm');
 
-const loadingCard = $('loadingCard');
 const errorCard = $('errorCard');
 const errorTitle = $('errorTitle');
 const errorText = $('errorText');
@@ -62,7 +86,9 @@ const downloadBtn = $('downloadBtn');
 const shareBtn = $('shareBtn');
 const shareStatus = $('shareStatus');
 
-/* ===== STATE ===== */
+/* ============================================================
+   STATE
+   ============================================================ */
 let currentFeedback = null;
 let savedReels = [];
 
@@ -71,6 +97,7 @@ let savedReels = [];
    ============================================================ */
 onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== ADMIN_UID) {
+        hideLoaderNow();
         window.location.replace('admin.html');
         return;
     }
@@ -175,15 +202,14 @@ async function loadPage() {
 }
 
 function showError(title, text) {
-    loadingCard.hidden = true;
-    viewWrap.hidden = true;
     errorCard.hidden = false;
+    viewWrap.hidden = true;
     errorTitle.textContent = title;
     errorText.textContent = text;
+    markReady();
 }
 
 function showView() {
-    loadingCard.hidden = true;
     errorCard.hidden = true;
     viewWrap.hidden = false;
 }
@@ -221,13 +247,11 @@ function renderView(f) {
 
     viewMeta.textContent = (f.reelId || 'Feedback') + ' · ' + formatDate(f.submittedAt);
 
-    /* Reel block */
     captureReel.innerHTML = `
         ${f.reelId ? `<span class="reel-row-id">${safe(f.reelId)}</span>` : ''}
         ${reelTitle ? `<div style="font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.2;margin-top:8px;">${safe(reelTitle)}</div>` : ''}
     `;
 
-    /* Rating pill */
     captureRating.innerHTML = `
         <div class="capture-rating">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -237,7 +261,6 @@ function renderView(f) {
         </div>
     `;
 
-    /* Grid */
     const gridItems = [];
     if (f.feeling) gridItems.push(captureItem('Feeling', f.feeling));
     if (f.more) gridItems.push(captureItem('Would watch more', f.more));
@@ -246,7 +269,6 @@ function renderView(f) {
     gridItems.push(captureItem('From', f.name || 'Anonymous'));
     captureGrid.innerHTML = gridItems.join('');
 
-    /* Message */
     const msg = (f.message || '').trim();
     if (msg) {
         captureMessage.hidden = false;
@@ -255,10 +277,10 @@ function renderView(f) {
         captureMessage.hidden = true;
     }
 
-    /* Footer */
     captureDate.textContent = formatDate(f.submittedAt);
 
     showView();
+    markReady();
 }
 
 function captureItem(label, value) {
@@ -319,7 +341,6 @@ async function withButtonLock(btn, label, fn) {
     }
 }
 
-/* Download */
 if (downloadBtn) {
     downloadBtn.addEventListener('click', () => {
         withButtonLock(downloadBtn, 'Preparing…', async () => {
@@ -343,7 +364,6 @@ if (downloadBtn) {
     });
 }
 
-/* Share */
 if (shareBtn) {
     shareBtn.addEventListener('click', () => {
         withButtonLock(shareBtn, 'Preparing…', async () => {
@@ -366,7 +386,6 @@ if (shareBtn) {
                     return;
                 }
 
-                /* Fallback: download */
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -384,6 +403,3 @@ if (shareBtn) {
         });
     });
 }
-
-/* Start hidden until auth resolves */
-dash.hidden = true;
