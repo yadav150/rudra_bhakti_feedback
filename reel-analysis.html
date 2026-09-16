@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#202020" />
+<title>Reel Analysis — Rudra Bhakti Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css" />
+<link rel="stylesheet" href="reel-analysis.css" />
+</head>
+<body>
+
+<div class="dash" id="dash" hidden>
+
+    <header class="dash-header">
+        <div class="dash-header-inner">
+            <div class="brand-block">
+                <div class="logo logo--sm" aria-hidden="true">ॐ</div>
+                <div class="brand-text">
+                    <strong>Admin</strong>
+                    <small>Reel Analysis</small>
+                </div>
+            </div>
+
+            <nav class="dash-nav dash-nav--desktop" aria-label="Dashboard navigation">
+                <a href="admin.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="notifications.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                    </svg>
+                    <span>Notifications</span>
+                </a>
+                <a href="reel-analysis.html" class="dash-nav-link is-active">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 3v18h18"/>
+                        <path d="M7 15l4-4 3 3 5-5"/>
+                    </svg>
+                    <span>Reel Analysis</span>
+                </a>
+            </nav>
+
+            <div class="dash-account">
+                <button type="button" class="btn-icon" id="logoutBtn" aria-label="Logout" title="Logout">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                </button>
+                <button type="button" class="btn-icon dash-menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+        <div class="drawer-head">
+            <div class="brand-block">
+                <div class="logo logo--sm" aria-hidden="true">ॐ</div>
+                <div class="brand-text">
+                    <strong>Admin</strong>
+                    <small>Reel Analysis</small>
+                </div>
+            </div>
+            <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="drawer-nav" aria-label="Mobile navigation">
+            <a href="admin.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="notifications.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+                <span>Notifications</span>
+            </a>
+            <a href="reel-analysis.html" class="drawer-link is-active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 15l4-4 3 3 5-5"/>
+                </svg>
+                <span>Reel Analysis</span>
+            </a>
+        </nav>
+
+        <div class="drawer-foot">
+            <span class="drawer-email" id="drawerUserEmail">admin@rudrabhakti.com</span>
+            <button type="button" class="drawer-logout" id="drawerLogout">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="dash-main">
+
+        <!-- SECTION: REEL SELECTOR -->
+        <section class="dash-section">
+            <div class="section-head">
+                <h2>Reel Analysis</h2>
+                <p>Per-reel feedback behavior, timing, engagement and strategic guidance.</p>
+            </div>
+            <div class="toolbar">
+                <select class="select" id="reelSelect" style="flex:1;min-width:220px;"></select>
+            </div>
+        </section>
+
+        <!-- SECTION: LOADING / EMPTY -->
+        <section class="dash-section" id="stateSection">
+            <div class="panel-card">
+                <div class="panel-body panel-body--flush">
+                    <div class="empty-state" id="loadingState">
+                        <div class="empty-state-icon">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <h3>Loading analysis</h3>
+                        <p>Please wait while we fetch reel data.</p>
+                    </div>
+                    <div class="empty-state" id="noReelsState" hidden>
+                        <div class="empty-state-icon">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <path d="M10 9l5 3-5 3z"/>
+                            </svg>
+                        </div>
+                        <h3>No reels added yet</h3>
+                        <p>Add reels from the dashboard to begin analysis.</p>
+                        <a href="admin.html" class="btn btn-primary" style="margin-top:18px;">
+                            <span>Go to Dashboard</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALYSIS CONTENT -->
+        <div id="analysisWrap" hidden>
+
+            <!-- SECTION: REEL IDENTITY -->
+            <section class="dash-section">
+                <div class="panel-card" id="reelHeroCard"></div>
+            </section>
+
+            <!-- SECTION: KEY SIGNALS -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Key Signals</h3>
+                    <p>Aggregate performance for this reel.</p>
+                </div>
+                <div class="stats" id="kpiGrid"></div>
+            </section>
+
+            <!-- SECTION: RESPONSE BEHAVIOR -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Response Behavior</h3>
+                    <p>How and when feedback arrived after publishing.</p>
+                </div>
+                <div class="exec-grid" id="behaviorGrid"></div>
+            </section>
+
+            <!-- SECTION: TIMELINE -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Response Timeline</h3>
+                    <p>Daily feedback volume since this reel was added.</p>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-head">
+                        <span class="panel-title">Daily Volume</span>
+                        <span class="panel-meta" id="timelineMeta"></span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="timelineChart"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: TIMING -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Timing Patterns</h3>
+                    <p>When your audience engages. Times shown in IST.</p>
+                </div>
+                <div class="split-grid-2">
+                    <div class="panel-card">
+                        <div class="panel-head">
+                            <span class="panel-title">Hour of Day</span>
+                            <span class="panel-meta">2-hour buckets</span>
+                        </div>
+                        <div class="panel-body">
+                            <div id="hourChart"></div>
+                        </div>
+                    </div>
+                    <div class="panel-card">
+                        <div class="panel-head">
+                            <span class="panel-title">Day of Week</span>
+                        </div>
+                        <div class="panel-body">
+                            <div id="weekdayChart"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: EMOTIONAL SIGNATURE -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Emotional Signature</h3>
+                    <p>Which feeling dominates the response to this reel.</p>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-body">
+                        <div id="feelingChart"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: INTENT -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Intent Signals</h3>
+                    <p>What the audience wants next and how likely they are to return.</p>
+                </div>
+                <div class="perception-grid" id="intentGrid"></div>
+            </section>
+
+            <!-- SECTION: WRITTEN ENGAGEMENT -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Written Engagement</h3>
+                    <p>How often and how deeply the audience writes in.</p>
+                </div>
+                <div class="analytics-grid" id="writtenGrid"></div>
+                <div class="panel-card" style="margin-top:14px;">
+                    <div class="panel-head">
+                        <span class="panel-title">Common Themes</span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="writtenThemes"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: FINAL RECOMMENDATION -->
+            <section class="dash-section">
+                <div class="section-head section-head--sub">
+                    <h3>Final Recommendation</h3>
+                    <p>Strategic guidance generated from this reel's data.</p>
+                </div>
+                <div id="recommendationBlock"></div>
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<div class="modal modal--center" id="logoutModal" hidden>
+    <div class="modal-backdrop" id="logoutBackdrop"></div>
+    <div class="modal-card modal-card--sm" role="dialog" aria-modal="true" aria-labelledby="logoutHeading">
+        <div class="modal-body modal-body--confirm">
+            <div class="confirm-icon confirm-icon--danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+            </div>
+            <h2 id="logoutHeading" class="confirm-title">Logout?</h2>
+            <p class="confirm-text">Are you sure you want to logout?</p>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-ghost" id="logoutCancel">Cancel</button>
+                <button type="button" class="btn btn-danger" id="logoutConfirm">Logout</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="reel-analysis.js"></script>
+</body>
+</html>
