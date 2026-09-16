@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#202020" />
+<title>Notifications — Rudra Bhakti Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css" />
+<link rel="stylesheet" href="notifications.css" />
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="auth-wrap" id="loginWrap">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="logo" aria-hidden="true">ॐ</div>
+            <div class="brand">Admin Panel</div>
+            <div class="subtitle">Rudra Bhakti · Notifications</div>
+        </div>
+        <form id="loginForm" class="auth-form" novalidate>
+            <div class="field">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
+            </div>
+            <div class="field">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
+            </div>
+            <p class="form-error" id="loginError" role="alert"></p>
+            <button type="submit" class="btn btn-primary btn-block">
+                <span id="loginLabel">Sign In</span>
+            </button>
+            <button type="button" class="link-btn" id="forgotLink">Forgot password?</button>
+        </form>
+        <p class="auth-note">Authorized access only.</p>
+    </div>
+</div>
+
+<!-- FORGOT -->
+<div class="auth-wrap" id="forgotWrap" hidden>
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+            </div>
+            <div class="brand">Reset Password</div>
+            <div class="subtitle">Enter your admin email</div>
+        </div>
+        <form id="forgotForm" class="auth-form" novalidate>
+            <div class="field">
+                <label for="forgotEmail">Email</label>
+                <input type="email" id="forgotEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
+            </div>
+            <p class="form-error" id="forgotError"></p>
+            <p class="form-success" id="forgotSuccess"></p>
+            <button type="submit" class="btn btn-primary btn-block">
+                <span id="forgotLabel">Send Reset Link</span>
+            </button>
+            <button type="button" class="link-btn" id="forgotBack">Back to Sign In</button>
+        </form>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dash" hidden>
+
+    <header class="dash-header">
+        <div class="dash-header-inner">
+            <div class="brand-block">
+                <div class="logo logo--sm" aria-hidden="true">ॐ</div>
+                <div class="brand-text">
+                    <strong>Admin</strong>
+                    <small>Notifications</small>
+                </div>
+            </div>
+
+            <nav class="dash-nav dash-nav--desktop" aria-label="Navigation">
+                <a href="admin.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="notifications.html" class="dash-nav-link is-active">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                    </svg>
+                    <span>Notifications</span>
+                </a>
+            </nav>
+
+            <div class="dash-account">
+                <button type="button" class="btn-icon" id="logoutBtn" aria-label="Logout" title="Logout">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                </button>
+                <button type="button" class="btn-icon dash-menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MOBILE DRAWER -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+        <div class="drawer-head">
+            <div class="brand-block">
+                <div class="logo logo--sm" aria-hidden="true">ॐ</div>
+                <div class="brand-text">
+                    <strong>Admin</strong>
+                    <small>Notifications</small>
+                </div>
+            </div>
+            <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="drawer-nav" aria-label="Mobile navigation">
+            <a href="admin.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="notifications.html" class="drawer-link is-active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+                <span>Notifications</span>
+            </a>
+        </nav>
+
+        <div class="drawer-foot">
+            <span class="drawer-email" id="drawerUserEmail">admin@rudrabhakti.com</span>
+            <button type="button" class="drawer-logout" id="drawerLogout">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="dash-main">
+        <section class="dash-section">
+            <div class="section-head">
+                <h2>Notifications</h2>
+                <p>Real-time alerts whenever new feedback is submitted.</p>
+            </div>
+
+            <div class="notif-toolbar">
+                <div class="notif-stats">
+                    <span class="notif-count" id="notifCount">0 notifications</span>
+                    <span class="notif-unread-count" id="notifUnread">0 unread</span>
+                </div>
+                <div class="notif-actions">
+                    <select class="select" id="filterNotif">
+                        <option value="all">All</option>
+                        <option value="unread">Unread only</option>
+                        <option value="today">Today</option>
+                        <option value="7d">Last 7 days</option>
+                    </select>
+                    <button type="button" class="btn btn-ghost" id="markAllRead">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span>Mark all read</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="list-wrap">
+                <div class="list" id="notifList"></div>
+                <div class="empty-state" id="notifEmpty" hidden>
+                    <div class="empty-state-icon">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                        </svg>
+                    </div>
+                    <h3 id="notifEmptyTitle">No notifications yet</h3>
+                    <p id="notifEmptyText">Notifications will appear here whenever feedback is submitted.</p>
+                </div>
+                <div class="pagination" id="notifPagination" hidden></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- LOGOUT CONFIRM MODAL -->
+<div class="modal modal--center" id="logoutModal" hidden>
+    <div class="modal-backdrop" id="logoutBackdrop"></div>
+    <div class="modal-card modal-card--sm" role="dialog" aria-modal="true" aria-labelledby="logoutHeading">
+        <div class="modal-body modal-body--confirm">
+            <div class="confirm-icon confirm-icon--danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+            </div>
+            <h2 id="logoutHeading" class="confirm-title">Logout?</h2>
+            <p class="confirm-text">Are you sure you want to logout?</p>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-ghost" id="logoutCancel">Cancel</button>
+                <button type="button" class="btn btn-danger" id="logoutConfirm">Logout</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="notifications.js"></script>
+</body>
+</html>
