@@ -1,7 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — REEL ANALYSIS
-   Native integration with admin panel.
-   No login screen. Silent auth check + redirect.
+   Native integration. Silent auth. Uses only admin.css.
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -70,7 +69,7 @@ let unsubReels = null;
 let unsubFeedback = null;
 
 /* ============================================================
-   AUTH — silent check. No login form here.
+   AUTH — silent
    ============================================================ */
 onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== ADMIN_UID) {
@@ -299,7 +298,7 @@ function computeStats(reel, items) {
     const stdDev = Math.sqrt(variance);
 
     const recYes = items.filter((f) => {
-        const v = (f.more || '').toLowerCase();
+        const v = (f.more || f.wouldWatchMore || '').toLowerCase();
         return v.startsWith('definitely') || v.startsWith('yes');
     }).length;
 
@@ -422,7 +421,7 @@ function getReelItems(reelId) {
     return allFeedback.filter((f) => f.reelId === reelId);
 }
 
-/* ---- HERO (uses .reel-row pattern) ---- */
+/* ---- HERO (uses .reel-row) ---- */
 function renderHero(stats) {
     const r = stats.reel;
     const thumb = r.thumbnail
@@ -430,15 +429,17 @@ function renderHero(stats) {
         : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></svg>`;
 
     reelHeroCard.innerHTML = `
-        <div class="panel-body" style="display:flex;gap:18px;align-items:center;">
-            <div class="reel-row-thumb" style="width:70px;height:88px;">${thumb}</div>
-            <div class="reel-row-main">
-                <div class="reel-row-top">
-                    <span class="reel-row-id">${escapeHTML(r.id)}</span>
-                    <span class="reel-row-title" style="white-space:normal;font-size:16px;">${escapeHTML(r.title || 'Untitled')}</span>
-                </div>
-                <div class="reel-row-url">
-                    Added ${escapeHTML(formatDate(r.createdAt))} · ${stats.total} response${stats.total === 1 ? '' : 's'}
+        <div class="panel-body">
+            <div class="reel-row" style="border-bottom:0;padding:0;">
+                <div class="reel-row-thumb">${thumb}</div>
+                <div class="reel-row-main">
+                    <div class="reel-row-top">
+                        <span class="reel-row-id">${escapeHTML(r.id)}</span>
+                        <span class="reel-row-title" style="white-space:normal;font-size:16px;">${escapeHTML(r.title || 'Untitled')}</span>
+                    </div>
+                    <div class="reel-row-url">
+                        Added ${escapeHTML(formatDate(r.createdAt))} · ${stats.total} response${stats.total === 1 ? '' : 's'}
+                    </div>
                 </div>
             </div>
         </div>
@@ -448,7 +449,7 @@ function renderHero(stats) {
 /* ---- KPIs (uses .stats + .stat) ---- */
 function renderKPIs(stats) {
     if (!stats.total) {
-        kpiGrid.innerHTML = `<div class="chart-empty" style="grid-column:1/-1;">${chartEmpty('No responses yet', 'KPIs will appear once feedback arrives.')}</div>`;
+        kpiGrid.innerHTML = `<div style="grid-column:1/-1;">${chartEmpty('No responses yet', 'KPIs will appear once feedback arrives.')}</div>`;
         return;
     }
 
@@ -583,16 +584,16 @@ function renderTimeline(stats) {
         const width = Math.round((v / max) * 100);
         const isPeak = v === peakVal && v > 0;
         return `
-            <div class="dist-bar${isPeak ? ' is-peak' : ''}">
+            <div class="dist-bar"${isPeak ? ' style="--peak:1"' : ''}>
                 <span class="dist-label" style="font-size:11px;">${escapeHTML(k.slice(5))}</span>
-                <div class="dist-track"><div class="dist-fill" style="width:${width}%"></div></div>
+                <div class="dist-track"><div class="dist-fill" style="width:${width}%;${isPeak ? 'background:#2563eb;' : ''}"></div></div>
                 <span class="dist-count">${v}</span>
             </div>
         `;
     }).join('')}</div>`;
 }
 
-/* ---- HOUR CHART (uses .dist-list + .dist-bar) ---- */
+/* ---- HOUR (uses .dist-list + .dist-bar) ---- */
 function renderHourChart(stats) {
     if (!stats.total) {
         hourChart.innerHTML = chartEmpty('No timing data');
@@ -605,10 +606,10 @@ function renderHourChart(stats) {
         const width = Math.round((v / max) * 100);
         const isPeak = i === peakIdx && v > 0;
         return `
-            <div class="dist-bar${isPeak ? ' is-peak' : ''}">
+            <div class="dist-bar">
                 <span class="dist-label" style="font-size:10px;">${escapeHTML(formatHourLabel(i * 2))}</span>
-                <div class="dist-track"><div class="dist-fill" style="width:${width}%"></div></div>
-                <span class="dist-count">${v}</span>
+                <div class="dist-track"><div class="dist-fill" style="width:${width}%;${isPeak ? 'background:#2563eb;' : ''}"></div></div>
+                <span class="dist-count"${isPeak ? ' style="color:var(--text);font-weight:800;"' : ''}>${v}</span>
             </div>
         `;
     }).join('')}</div>`;
@@ -629,10 +630,10 @@ function renderWeekdayChart(stats) {
         const width = Math.round((v / max) * 100);
         const isPeak = v === peakVal && v > 0;
         return `
-            <div class="dist-bar${isPeak ? ' is-peak' : ''}">
+            <div class="dist-bar">
                 <span class="dist-label">${escapeHTML(k)}</span>
-                <div class="dist-track"><div class="dist-fill" style="width:${width}%"></div></div>
-                <span class="dist-count">${v}</span>
+                <div class="dist-track"><div class="dist-fill" style="width:${width}%;${isPeak ? 'background:#2563eb;' : ''}"></div></div>
+                <span class="dist-count"${isPeak ? ' style="color:var(--text);font-weight:800;"' : ''}>${v}</span>
             </div>
         `;
     }).join('')}</div>`;
@@ -651,9 +652,9 @@ function renderFeeling(stats) {
         const width = Math.round((v / max) * 100);
         const isPeak = v === max;
         return `
-            <div class="dist-bar${isPeak ? ' is-peak' : ''}">
+            <div class="dist-bar">
                 <span class="dist-label" style="font-size:11px;text-align:left;">${escapeHTML(truncate(k, 14))}</span>
-                <div class="dist-track"><div class="dist-fill" style="width:${width}%"></div></div>
+                <div class="dist-track"><div class="dist-fill" style="width:${width}%;${isPeak ? 'background:#2563eb;' : ''}"></div></div>
                 <span class="dist-count">${pct(v, total)}%</span>
             </div>
         `;
@@ -670,7 +671,7 @@ function renderIntent(stats) {
     const cards = [];
 
     const moreYes = stats.items.filter((f) => {
-        const v = (f.more || '').toLowerCase();
+        const v = (f.more || f.wouldWatchMore || '').toLowerCase();
         return v.startsWith('definitely') || v.startsWith('yes');
     }).length;
 
@@ -730,7 +731,7 @@ function renderIntent(stats) {
 /* ---- WRITTEN (uses .analytics-grid + .analytics-card) ---- */
 function renderWritten(stats) {
     if (!stats.total) {
-        writtenGrid.innerHTML = chartEmpty('No written feedback yet');
+        writtenGrid.innerHTML = `<div style="grid-column:1/-1;">${chartEmpty('No written feedback yet')}</div>`;
         writtenThemes.innerHTML = '';
         return;
     }
@@ -777,7 +778,6 @@ function avgLenDesc(len) {
 
 /* ============================================================
    FINAL RECOMMENDATION
-   Locked until 10+ responses.
    ============================================================ */
 function renderRecommendation(stats) {
     if (stats.total < RECOMMENDATION_THRESHOLD) {
@@ -790,16 +790,25 @@ function renderRecommendation(stats) {
     const watch = buildWatchList(stats);
     const actions = buildActionList(stats);
 
+    const verdictClsMap = {
+        high: 'high',
+        strong: 'strong',
+        polarizing: 'insufficient',
+        stable: 'stable',
+        under: 'attention'
+    };
+    const borderMap = {
+        high: '#1d7a3d',
+        strong: '#2563eb',
+        polarizing: '#7c6b00',
+        under: '#b03030',
+        stable: '#666'
+    };
+
     recommendationBlock.innerHTML = `
-        <div class="summary-card" style="border-left-color:${
-            verdict.cls === 'top' ? '#1d7a3d'
-            : verdict.cls === 'strong' ? '#2563eb'
-            : verdict.cls === 'polarizing' ? '#7c6b00'
-            : verdict.cls === 'under' ? '#b03030'
-            : '#666'
-        };">
+        <div class="summary-card" style="border-left-color:${borderMap[verdict.cls] || '#666'};">
             <div class="summary-head">
-                <span class="intel-label intel-label--${verdict.cls}">${escapeHTML(verdict.label)}</span>
+                <span class="intel-label intel-label--${verdictClsMap[verdict.cls] || 'stable'}">${escapeHTML(verdict.label)}</span>
                 <span>Final Recommendation</span>
             </div>
             <p class="summary-text">${escapeHTML(verdict.summary)}</p>
@@ -875,9 +884,9 @@ function lockedHTML(stats) {
                     </div>
                     <h3>Final Recommendation Locked</h3>
                     <p>A reliable recommendation requires at least ${RECOMMENDATION_THRESHOLD} responses. ${remaining} more needed for this reel.</p>
-                    <div class="reel-lock-progress">
+                    <div style="width:100%;max-width:340px;margin:6px auto 0;display:grid;gap:8px;">
                         <div class="dist-track"><div class="dist-fill" style="width:${progress}%"></div></div>
-                        <div class="reel-lock-count">${current} / ${RECOMMENDATION_THRESHOLD} responses</div>
+                        <div style="font-size:12px;font-weight:700;color:var(--text);text-align:center;">${current} / ${RECOMMENDATION_THRESHOLD} responses</div>
                     </div>
                 </div>
             </div>
@@ -918,7 +927,7 @@ function computeVerdict(stats) {
         };
     }
     return {
-        cls: 'attention',
+        cls: 'under',
         label: 'Underperforming',
         summary: `Below target average (${avg.toFixed(1)}/5). This reel needs review before scaling similar content. Study what worked in your top performers.`
     };
@@ -971,5 +980,5 @@ function buildActionList(stats) {
     return list.slice(0, 4);
 }
 
-/* Start hidden. Auth check will reveal. */
+/* Start hidden until auth resolves */
 dash.hidden = true;
