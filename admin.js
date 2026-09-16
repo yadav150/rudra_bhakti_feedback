@@ -378,7 +378,9 @@ function startRealtimeListeners() {
             allFeedback.push({
                 id: child.key,
                 ...v,
-                isAnonymous: !!v.isAnonymous || !v.name || v.name === 'Anonymous'
+                isAnonymous: typeof v.isAnonymous === 'boolean'
+    ? v.isAnonymous
+    : (!v.name || v.name === 'Anonymous' || /^Anonymous \(/.test(v.name || ''))
             });
         });
         renderEverything();
