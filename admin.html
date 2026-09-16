@@ -5,21 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="theme-color" content="#202020" />
-<title>Admin — Rudra Bhakti Feedback</title>
+<title>Admin — Rudra Bhakti</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css" />
+<script>
+    document.documentElement.classList.add('auth-pending');
+    setTimeout(() => document.documentElement.classList.remove('auth-pending'), 3000);
+</script>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div class="auth-wrap" id="loginWrap">
+<div class="auth-wrap" id="loginWrap" hidden>
     <div class="auth-card">
         <div class="auth-brand">
             <div class="logo" aria-hidden="true">ॐ</div>
             <div class="brand">Admin Panel</div>
-            <div class="subtitle">Rudra Bhakti · Reel Feedback</div>
+            <div class="subtitle">Rudra Bhakti</div>
         </div>
         <form id="loginForm" class="auth-form" novalidate>
             <div class="field">
@@ -77,7 +81,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Reel Feedback</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
 
@@ -150,7 +154,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Reel Feedback</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
             <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
@@ -219,7 +223,6 @@
 
     <main class="dash-main">
 
-        <!-- ==================== EXECUTIVE INTELLIGENCE ==================== -->
         <section class="dash-section" id="sec-executive">
             <div class="section-head">
                 <h2>Executive Intelligence</h2>
