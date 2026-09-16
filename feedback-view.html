@@ -38,7 +38,20 @@
     padding:10px 18px;background:var(--dark);color:#fff;border-radius:99px;
     font-size:15px;font-weight:800;margin-bottom:28px;
 }
-    .capture-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:6px}.capture-area{width:800px;max-width:none}
+    #viewWrap{ min-width: 0; max-width: 100%; }
+
+.capture-scroll{
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+}
+.capture-area{
+    width: 800px;
+    max-width: none;
+}
 .capture-rating svg{width:18px;height:18px;}
 .capture-foot{
     display:flex;justify-content:space-between;align-items:center;
