@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — PUBLIC FEEDBACK PAGE
-   Phase 3 — Firebase + expanded question set
+   Identity screen + 6-question wizard
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -88,7 +88,7 @@ loadActiveReel();
 
 /* ===== WIZARD STATE ===== */
 let currentQuestion = 1;
-const totalQuestions = 12;
+const totalQuestions = 7;
 const answers = {};
 
 const progressNumber = document.getElementById('progressNumber');
@@ -102,20 +102,25 @@ const messageField = document.getElementById('message');
 const shareBtn = document.getElementById('shareFacebook');
 const nav = document.querySelector('.navigation');
 const progressArea = document.querySelector('.progress-area');
+const userNameInput = document.getElementById('userName');
+const userEmailInput = document.getElementById('userEmail');
+const skipIdentityBtn = document.getElementById('skipIdentity');
 
-/* ===== REQUIRED PER QUESTION ===== */
+/* ===== REQUIRED PER QUESTION =====
+   1 = identity (optional)
+   2 = feeling
+   3 = more
+   4 = rating
+   5 = wantMore
+   6 = engageAgain
+   7 = message (optional)
+*/
 const REQUIRED = {
-    1: 'feeling',
-    2: 'more',
-    3: 'liked',
+    2: 'feeling',
+    3: 'more',
     4: 'rating',
-    5: 'stoodOut',
-    6: 'heldInterest',
-    7: 'presentation',
-    8: 'improve',
-    9: 'wantMore',
-    10: 'engageAgain',
-    11: 'likedPart'
+    5: 'wantMore',
+    6: 'engageAgain'
 };
 
 /* ===== OPTIONS ===== */
@@ -170,6 +175,16 @@ function previousQuestion() {
 backBtn.addEventListener('click', previousQuestion);
 nextBtn.addEventListener('click', nextQuestion);
 
+/* ===== SKIP IDENTITY ===== */
+if (skipIdentityBtn) {
+    skipIdentityBtn.addEventListener('click', () => {
+        if (userNameInput) userNameInput.value = '';
+        if (userEmailInput) userEmailInput.value = '';
+        currentQuestion = 2;
+        showQuestion(2);
+    });
+}
+
 /* ===== HINDI TTS ===== */
 document.querySelectorAll('.voice').forEach((button) => {
     button.addEventListener('click', () => speakHindi(button, button.dataset.hindi || ''));
@@ -192,6 +207,49 @@ function speakHindi(button, text) {
     window.speechSynthesis.speak(utterance);
 }
 
+/* ===== IDENTITY HELPERS ===== */
+function formatIST(date) {
+    const formatted = date.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata'
+    });
+    return formatted + ' IST';
+}
+
+function generateAnonymousId() {
+    return String(Math.floor(100000000 + Math.random() * 900000000));
+}
+
+function buildIdentity() {
+    const rawName = (userNameInput?.value || '').trim();
+    const rawEmail = (userEmailInput?.value || '').trim();
+    const hasName = rawName.length > 0;
+    const hasEmail = rawEmail.length > 0;
+    const isAnonymous = !hasName && !hasEmail;
+
+    let name;
+    let email;
+
+    if (hasName) {
+        name = rawName.slice(0, 60);
+    } else {
+        name = 'Anonymous (' + formatIST(new Date()) + ')';
+    }
+
+    if (hasEmail) {
+        email = rawEmail.slice(0, 120);
+    } else {
+        email = 'anonymous' + generateAnonymousId() + '@gmail.com';
+    }
+
+    return { name, email, isAnonymous };
+}
+
 /* ===== SUBMIT ===== */
 async function submitFeedback() {
     if (!reelLoaded) {
@@ -205,6 +263,8 @@ async function submitFeedback() {
         return;
     }
 
+    const identity = buildIdentity();
+
     const originalLabel = nextBtn.textContent;
     nextBtn.disabled = true;
     nextBtn.textContent = 'Submitting…';
@@ -212,20 +272,14 @@ async function submitFeedback() {
     const feedback = {
         reelId: activeReel.id,
         reelTitle: activeReel.title || '',
-        name: 'Anonymous',
-        email: 'anonymous@gmail.com',
-        isAnonymous: true,
+        name: identity.name,
+        email: identity.email,
+        isAnonymous: identity.isAnonymous,
         feeling: answers.feeling || '',
-        wouldWatchMore: answers.more || '',
-        connectedWith: answers.liked || '',
+        more: answers.more || '',
         rating: rating,
-        stoodOut: answers.stoodOut || '',
-        heldInterest: answers.heldInterest || '',
-        presentation: answers.presentation || '',
-        improve: answers.improve || '',
         wantMore: answers.wantMore || '',
         engageAgain: answers.engageAgain || '',
-        likedPart: answers.likedPart || '',
         message: (messageField.value || '').trim(),
         submittedAt: serverTimestamp()
     };
