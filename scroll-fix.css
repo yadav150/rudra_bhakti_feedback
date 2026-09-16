@@ -1,0 +1,23 @@
+/* ============================================================
+   RUDRA BHAKTI — HORIZONTAL SCROLL FIX
+   Header + footer static. Only main content scrolls horizontally.
+   Loads AFTER admin.css. No other styles touched.
+   ============================================================ */
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;   /* fallback */
+    overflow-x: clip;     /* modern — preserves position: sticky header */
+}
+
+.dash-main {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.dash-main::-webkit-scrollbar { height: 6px; }
+.dash-main::-webkit-scrollbar-thumb { background: #c9c9c3; border-radius: 99px; }
+.dash-main::-webkit-scrollbar-track { background: transparent; }
