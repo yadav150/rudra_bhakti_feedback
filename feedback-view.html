@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#202020" />
+<title>Feedback Review — Rudra Bhakti Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css" />
+<link rel="stylesheet" href="feedback-view.css" />
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="auth-wrap" id="loginWrap">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="logo" aria-hidden="true">ॐ</div>
+            <div class="brand">Admin Panel</div>
+            <div class="subtitle">Rudra Bhakti · Feedback Review</div>
+        </div>
+        <form id="loginForm" class="auth-form" novalidate>
+            <div class="field">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
+            </div>
+            <div class="field">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
+            </div>
+            <p class="form-error" id="loginError" role="alert"></p>
+            <button type="submit" class="btn btn-primary btn-block">
+                <span id="loginLabel">Sign In</span>
+            </button>
+        </form>
+        <p class="auth-note">Authorized access only.</p>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dash" hidden>
+
+    <header class="dash-header">
+        <div class="dash-header-inner">
+            <div class="brand-block">
+                <div class="logo logo--sm" aria-hidden="true">ॐ</div>
+                <div class="brand-text">
+                    <strong>Admin</strong>
+                    <small>Feedback Review</small>
+                </div>
+            </div>
+
+            <nav class="dash-nav dash-nav--desktop" aria-label="Navigation">
+                <a href="admin.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="notifications.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                    </svg>
+                    <span>Notifications</span>
+                </a>
+            </nav>
+
+            <div class="dash-account">
+                <button type="button" class="btn-icon" id="backBtn" aria-label="Back" title="Back to notifications">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <button type="button" class="btn-icon" id="logoutBtn" aria-label="Logout" title="Logout">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dash-main">
+        <section class="dash-section">
+
+            <!-- Loading / error -->
+            <div class="empty-state" id="loadingState">
+                <div class="empty-state-icon">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <h3>Loading feedback…</h3>
+                <p>Please wait while we fetch this response.</p>
+            </div>
+
+            <div class="empty-state" id="errorState" hidden>
+                <div class="empty-state-icon">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v5M12 16h.01"/>
+                    </svg>
+                </div>
+                <h3 id="errorTitle">Feedback not found</h3>
+                <p id="errorText">This feedback may have been removed or the link is incorrect.</p>
+                <a href="notifications.html" class="btn btn-primary" style="margin-top:18px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Back to Notifications</span>
+                </a>
+            </div>
+
+            <!-- Full view -->
+            <div id="viewWrap" hidden>
+
+                <div class="view-toolbar">
+                    <div class="view-toolbar-info">
+                        <span class="view-label">Feedback Review</span>
+                        <span class="view-meta" id="viewMeta"></span>
+                    </div>
+                    <div class="view-toolbar-actions">
+                        <button type="button" class="btn btn-ghost" id="downloadBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                            <span>Download Image</span>
+                        </button>
+                        <button type="button" class="btn btn-primary" id="shareBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="18" cy="5" r="3"/>
+                                <circle cx="6" cy="12" r="3"/>
+                                <circle cx="18" cy="19" r="3"/>
+                                <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                            </svg>
+                            <span>Share Image</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ========== CAPTURE AREA (4K image isi ka banega) ========== -->
+                <div class="capture-area" id="captureArea">
+                    <div class="capture-brand">
+                        <div class="capture-logo" aria-hidden="true">ॐ</div>
+                        <div class="capture-brand-text">
+                            <strong>Rudra Bhakti</strong>
+                            <small>Feedback Review</small>
+                        </div>
+                    </div>
+
+                    <div class="capture-reel" id="captureReel"></div>
+
+                    <div class="capture-rating" id="captureRating"></div>
+
+                    <div class="capture-grid" id="captureGrid"></div>
+
+                    <div class="capture-message" id="captureMessage" hidden>
+                        <span class="capture-label">Message</span>
+                        <p class="capture-message-text" id="captureMessageText"></p>
+                    </div>
+
+                    <div class="capture-foot">
+                        <span id="captureDate"></span>
+                        <span>rudrabhakti · devotional feedback</span>
+                    </div>
+                </div>
+
+                <div class="share-status" id="shareStatus" hidden></div>
+
+            </div>
+
+        </section>
+    </main>
+</div>
+
+<!-- LOGOUT CONFIRM MODAL -->
+<div class="modal modal--center" id="logoutModal" hidden>
+    <div class="modal-backdrop" id="logoutBackdrop"></div>
+    <div class="modal-card modal-card--sm" role="dialog" aria-modal="true" aria-labelledby="logoutHeading">
+        <div class="modal-body modal-body--confirm">
+            <div class="confirm-icon confirm-icon--danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+            </div>
+            <h2 id="logoutHeading" class="confirm-title">Logout?</h2>
+            <p class="confirm-text">Are you sure you want to logout?</p>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-ghost" id="logoutCancel">Cancel</button>
+                <button type="button" class="btn btn-danger" id="logoutConfirm">Logout</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNa5d4aJkRkQK7FQ+3T6sfoCkQqAaKkPR3lXfoZg0e4B4QGYnTKcMHRVS6M6jc9XGk8Z1HP6faaLzDzV6i7y4Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="module" src="feedback-view.js"></script>
+</body>
+</html>
