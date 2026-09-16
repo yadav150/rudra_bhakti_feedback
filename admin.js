@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — ADMIN PANEL
-   Executive dashboard + auth + page loader
+   Executive dashboard + blue loader (zero CLS)
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -26,12 +26,35 @@ const db = getDatabase(app);
 
 const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
 
-const $ = (id) => document.getElementById(id);
+/* ============================================================
+   PAGE LOADER
+   ============================================================ */
+let __loaderDone = false;
+
+function markReady() {
+    if (__loaderDone) return;
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => loader.classList.add('is-hidden'));
+    });
+}
+
+function hideLoaderNow() {
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('is-hidden');
+}
+
+/* Safety net — never keep user waiting more than 2s */
+setTimeout(markReady, 2000);
 
 /* ============================================================
    DOM
    ============================================================ */
-const pageLoader = $('pageLoader');
+const $ = (id) => document.getElementById(id);
+
 const loginWrap = $('loginWrap');
 const forgotWrap = $('forgotWrap');
 const dash = $('dash');
@@ -84,22 +107,7 @@ let allFeedback = [];
 let savedReels = [];
 let unsubscribeReels = null;
 let unsubscribeFeedback = null;
-let pageRevealed = false;
-
-/* ============================================================
-   PAGE REVEAL (smooth blur-out, no CLS)
-   ============================================================ */
-function revealPage() {
-    if (pageRevealed) return;
-    pageRevealed = true;
-    document.body.classList.remove('is-loading');
-    if (pageLoader) pageLoader.classList.add('is-hidden');
-}
-
-/* Safety: if auth takes too long, reveal anyway */
-setTimeout(() => {
-    if (!pageRevealed) revealPage();
-}, 4000);
+let firstDataFired = false;
 
 /* ============================================================
    SCREEN CONTROL
@@ -127,19 +135,18 @@ onAuthStateChanged(auth, (user) => {
     if (!user) {
         stopRealtimeListeners();
         showLogin();
-        revealPage();
+        hideLoaderNow();
         return;
     }
     if (user.uid !== ADMIN_UID) {
         signOut(auth);
         showLogin();
         loginError.textContent = 'This account is not authorized to access the admin panel.';
-        revealPage();
+        hideLoaderNow();
         return;
     }
     if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
     showDash();
-    revealPage();
     startRealtimeListeners();
 });
 
@@ -285,7 +292,10 @@ function startRealtimeListeners() {
         });
         renderExecutive();
         renderActionCenter();
-    }, (err) => console.error('Reels listener error:', err));
+    }, (err) => {
+        console.error('Reels listener error:', err);
+        maybeMarkReady();
+    });
 
     unsubscribeFeedback = onValue(ref(db, 'feedback'), (snap) => {
         allFeedback = [];
@@ -301,12 +311,25 @@ function startRealtimeListeners() {
         });
         renderExecutive();
         renderActionCenter();
-    }, (err) => console.error('Feedback listener error:', err));
+        maybeMarkReady();
+    }, (err) => {
+        console.error('Feedback listener error:', err);
+        maybeMarkReady();
+    });
 }
 
 function stopRealtimeListeners() {
     if (unsubscribeReels) { unsubscribeReels(); unsubscribeReels = null; }
     if (unsubscribeFeedback) { unsubscribeFeedback(); unsubscribeFeedback = null; }
+}
+
+/* Both listeners must fire at least once before we reveal the page */
+function maybeMarkReady() {
+    if (firstDataFired) return;
+    if (unsubscribeReels && unsubscribeFeedback) {
+        firstDataFired = true;
+        markReady();
+    }
 }
 
 /* ============================================================
@@ -334,7 +357,7 @@ function computeReelStats(reelId) {
     const avg = rated.length ? rated.reduce((s, f) => s + Number(f.rating || 0), 0) / rated.length : 0;
 
     const recYes = items.filter((f) => {
-        const v = (f.more || '').toLowerCase();
+        const v = (f.more || f.wouldWatchMore || '').toLowerCase();
         return v.startsWith('definitely') || v.startsWith('yes');
     }).length;
     const recommend = pct(recYes, total);
@@ -383,7 +406,7 @@ function renderExecutive() {
     const satisfaction = rated.length ? Math.round((avg / 5) * 100) : 0;
 
     const recYes = allFeedback.filter((f) => {
-        const v = (f.more || '').toLowerCase();
+        const v = (f.more || f.wouldWatchMore || '').toLowerCase();
         return v.startsWith('definitely') || v.startsWith('yes');
     }).length;
     const recommend = pct(recYes, total);
@@ -533,6 +556,6 @@ function renderActionCenter() {
 }
 
 /* ============================================================
-   INIT — show login underneath loader until auth resolves
+   INITIAL
    ============================================================ */
 showLogin();
