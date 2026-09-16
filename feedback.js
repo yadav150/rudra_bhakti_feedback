@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — FEEDBACK LIST
-   Native integration. Silent auth, no login form.
+   Native integration. Silent auth. Blue loader (zero CLS).
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -27,9 +27,34 @@ const db = getDatabase(app);
 const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
 const FEEDBACK_PER_PAGE = 10;
 
+/* ============================================================
+   PAGE LOADER
+   ============================================================ */
+let __loaderDone = false;
+
+function markReady() {
+    if (__loaderDone) return;
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => loader.classList.add('is-hidden'));
+    });
+}
+
+function hideLoaderNow() {
+    __loaderDone = true;
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('is-hidden');
+}
+
+setTimeout(markReady, 2000);
+
+/* ============================================================
+   DOM
+   ============================================================ */
 const $ = (id) => document.getElementById(id);
 
-/* ===== DOM ===== */
 const dash = $('dash');
 const logoutBtn = $('logoutBtn');
 const drawerUserEmail = $('drawerUserEmail');
@@ -50,7 +75,9 @@ const sortBy = $('sortBy');
 const resultCount = $('resultCount');
 const feedbackList = $('feedbackList');
 
-/* ===== STATE ===== */
+/* ============================================================
+   STATE
+   ============================================================ */
 let allFeedback = [];
 let unsubFeedback = null;
 let feedbackPage = 1;
@@ -61,6 +88,7 @@ let feedbackPage = 1;
 onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== ADMIN_UID) {
         stopListeners();
+        hideLoaderNow();
         window.location.replace('admin.html');
         return;
     }
@@ -135,7 +163,11 @@ function startListeners() {
             });
         });
         renderList();
-    }, (err) => console.error('Feedback listener error:', err));
+        markReady();
+    }, (err) => {
+        console.error('Feedback listener error:', err);
+        markReady();
+    });
 }
 
 function stopListeners() {
@@ -329,6 +361,3 @@ function item(label, value) {
         renderList();
     });
 });
-
-/* Start hidden until auth resolves */
-dash.hidden = true;
