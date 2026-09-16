@@ -1,6 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — REELS
-   Native integration. Silent auth, no login form.
+   Silent auth + page loader + no CLS
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -31,7 +31,7 @@ const REEL_INTEL_PER_PAGE = 5;
 const $ = (id) => document.getElementById(id);
 
 /* ===== DOM ===== */
-const dash = $('dash');
+const pageLoader = $('pageLoader');
 const logoutBtn = $('logoutBtn');
 const drawerUserEmail = $('drawerUserEmail');
 const menuBtn = $('menuBtn');
@@ -51,7 +51,6 @@ const reelIntelList = $('reelIntelList');
 const compareSelect = $('compareSelect');
 const compareResult = $('compareResult');
 
-const openAddReel = $('openAddReel');
 const drawerAddReel = $('drawerAddReel');
 const emptyAddReel = $('emptyAddReel');
 const addReelModal = $('addReelModal');
@@ -75,18 +74,30 @@ let unsubReels = null;
 let unsubFeedback = null;
 let reelsPage = 1;
 let reelIntelPage = 1;
+let pageRevealed = false;
 
 /* ============================================================
-   AUTH — silent
+   PAGE REVEAL
+   ============================================================ */
+function revealPage() {
+    if (pageRevealed) return;
+    pageRevealed = true;
+    document.body.classList.remove('is-loading');
+    if (pageLoader) pageLoader.classList.add('is-hidden');
+}
+setTimeout(() => { if (!pageRevealed) revealPage(); }, 4000);
+
+/* ============================================================
+   AUTH
    ============================================================ */
 onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== ADMIN_UID) {
         stopListeners();
-        window.location.replace('admin.html');
+        window.location.replace('/admin.html');
         return;
     }
     if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
-    dash.hidden = false;
+    revealPage();
     startListeners();
 });
 
@@ -283,7 +294,7 @@ function renderReels() {
 }
 
 function reelFeedbackUrl(id) {
-    return 'index.html?reel=' + encodeURIComponent(id);
+    return '/index.html?reel=' + encodeURIComponent(id);
 }
 
 async function copyReelLink(btn) {
@@ -682,7 +693,6 @@ async function generateNextReelId() {
 /* ============================================================
    BINDINGS
    ============================================================ */
-if (openAddReel) openAddReel.addEventListener('click', openReelModal);
 if (drawerAddReel) drawerAddReel.addEventListener('click', () => {
     closeDrawer();
     setTimeout(openReelModal, 220);
@@ -701,6 +711,3 @@ if (reelThumbInput) reelThumbInput.addEventListener('input', () => buildPreviewF
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && addReelModal && !addReelModal.hidden) closeReelModal();
 });
-
-/* Start hidden until auth resolves */
-dash.hidden = true;
