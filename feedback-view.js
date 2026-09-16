@@ -1,10 +1,10 @@
 /* ============================================================
    RUDRA BHAKTI — FEEDBACK VIEW
-   Single feedback detail + 4K image share
+   Native integration. Silent auth. 4K image share.
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+import { getAuth, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getDatabase, ref, get, set }
     from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
@@ -29,19 +29,23 @@ const TARGET_WIDTH = 3840; /* 4K */
 
 const $ = (id) => document.getElementById(id);
 
-const loginWrap = $('loginWrap');
+/* ===== DOM ===== */
 const dash = $('dash');
-
-const loginForm = $('loginForm');
-const loginEmail = $('loginEmail');
-const loginPassword = $('loginPassword');
-const loginError = $('loginError');
-const loginLabel = $('loginLabel');
 const logoutBtn = $('logoutBtn');
 const backBtn = $('backBtn');
+const drawerUserEmail = $('drawerUserEmail');
+const menuBtn = $('menuBtn');
+const drawer = $('drawer');
+const drawerBackdrop = $('drawerBackdrop');
+const drawerClose = $('drawerClose');
+const drawerLogout = $('drawerLogout');
+const logoutModal = $('logoutModal');
+const logoutBackdrop = $('logoutBackdrop');
+const logoutCancel = $('logoutCancel');
+const logoutConfirm = $('logoutConfirm');
 
-const loadingState = $('loadingState');
-const errorState = $('errorState');
+const loadingCard = $('loadingCard');
+const errorCard = $('errorCard');
 const errorTitle = $('errorTitle');
 const errorText = $('errorText');
 const viewWrap = $('viewWrap');
@@ -58,65 +62,25 @@ const downloadBtn = $('downloadBtn');
 const shareBtn = $('shareBtn');
 const shareStatus = $('shareStatus');
 
-const logoutModal = $('logoutModal');
-const logoutBackdrop = $('logoutBackdrop');
-const logoutCancel = $('logoutCancel');
-const logoutConfirm = $('logoutConfirm');
-
+/* ===== STATE ===== */
 let currentFeedback = null;
 let savedReels = [];
 
 /* ============================================================
-   AUTH
+   AUTH — silent
    ============================================================ */
 onAuthStateChanged(auth, (user) => {
-    if (!user) { showLogin(); return; }
-    if (user.uid !== ADMIN_UID) {
-        signOut(auth);
-        showLogin();
-        loginError.textContent = 'This account is not authorized.';
+    if (!user || user.uid !== ADMIN_UID) {
+        window.location.replace('admin.html');
         return;
     }
-    showDash();
+    if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
+    dash.hidden = false;
     loadPage();
 });
 
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginError.textContent = '';
-    const email = loginEmail.value.trim();
-    const password = loginPassword.value;
-    if (!email || !password) {
-        loginError.textContent = 'Please enter both email and password.';
-        return;
-    }
-    loginLabel.textContent = 'Signing in…';
-    const btn = loginForm.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-        let msg = 'Invalid email or password.';
-        if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please try again later.';
-        if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
-        loginError.textContent = msg;
-    } finally {
-        loginLabel.textContent = 'Sign In';
-        btn.disabled = false;
-    }
-});
-
-function showLogin() {
-    loginWrap.hidden = false;
-    dash.hidden = true;
-}
-function showDash() {
-    loginWrap.hidden = true;
-    dash.hidden = false;
-}
-
 /* ============================================================
-   LOGOUT
+   LOGOUT / DRAWER
    ============================================================ */
 function openLogoutModal() {
     logoutModal.hidden = false;
@@ -131,12 +95,36 @@ async function performLogout() {
     try { await signOut(auth); } catch (err) { console.error(err); }
 }
 if (logoutBtn) logoutBtn.addEventListener('click', openLogoutModal);
+if (drawerLogout) drawerLogout.addEventListener('click', () => {
+    closeDrawer();
+    setTimeout(openLogoutModal, 220);
+});
 if (logoutCancel) logoutCancel.addEventListener('click', closeLogoutModal);
 if (logoutConfirm) logoutConfirm.addEventListener('click', performLogout);
 if (logoutBackdrop) logoutBackdrop.addEventListener('click', closeLogoutModal);
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && logoutModal && !logoutModal.hidden) closeLogoutModal();
 });
+
+function openDrawer() {
+    drawer.classList.add('is-open');
+    drawerBackdrop.classList.add('is-open');
+    drawer.setAttribute('aria-hidden', 'false');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+    drawer.classList.remove('is-open');
+    drawerBackdrop.classList.remove('is-open');
+    drawer.setAttribute('aria-hidden', 'true');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+}
+if (menuBtn) menuBtn.addEventListener('click', () => {
+    drawer.classList.contains('is-open') ? closeDrawer() : openDrawer();
+});
+if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
+if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
 
 if (backBtn) backBtn.addEventListener('click', () => {
     window.location.href = 'notifications.html';
@@ -187,16 +175,16 @@ async function loadPage() {
 }
 
 function showError(title, text) {
-    loadingState.hidden = true;
+    loadingCard.hidden = true;
     viewWrap.hidden = true;
-    errorState.hidden = false;
+    errorCard.hidden = false;
     errorTitle.textContent = title;
     errorText.textContent = text;
 }
 
 function showView() {
-    loadingState.hidden = true;
-    errorState.hidden = true;
+    loadingCard.hidden = true;
+    errorCard.hidden = true;
     viewWrap.hidden = false;
 }
 
@@ -208,7 +196,6 @@ function escapeHTML(v) {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-
 function formatDate(ts) {
     if (!ts) return '—';
     const d = new Date(ts);
@@ -218,7 +205,6 @@ function formatDate(ts) {
         hour: '2-digit', minute: '2-digit'
     });
 }
-
 function getReelTitle(f) {
     if (f.reelTitle) return f.reelTitle;
     const reel = savedReels.find((r) => r.id === f.reelId);
@@ -233,21 +219,22 @@ function renderView(f) {
     const reelTitle = getReelTitle(f);
     const safe = escapeHTML;
 
-    /* Toolbar meta */
     viewMeta.textContent = (f.reelId || 'Feedback') + ' · ' + formatDate(f.submittedAt);
 
     /* Reel block */
     captureReel.innerHTML = `
-        ${f.reelId ? `<span class="reel-id">${safe(f.reelId)}</span>` : ''}
-        ${reelTitle ? `<span class="reel-title">${safe(reelTitle)}</span>` : ''}
+        ${f.reelId ? `<span class="reel-row-id">${safe(f.reelId)}</span>` : ''}
+        ${reelTitle ? `<div style="font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.2;margin-top:8px;">${safe(reelTitle)}</div>` : ''}
     `;
 
     /* Rating pill */
     captureRating.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/>
-        </svg>
-        <span>${safe(rating)} / 5</span>
+        <div class="capture-rating">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/>
+            </svg>
+            <span>${safe(rating)} / 5</span>
+        </div>
     `;
 
     /* Grid */
@@ -276,9 +263,9 @@ function renderView(f) {
 
 function captureItem(label, value) {
     return `
-        <div class="capture-item">
-            <span class="capture-label">${escapeHTML(label)}</span>
-            <span class="capture-value">${escapeHTML(value)}</span>
+        <div class="row-item">
+            <span class="row-item-label">${escapeHTML(label)}</span>
+            <span class="row-item-value">${escapeHTML(value)}</span>
         </div>
     `;
 }
@@ -290,11 +277,10 @@ async function generate4KCanvas() {
     const target = $('captureArea');
     if (!target) throw new Error('Capture area not found');
 
-    /* html2canvas renders at CSS width; we scale to reach 3840px */
     const cssWidth = target.offsetWidth;
     const scale = TARGET_WIDTH / cssWidth;
 
-    const canvas = await html2canvas(target, {
+    return await html2canvas(target, {
         scale: scale,
         backgroundColor: null,
         useCORS: true,
@@ -302,7 +288,6 @@ async function generate4KCanvas() {
         windowWidth: cssWidth,
         windowHeight: target.offsetHeight
     });
-    return canvas;
 }
 
 function canvasToBlob(canvas) {
@@ -315,7 +300,9 @@ function showStatus(text, isError) {
     if (!shareStatus) return;
     shareStatus.textContent = text;
     shareStatus.hidden = false;
-    shareStatus.classList.toggle('is-error', !!isError);
+    shareStatus.style.background = isError ? '#fff2f2' : '';
+    shareStatus.style.borderColor = isError ? '#f0c7c7' : '';
+    shareStatus.style.color = isError ? '#b03030' : '';
     clearTimeout(showStatus._t);
     showStatus._t = setTimeout(() => { shareStatus.hidden = true; }, 4000);
 }
@@ -369,7 +356,6 @@ if (shareBtn) {
                     { type: 'image/png' }
                 );
 
-                /* Web Share API — mobile native share */
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         files: [file],
@@ -398,3 +384,6 @@ if (shareBtn) {
         });
     });
 }
+
+/* Start hidden until auth resolves */
+dash.hidden = true;
