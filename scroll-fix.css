@@ -1,23 +1,22 @@
 /* ============================================================
-   RUDRA BHAKTI — HORIZONTAL SCROLL FIX
-   Header + footer static. Only main content scrolls horizontally.
-   Loads AFTER admin.css. No other styles touched.
+   RUDRA BHAKTI — SCROLL FIX (only for feedback-view.html)
+   Targets classes only. No html/body rules.
    ============================================================ */
 
-html,
-body {
-    max-width: 100%;
-    overflow-x: hidden;   /* fallback */
-    overflow-x: clip;     /* modern — preserves position: sticky header */
-}
-
+/* Main content — clip overflow so nothing escapes to body */
 .dash-main {
-    overflow-x: auto;
-    overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
     grid-template-columns: minmax(0, 1fr);
 }
 
-.dash-main::-webkit-scrollbar { height: 6px; }
-.dash-main::-webkit-scrollbar-thumb { background: #c9c9c3; border-radius: 99px; }
-.dash-main::-webkit-scrollbar-track { background: transparent; }
+/* Capture area — only horizontal scroller */
+.capture-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+}
+
+.capture-scroll::-webkit-scrollbar { height: 6px; }
+.capture-scroll::-webkit-scrollbar-thumb { background: #c9c9c3; border-radius: 99px; }
+.capture-scroll::-webkit-scrollbar-track { background: transparent; }
