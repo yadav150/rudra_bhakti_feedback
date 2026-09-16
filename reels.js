@@ -24,6 +24,32 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+/* ============================================================
+   PREFETCH NAV PAGES ON HOVER / TOUCH
+   Fires only on user intent. Makes next page load instant.
+   ============================================================ */
+(function prefetchNav() {
+    const seen = new Set();
+    const prefetch = (href) => {
+        if (!href || href.startsWith('#') || href.startsWith('http')) return;
+        if (seen.has(href)) return;
+        seen.add(href);
+        if (document.querySelector(`link[rel="prefetch"][href="${href}"]`)) return;
+        const l = document.createElement('link');
+        l.rel = 'prefetch';
+        l.href = href;
+        document.head.appendChild(l);
+    };
+    document.addEventListener('mouseover', (e) => {
+        const a = e.target.closest('a[href$=".html"]');
+        if (a) prefetch(a.getAttribute('href'));
+    }, { passive: true });
+    document.addEventListener('touchstart', (e) => {
+        const a = e.target.closest('a[href$=".html"]');
+        if (a) prefetch(a.getAttribute('href'));
+    }, { passive: true });
+})();
+
 const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
 const REELS_PER_PAGE = 5;
 const REEL_INTEL_PER_PAGE = 5;
@@ -50,7 +76,6 @@ function hideLoaderNow() {
 }
 
 setTimeout(markReady, 2000);
-
 /* ============================================================
    DOM
    ============================================================ */
