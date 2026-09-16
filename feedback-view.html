@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css" />
 <style>
-/* Only capture-area styles — rest from admin.css */
+/* Capture-area styles only — everything else from admin.css */
 .capture-area{
     width:800px;max-width:100%;margin:0 auto;
     padding:56px 60px;
@@ -57,6 +57,11 @@
 </head>
 <body>
 
+<!-- PAGE LOADER -->
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+    <div class="page-loader-spinner"></div>
+</div>
+
 <div class="dash" id="dash" hidden>
 
     <header class="dash-header">
@@ -65,7 +70,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Feedback Review</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
 
@@ -135,6 +140,7 @@
         </div>
     </header>
 
+    <!-- MOBILE DRAWER -->
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
     <aside class="drawer" id="drawer" aria-hidden="true">
         <div class="drawer-head">
@@ -142,7 +148,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Feedback Review</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
             <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
@@ -213,25 +219,10 @@
 
         <section class="dash-section">
 
-            <!-- Loading -->
-            <div class="panel-card" id="loadingCard">
-                <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="loadingState">
-                        <div class="empty-state-icon">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                            </svg>
-                        </div>
-                        <h3>Loading feedback</h3>
-                        <p>Please wait while we fetch this response.</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Error -->
             <div class="panel-card" id="errorCard" hidden>
                 <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="errorState">
+                    <div class="empty-state">
                         <div class="empty-state-icon">
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"/>
@@ -309,6 +300,7 @@
     </main>
 </div>
 
+<!-- LOGOUT CONFIRM MODAL -->
 <div class="modal modal--center" id="logoutModal" hidden>
     <div class="modal-backdrop" id="logoutBackdrop"></div>
     <div class="modal-card modal-card--sm" role="dialog" aria-modal="true" aria-labelledby="logoutHeading">
