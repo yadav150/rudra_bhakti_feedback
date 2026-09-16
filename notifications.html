@@ -10,66 +10,51 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css" />
-<link rel="stylesheet" href="notifications.css" />
+<style>
+/* Notif-specific only — everything else from admin.css */
+.notif-row.is-unread{border-left:3px solid var(--dark);}
+.notif-icon{
+    width:40px;height:40px;border-radius:11px;background:#eeeeea;color:var(--dark);
+    display:grid;place-items:center;flex-shrink:0;
+}
+.notif-icon svg{width:18px;height:18px;}
+.notif-titles{display:grid;gap:3px;min-width:0;flex:1;}
+.notif-sub{
+    font-size:12px;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;
+}
+.notif-new{
+    padding:3px 10px;background:var(--dark);color:#fff;border-radius:99px;
+    font-size:10px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;
+    align-self:flex-start;margin-top:2px;flex-shrink:0;
+}
+.notif-toolbar{
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+    padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:16px;
+}
+.notif-stats{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.notif-count{font-size:13px;font-weight:700;color:var(--text);}
+.notif-unread-count{font-size:12px;color:var(--muted);font-weight:600;}
+.notif-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+@media (max-width:640px){
+    .notif-toolbar{padding:12px;}
+    .notif-stats{width:100%;justify-content:space-between;}
+    .notif-actions{width:100%;}
+    .notif-actions .select{flex:1;min-width:0;}
+    .notif-actions .btn{flex:1;}
+    .notif-row .row-top{flex-wrap:wrap;}
+    .notif-icon{width:36px;height:36px;}
+    .notif-icon svg{width:16px;height:16px;}
+}
+</style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div class="auth-wrap" id="loginWrap">
-    <div class="auth-card">
-        <div class="auth-brand">
-            <div class="logo" aria-hidden="true">ॐ</div>
-            <div class="brand">Admin Panel</div>
-            <div class="subtitle">Rudra Bhakti · Notifications</div>
-        </div>
-        <form id="loginForm" class="auth-form" novalidate>
-            <div class="field">
-                <label for="loginEmail">Email</label>
-                <input type="email" id="loginEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
-            </div>
-            <div class="field">
-                <label for="loginPassword">Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
-            </div>
-            <p class="form-error" id="loginError" role="alert"></p>
-            <button type="submit" class="btn btn-primary btn-block">
-                <span id="loginLabel">Sign In</span>
-            </button>
-            <button type="button" class="link-btn" id="forgotLink">Forgot password?</button>
-        </form>
-        <p class="auth-note">Authorized access only.</p>
-    </div>
+<!-- PAGE LOADER -->
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+    <div class="page-loader-spinner"></div>
 </div>
 
-<!-- FORGOT -->
-<div class="auth-wrap" id="forgotWrap" hidden>
-    <div class="auth-card">
-        <div class="auth-brand">
-            <div class="logo" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2"/>
-                    <path d="M7 11V7a5 5 0 0110 0v4"/>
-                </svg>
-            </div>
-            <div class="brand">Reset Password</div>
-            <div class="subtitle">Enter your admin email</div>
-        </div>
-        <form id="forgotForm" class="auth-form" novalidate>
-            <div class="field">
-                <label for="forgotEmail">Email</label>
-                <input type="email" id="forgotEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
-            </div>
-            <p class="form-error" id="forgotError"></p>
-            <p class="form-success" id="forgotSuccess"></p>
-            <button type="submit" class="btn btn-primary btn-block">
-                <span id="forgotLabel">Send Reset Link</span>
-            </button>
-            <button type="button" class="link-btn" id="forgotBack">Back to Sign In</button>
-        </form>
-    </div>
-</div>
-
-<!-- DASHBOARD -->
 <div class="dash" id="dash" hidden>
 
     <header class="dash-header">
@@ -78,16 +63,39 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Notifications</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
 
-            <nav class="dash-nav dash-nav--desktop" aria-label="Navigation">
+            <nav class="dash-nav dash-nav--desktop" aria-label="Dashboard navigation">
                 <a href="admin.html" class="dash-nav-link">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                        <rect x="3" y="3" width="7" height="9"/>
+                        <rect x="14" y="3" width="7" height="5"/>
+                        <rect x="14" y="12" width="7" height="9"/>
+                        <rect x="3" y="16" width="7" height="5"/>
                     </svg>
-                    <span>Dashboard</span>
+                    <span>Executive</span>
+                </a>
+                <a href="reels.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <path d="M10 9l5 3-5 3z"/>
+                    </svg>
+                    <span>Reels</span>
+                </a>
+                <a href="feedback.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                    <span>Feedback</span>
+                </a>
+                <a href="reel-analysis.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 3v18h18"/>
+                        <path d="M7 15l4-4 3 3 5-5"/>
+                    </svg>
+                    <span>Reel Analysis</span>
                 </a>
                 <a href="notifications.html" class="dash-nav-link is-active">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -95,6 +103,13 @@
                         <path d="M13.73 21a2 2 0 01-3.46 0"/>
                     </svg>
                     <span>Notifications</span>
+                </a>
+                <a href="audit.html" class="dash-nav-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                    </svg>
+                    <span>Audit Report</span>
                 </a>
             </nav>
 
@@ -121,7 +136,7 @@
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
                     <strong>Admin</strong>
-                    <small>Notifications</small>
+                    <small>Rudra Bhakti</small>
                 </div>
             </div>
             <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
@@ -134,9 +149,32 @@
         <nav class="drawer-nav" aria-label="Mobile navigation">
             <a href="admin.html" class="drawer-link">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                    <rect x="3" y="3" width="7" height="9"/>
+                    <rect x="14" y="3" width="7" height="5"/>
+                    <rect x="14" y="12" width="7" height="9"/>
+                    <rect x="3" y="16" width="7" height="5"/>
                 </svg>
-                <span>Dashboard</span>
+                <span>Executive</span>
+            </a>
+            <a href="reels.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="M10 9l5 3-5 3z"/>
+                </svg>
+                <span>Reels</span>
+            </a>
+            <a href="feedback.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+                <span>Feedback</span>
+            </a>
+            <a href="reel-analysis.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 15l4-4 3 3 5-5"/>
+                </svg>
+                <span>Reel Analysis</span>
             </a>
             <a href="notifications.html" class="drawer-link is-active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -144,6 +182,13 @@
                     <path d="M13.73 21a2 2 0 01-3.46 0"/>
                 </svg>
                 <span>Notifications</span>
+            </a>
+            <a href="audit.html" class="drawer-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                <span>Audit Report</span>
             </a>
         </nav>
 
@@ -159,6 +204,7 @@
     </aside>
 
     <main class="dash-main">
+
         <section class="dash-section">
             <div class="section-head">
                 <h2>Notifications</h2>
@@ -201,6 +247,7 @@
                 <div class="pagination" id="notifPagination" hidden></div>
             </div>
         </section>
+
     </main>
 </div>
 
