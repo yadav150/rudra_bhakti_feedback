@@ -13,7 +13,6 @@ import * as Reels from './reels.js';
 import * as Feedback from './feedback.js';
 import * as ReelAnalysis from './reel-analysis.js';
 import * as Notifications from './notifications.js';
-import * as FeedbackView from './feedback-view.js';
 
 /* ============================================================
    DOM
@@ -109,9 +108,7 @@ const PAGES = {
     'reels':           { el: 'page-reels',           mod: Reels,           title: 'Reels' },
     'feedback':        { el: 'page-feedback',        mod: Feedback,        title: 'Feedback' },
     'reel-analysis':   { el: 'page-reel-analysis',   mod: ReelAnalysis,    title: 'Reel Analysis' },
-    'notifications':   { el: 'page-notifications',   mod: Notifications,   title: 'Notifications' },
-    'feedback-view':   { el: 'page-feedback-view',   mod: FeedbackView,    title: 'Feedback Review' }
-};
+    'notifications':   { el: 'page-notifications',   mod: Notifications,   title: 'Notifications' }
 
 function getHashRoute() {
     const h = (location.hash || '').replace(/^#/, '').trim();
@@ -402,7 +399,6 @@ onAuthStateChanged(auth, (user) => {
     try { if (Feedback.init) Feedback.init(); } catch (e) { console.error(e); }
     try { if (ReelAnalysis.init) ReelAnalysis.init(); } catch (e) { console.error(e); }
     try { if (Notifications.init) Notifications.init(); } catch (e) { console.error(e); }
-    try { if (FeedbackView.init) FeedbackView.init(); } catch (e) { console.error(e); }
 
     /* Route to current hash or default */
     onHashChange();
