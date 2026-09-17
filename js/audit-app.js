@@ -255,28 +255,28 @@ document.addEventListener('keydown', (e) => {
 function startListeners() {
     stopListeners();
 
-    subs.push(onValue(ref(db, 'reels'), (snap) => {
+        subs.push(onValue(ref(db, 'reels'), (snap) => {
         state.reels = [];
-        snap.forEach((c) => state.reels.push({ id: c.key, ...c.val() }));
+        snap.forEach((c) => { state.reels.push({ id: c.key, ...c.val() }); });
         state.reels.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
         refreshActive();
     }, (err) => console.error('Reels listener:', err)));
 
-    subs.push(onValue(ref(db, 'feedback'), (snap) => {
+        subs.push(onValue(ref(db, 'feedback'), (snap) => {
         state.feedback = [];
-        snap.forEach((c) => state.feedback.push({ id: c.key, ...c.val() }));
+        snap.forEach((c) => { state.feedback.push({ id: c.key, ...c.val() }); });
         refreshActive();
     }, (err) => console.error('Feedback listener:', err)));
 
-    subs.push(onValue(ref(db, 'adminNotifications/readIds'), (snap) => {
+       subs.push(onValue(ref(db, 'adminNotifications/readIds'), (snap) => {
         state.readIds = new Set();
-        if (snap.exists()) snap.forEach((c) => state.readIds.add(c.key));
+        if (snap.exists()) snap.forEach((c) => { state.readIds.add(c.key); });
         refreshActive();
     }, (err) => console.error('readIds listener:', err)));
 
-    subs.push(onValue(ref(db, 'auditLog'), (snap) => {
+        subs.push(onValue(ref(db, 'auditLog'), (snap) => {
         state.auditLog = [];
-        snap.forEach((c) => state.auditLog.push({ id: c.key, ...c.val() }));
+        snap.forEach((c) => { state.auditLog.push({ id: c.key, ...c.val() }); });
         state.auditLog.sort((a, b) => (b.ts || 0) - (a.ts || 0));
         refreshActive();
     }, (err) => console.error('auditLog listener:', err)));
