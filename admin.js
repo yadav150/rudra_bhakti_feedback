@@ -1,121 +1,31 @@
 /* ============================================================
-   RUDRA BHAKTI — ADMIN PANEL
-   Executive dashboard + blue loader (zero CLS)
+   RUDRA BHAKTI — EXECUTIVE DASHBOARD
+   Page-specific logic only. Shell + Firebase are shared.
    ============================================================ */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail }
+import { auth, db } from './firebase.js';
+import { initShell, markReady } from './shell.js';
+import { signInWithEmailAndPassword, sendPasswordResetEmail }
     from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-import { getDatabase, ref, onValue }
+import { ref, onValue }
     from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyAoPVLSklKARDfdDoSm6L2zkj1kabJVpsw",
-    authDomain: "rudrabhakti-a1d3e.firebaseapp.com",
-    databaseURL: "https://rudrabhakti-a1d3e-default-rtdb.firebaseio.com",
-    projectId: "rudrabhakti-a1d3e",
-    storageBucket: "rudrabhakti-a1d3e.firebasestorage.app",
-    messagingSenderId: "96491326088",
-    appId: "1:96491326088:web:593b15e565a12f57936d3d",
-    measurementId: "G-DF9MKJ113R"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-
-/* ============================================================
-   PREFETCH NAV PAGES ON HOVER / TOUCH
-   Fires only on user intent. Makes next page load instant.
-   ============================================================ */
-(function prefetchNav() {
-    const seen = new Set();
-    const prefetch = (href) => {
-        if (!href || href.startsWith('#') || href.startsWith('http')) return;
-        if (seen.has(href)) return;
-        seen.add(href);
-        if (document.querySelector(`link[rel="prefetch"][href="${href}"]`)) return;
-        const l = document.createElement('link');
-        l.rel = 'prefetch';
-        l.href = href;
-        document.head.appendChild(l);
-    };
-    document.addEventListener('mouseover', (e) => {
-        const a = e.target.closest('a[href$=".html"]');
-        if (a) prefetch(a.getAttribute('href'));
-    }, { passive: true });
-    document.addEventListener('touchstart', (e) => {
-        const a = e.target.closest('a[href$=".html"]');
-        if (a) prefetch(a.getAttribute('href'));
-    }, { passive: true });
-})();
-
-const ADMIN_UID = 'ukvRTL3B3WOoasKnJI7t6USMeUF3';
-
-/* ============================================================
-   PAGE LOADER
-   ============================================================ */
-let __loaderDone = false;
-
-function markReady() {
-    if (__loaderDone) return;
-    __loaderDone = true;
-    const loader = document.getElementById('pageLoader');
-    if (!loader) return;
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => loader.classList.add('is-hidden'));
-    });
-}
-
-function hideLoaderNow() {
-    __loaderDone = true;
-    const loader = document.getElementById('pageLoader');
-    if (loader) loader.classList.add('is-hidden');
-}
-
-function showLoaderNow() {
-    __loaderDone = false;
-    const loader = document.getElementById('pageLoader');
-    if (loader) loader.classList.remove('is-hidden');
-}
-
-/* Safety net — never keep user waiting more than 2s */
-setTimeout(markReady, 2000);
 
 /* ============================================================
    DOM
    ============================================================ */
 const $ = (id) => document.getElementById(id);
 
-const loginWrap = $('loginWrap');
-const forgotWrap = $('forgotWrap');
-const dash = $('dash');
-
 const loginForm = $('loginForm');
 const loginEmail = $('loginEmail');
 const loginPassword = $('loginPassword');
 const loginError = $('loginError');
 const loginLabel = $('loginLabel');
-const forgotLink = $('forgotLink');
+
 const forgotForm = $('forgotForm');
 const forgotEmail = $('forgotEmail');
 const forgotError = $('forgotError');
 const forgotSuccess = $('forgotSuccess');
 const forgotLabel = $('forgotLabel');
-const forgotBack = $('forgotBack');
-const logoutBtn = $('logoutBtn');
-const drawerUserEmail = $('drawerUserEmail');
-
-const menuBtn = $('menuBtn');
-const drawer = $('drawer');
-const drawerBackdrop = $('drawerBackdrop');
-const drawerClose = $('drawerClose');
-const drawerLogout = $('drawerLogout');
-
-const logoutModal = $('logoutModal');
-const logoutBackdrop = $('logoutBackdrop');
-const logoutCancel = $('logoutCancel');
-const logoutConfirm = $('logoutConfirm');
 
 const execSatisfaction = $('execSatisfaction');
 const execSatisfactionSub = $('execSatisfactionSub');
@@ -137,202 +47,113 @@ const actionList = $('actionList');
    ============================================================ */
 let allFeedback = [];
 let savedReels = [];
-let unsubscribeReels = null;
-let unsubscribeFeedback = null;
-let firstDataFired = false;
+let unsubReels = null;
+let unsubFeedback = null;
+let reelsFired = false;
+let feedbackFired = false;
 
 /* ============================================================
-   SCREEN CONTROL
+   INIT SHELL
    ============================================================ */
-function showLogin() {
-    loginWrap.hidden = false;
-    forgotWrap.hidden = true;
-    dash.hidden = true;
-}
-function showForgot() {
-    loginWrap.hidden = true;
-    forgotWrap.hidden = false;
-    dash.hidden = true;
-}
-function showDash() {
-    loginWrap.hidden = true;
-    forgotWrap.hidden = true;
-    dash.hidden = false;
+initShell({
+    mode: 'admin',
+    onAuthed: () => {
+        startRealtimeListeners();
+    }
+});
+
+/* ============================================================
+   LOGIN FORM
+   ============================================================ */
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginError.textContent = '';
+
+        const email = loginEmail.value.trim();
+        const password = loginPassword.value;
+        if (!email || !password) {
+            loginError.textContent = 'Please enter both email and password.';
+            return;
+        }
+
+        loginLabel.textContent = 'Signing in…';
+        const btn = loginForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (err) {
+            console.error('Login error:', err);
+            let msg = 'Invalid email or password.';
+            if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please try again later.';
+            if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
+            loginError.textContent = msg;
+        } finally {
+            loginLabel.textContent = 'Sign In';
+            btn.disabled = false;
+        }
+    });
 }
 
 /* ============================================================
-   AUTH
+   FORGOT FORM
    ============================================================ */
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        stopRealtimeListeners();
-        showLogin();
-        hideLoaderNow();
-        return;
-    }
-    if (user.uid !== ADMIN_UID) {
-        signOut(auth);
-        showLogin();
-        loginError.textContent = 'This account is not authorized to access the admin panel.';
-        hideLoaderNow();
-        return;
-    }
-    if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Administrator';
-    showDash();
-    startRealtimeListeners();
-});
-
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginError.textContent = '';
-
-    const email = loginEmail.value.trim();
-    const password = loginPassword.value;
-    if (!email || !password) {
-        loginError.textContent = 'Please enter both email and password.';
-        return;
-    }
-
-       loginLabel.textContent = 'Signing in…';
-    const btn = loginForm.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    showLoaderNow();
-
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        /* Loader stays visible — markReady() hides it after data loads */
-    } catch (err) {
-        console.error('Login error:', err);
-        hideLoaderNow();
-        let msg = 'Invalid email or password.';
-        if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please try again later.';
-        if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
-        loginError.textContent = msg;
-    } finally {
-        loginLabel.textContent = 'Sign In';
-        btn.disabled = false;
-    }
-});
-
-forgotLink.addEventListener('click', () => {
-    forgotEmail.value = loginEmail.value.trim();
-    forgotError.textContent = '';
-    forgotSuccess.textContent = '';
-    showForgot();
-});
-forgotBack.addEventListener('click', () => showLogin());
-
-forgotForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    forgotError.textContent = '';
-    forgotSuccess.textContent = '';
-    const email = forgotEmail.value.trim();
-    if (!email) {
-        forgotError.textContent = 'Please enter your email.';
-        return;
-    }
-    forgotLabel.textContent = 'Sending…';
-    const btn = forgotForm.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    try {
-        await sendPasswordResetEmail(auth, email);
-        forgotSuccess.textContent = 'If that email is registered, a reset link has been sent.';
-        forgotForm.reset();
-    } catch (err) {
-        if (err.code === 'auth/too-many-requests') {
-            forgotError.textContent = 'Too many attempts. Please try again later.';
-        } else if (err.code === 'auth/invalid-email') {
-            forgotError.textContent = 'Please enter a valid email address.';
-        } else {
+if (forgotForm) {
+    forgotForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        forgotError.textContent = '';
+        forgotSuccess.textContent = '';
+        const email = forgotEmail.value.trim();
+        if (!email) {
+            forgotError.textContent = 'Please enter your email.';
+            return;
+        }
+        forgotLabel.textContent = 'Sending…';
+        const btn = forgotForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            await sendPasswordResetEmail(auth, email);
             forgotSuccess.textContent = 'If that email is registered, a reset link has been sent.';
             forgotForm.reset();
+        } catch (err) {
+            if (err.code === 'auth/too-many-requests') {
+                forgotError.textContent = 'Too many attempts. Please try again later.';
+            } else if (err.code === 'auth/invalid-email') {
+                forgotError.textContent = 'Please enter a valid email address.';
+            } else {
+                forgotSuccess.textContent = 'If that email is registered, a reset link has been sent.';
+                forgotForm.reset();
+            }
+        } finally {
+            forgotLabel.textContent = 'Send Reset Link';
+            btn.disabled = false;
         }
-    } finally {
-        forgotLabel.textContent = 'Send Reset Link';
-        btn.disabled = false;
-    }
-});
-
-/* ============================================================
-   LOGOUT
-   ============================================================ */
-function openLogoutModal() {
-    logoutModal.hidden = false;
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => logoutCancel?.focus(), 80);
+    });
 }
-function closeLogoutModal() {
-    logoutModal.hidden = true;
-    document.body.style.overflow = '';
-}
-async function performLogout() {
-    closeLogoutModal();
-    try {
-        await signOut(auth);
-        loginEmail.value = '';
-        loginPassword.value = '';
-        closeDrawer();
-    } catch (err) {
-        console.error('Logout error:', err);
-    }
-}
-if (logoutBtn) logoutBtn.addEventListener('click', openLogoutModal);
-if (drawerLogout) drawerLogout.addEventListener('click', () => {
-    closeDrawer();
-    setTimeout(openLogoutModal, 220);
-});
-if (logoutCancel) logoutCancel.addEventListener('click', closeLogoutModal);
-if (logoutConfirm) logoutConfirm.addEventListener('click', performLogout);
-if (logoutBackdrop) logoutBackdrop.addEventListener('click', closeLogoutModal);
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && logoutModal && !logoutModal.hidden) closeLogoutModal();
-});
-
-/* ============================================================
-   DRAWER
-   ============================================================ */
-function openDrawer() {
-    drawer.classList.add('is-open');
-    drawerBackdrop.classList.add('is-open');
-    drawer.setAttribute('aria-hidden', 'false');
-    menuBtn.setAttribute('aria-expanded', 'true');
-    document.body.style.overflow = 'hidden';
-}
-function closeDrawer() {
-    drawer.classList.remove('is-open');
-    drawerBackdrop.classList.remove('is-open');
-    drawer.setAttribute('aria-hidden', 'true');
-    menuBtn.setAttribute('aria-expanded', 'false');
-    document.body.style.overflow = '';
-}
-if (menuBtn) menuBtn.addEventListener('click', () => {
-    drawer.classList.contains('is-open') ? closeDrawer() : openDrawer();
-});
-if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
-if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawer.classList.contains('is-open')) closeDrawer();
-});
 
 /* ============================================================
    REALTIME LISTENERS
    ============================================================ */
 function startRealtimeListeners() {
-    stopRealtimeListeners();
+    stopListeners();
 
-    unsubscribeReels = onValue(ref(db, 'reels'), (snap) => {
+    unsubReels = onValue(ref(db, 'reels'), (snap) => {
         savedReels = [];
         snap.forEach((child) => {
             savedReels.push({ id: child.key, ...child.val() });
         });
+        reelsFired = true;
         renderExecutive();
         renderActionCenter();
+        maybeMarkReady();
     }, (err) => {
         console.error('Reels listener error:', err);
+        reelsFired = true;
         maybeMarkReady();
     });
 
-    unsubscribeFeedback = onValue(ref(db, 'feedback'), (snap) => {
+    unsubFeedback = onValue(ref(db, 'feedback'), (snap) => {
         allFeedback = [];
         snap.forEach((child) => {
             const v = child.val() || {};
@@ -344,27 +165,24 @@ function startRealtimeListeners() {
                     : (!v.name || v.name === 'Anonymous' || /^Anonymous \(/.test(v.name || ''))
             });
         });
+        feedbackFired = true;
         renderExecutive();
         renderActionCenter();
         maybeMarkReady();
     }, (err) => {
         console.error('Feedback listener error:', err);
+        feedbackFired = true;
         maybeMarkReady();
     });
 }
 
-function stopRealtimeListeners() {
-    if (unsubscribeReels) { unsubscribeReels(); unsubscribeReels = null; }
-    if (unsubscribeFeedback) { unsubscribeFeedback(); unsubscribeFeedback = null; }
+function stopListeners() {
+    if (unsubReels) { unsubReels(); unsubReels = null; }
+    if (unsubFeedback) { unsubFeedback(); unsubFeedback = null; }
 }
 
-/* Both listeners must fire at least once before we reveal the page */
 function maybeMarkReady() {
-    if (firstDataFired) return;
-    if (unsubscribeReels && unsubscribeFeedback) {
-        firstDataFired = true;
-        markReady();
-    }
+    if (reelsFired && feedbackFired) markReady();
 }
 
 /* ============================================================
@@ -414,7 +232,7 @@ function computeReelStats(reelId) {
 }
 
 /* ============================================================
-   EXECUTIVE INTELLIGENCE
+   EXECUTIVE RENDER
    ============================================================ */
 function renderExecutive() {
     const total = allFeedback.length;
@@ -589,8 +407,3 @@ function renderActionCenter() {
         </div>
     `).join('');
 }
-
-/* ============================================================
-   INITIAL
-   ============================================================ */
-showLogin();
