@@ -1504,3 +1504,20 @@ a{color:inherit;text-decoration:none;}
   color:var(--muted);
   font-weight:600;
 }
+/* ============================================================
+   SPA PAGE SECTIONS
+   ============================================================ */
+.page-section[hidden]{
+    display:none !important;
+}
+.page-section{
+    display:block;
+    animation:pageSectionFade .25s ease;
+}
+@keyframes pageSectionFade{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
+}
+@media (prefers-reduced-motion: reduce){
+    .page-section{animation:none;}
+}
