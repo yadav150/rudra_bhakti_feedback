@@ -160,9 +160,8 @@ function navigate(page, params = {}, opts = {}) {
     }
     if (opts.replace) {
         history.replaceState(null, '', hash);
-    } else if (location.hash !== hash) {
+        } else if (location.hash !== hash) {
         location.hash = hash;
-        return; /* hashchange will handle render */
     }
 
     renderRoute(page, params);
