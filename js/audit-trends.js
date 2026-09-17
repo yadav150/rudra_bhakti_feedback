@@ -1,11 +1,10 @@
 /* ============================================================
    RUDRA BHAKTI — AUDIT: TREND & PERFORMANCE
-   Rolling 30-day trends + week-over-week deltas.
+   30-day rolling + week-over-week. Uses actual form fields only.
    ============================================================ */
 import {
     createLineChart, createBarChart,
-    last14Days,
-    pct, escapeHTML, emptyBlock, COLORS
+    escapeHTML, emptyBlock, COLORS
 } from './audit-charts.js';
 
 export function init(state) {}
@@ -14,7 +13,8 @@ export function render(state) {
     const el = document.getElementById('page-trends');
     if (!el) return;
 
-    const feedback = state.feedback || [];
+    const feedback = (state && state.feedback) || [];
+    const reels = (state && state.reels) || [];
 
     if (!feedback.length) {
         el.innerHTML = `
@@ -24,7 +24,7 @@ export function render(state) {
         return;
     }
 
-    /* ---------- 30-day rolling ---------- */
+    /* 30-day rolling buckets */
     const days = [];
     const now = new Date();
     for (let i = 29; i >= 0; i--) {
@@ -54,15 +54,15 @@ export function render(state) {
         return arr.length ? Number((arr.reduce((s, r) => s + r, 0) / arr.length).toFixed(2)) : null;
     });
 
-    /* ---------- Week-over-week ---------- */
-    const weekNow = Date.now();
+    /* Week-over-week */
+    const now_ms = Date.now();
     const last7 = feedback.filter(f => {
         const t = Number(f.submittedAt) || 0;
-        return t && weekNow - t <= 7 * 864e5;
+        return t && now_ms - t <= 7 * 864e5;
     });
     const prev7 = feedback.filter(f => {
         const t = Number(f.submittedAt) || 0;
-        return t && weekNow - t > 7 * 864e5 && weekNow - t <= 14 * 864e5;
+        return t && now_ms - t > 7 * 864e5 && now_ms - t <= 14 * 864e5;
     });
 
     const avgOf = (arr) => {
@@ -78,27 +78,21 @@ export function render(state) {
     const countDelta = prev7Count ? Math.round(((last7Count - prev7Count) / prev7Count) * 100) : 0;
     const ratingDelta = prev7Avg ? Number((last7Avg - prev7Avg).toFixed(2)) : 0;
 
-    /* Week comparison chart */
     const weekLabels = ['Prev 7d', 'Last 7d'];
     const weekCounts = [prev7Count, last7Count];
     const weekRatings = [Number(prev7Avg.toFixed(2)), Number(last7Avg.toFixed(2))];
 
-    /* ---------- Reel activity ranking ---------- */
-    const reelActivity = (state.reels || []).map(r => {
+    /* Reel activity (top 5 by recent volume) */
+    const reelActivity = reels.map(r => {
         const items = feedback.filter(f => f.reelId === r.id);
-        const last7Items = items.filter(f => {
+        const recent = items.filter(f => {
             const t = Number(f.submittedAt) || 0;
-            return t && weekNow - t <= 7 * 864e5;
-        });
-        return {
-            id: r.id,
-            title: r.title || '',
-            total: items.length,
-            recent: last7Items.length
-        };
+            return t && now_ms - t <= 7 * 864e5;
+        }).length;
+        return { id: r.id, title: r.title || '', total: items.length, recent };
     }).filter(x => x.total > 0).sort((a, b) => b.recent - a.recent || b.total - a.total);
 
-    const top5Active = reelActivity.slice(0, 5);
+    const top5 = reelActivity.slice(0, 5);
 
     el.innerHTML = `
         <div class="section-head">
@@ -109,7 +103,7 @@ export function render(state) {
         <div class="stats" style="margin-bottom:18px;">
             <div class="stat">
                 <div class="stat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 </div>
                 <div class="stat-body">
                     <span class="stat-label">Last 7 days</span>
@@ -119,20 +113,20 @@ export function render(state) {
             </div>
             <div class="stat">
                 <div class="stat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/></svg>
                 </div>
                 <div class="stat-body">
                     <span class="stat-label">Avg Rating (7d)</span>
-                    <span class="stat-value">${last7Avg.toFixed(2)}</span>
+                    <span class="stat-value">${last7Avg ? last7Avg.toFixed(2) : '—'}</span>
                     <span class="exec-sub" style="color:${ratingDelta >= 0 ? '#1d7a3d' : '#b03030'};margin-top:2px;">${ratingDelta >= 0 ? '+' : ''}${ratingDelta} vs prior week</span>
                 </div>
             </div>
             <div class="stat">
                 <div class="stat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
                 </div>
                 <div class="stat-body">
-                    <span class="stat-label">Total (30d)</span>
+                    <span class="stat-label">Total Records</span>
                     <span class="stat-value">${feedback.length}</span>
                 </div>
             </div>
@@ -159,14 +153,14 @@ export function render(state) {
             </div>
         </div>
 
-        ${top5Active.length ? `
+        ${top5.length ? `
             <div class="panel-card" style="margin-top:14px;">
                 <div class="panel-head">
                     <span class="panel-title">Most Active Reels (last 7 days)</span>
                     <span class="panel-meta">Top 5</span>
                 </div>
                 <div class="panel-body panel-body--flush">
-                    ${top5Active.map(r => `
+                    ${top5.map(r => `
                         <div class="intel-row">
                             <div class="intel-head">
                                 <span class="intel-id">${escapeHTML(r.id)}</span>
