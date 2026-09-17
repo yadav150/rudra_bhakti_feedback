@@ -479,8 +479,14 @@
                 <p>Per-reel feedback behavior, timing, engagement and strategic guidance.</p>
             </div>
             <div class="toolbar">
-                <select id="reelSelect" class="select" style="flex:1;min-width:220px;"></select>
-            </div>
+    <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="search" id="reelSearchInput" list="reelOptions" placeholder="Search reels by ID or name…" autocomplete="off" spellcheck="false" />
+        <datalist id="reelOptions"></datalist>
+    </div>
+</div>
 
             <div id="analysisWrap" hidden>
                 <section class="dash-section">
