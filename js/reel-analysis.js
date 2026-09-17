@@ -74,9 +74,10 @@ export function render() {
     const reel = allReels.find((r) => r.id === activeReelId);
     if (!reel) return;
 
-    /* Keep the search input reflecting current selection (only if user isn't typing) */
+        /* Keep the search input reflecting current selection (only if user isn't typing) */
     if (input && document.activeElement !== input) {
-        input.value = reel.id + ' — ' + (reel.title || 'Untitled');
+        const mode = document.getElementById('reelSearchMode')?.value || 'id';
+        input.value = mode === 'id' ? reel.id : (reel.title || 'Untitled');
     }
 
     const stats = computeStats(reel, getReelItems(reel.id));
@@ -95,29 +96,31 @@ export function render() {
 }
 
 /* ============================================================
-   SEARCH (uses native datalist — no new CSS)
+   SEARCH — two modes: Reel ID or Reel Name/Title
    ============================================================ */
 function bindSearchInput() {
     const input = document.getElementById('reelSearchInput');
+    const modeSelect = document.getElementById('reelSearchMode');
     if (!input) return;
 
     input.addEventListener('change', () => {
         const val = input.value.trim();
         if (!val) { render(); return; }
 
-        let reel = allReels.find((r) => r.id === val);
+        const mode = modeSelect?.value || 'id';
+        let reel;
 
-        if (!reel) {
-            const id = val.split(' — ')[0].trim();
-            reel = allReels.find((r) => r.id === id);
-        }
-        if (!reel) {
+        if (mode === 'id') {
+            /* Match ONLY by Reel ID */
+            const q = val.toUpperCase();
+            reel = allReels.find((r) => r.id.toUpperCase() === q)
+                || allReels.find((r) => r.id.toUpperCase().includes(q));
+        } else {
+            /* Match ONLY by Title */
             const q = val.toLowerCase();
-            reel = allReels.find((r) =>
-                r.id.toLowerCase().includes(q) ||
-                (r.title || '').toLowerCase().includes(q)
-            );
+            reel = allReels.find((r) => (r.title || '').toLowerCase().includes(q));
         }
+
         if (reel) activeReelId = reel.id;
         render();
     });
@@ -126,14 +129,28 @@ function bindSearchInput() {
         if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
         if (e.key === 'Escape') input.blur();
     });
+
+    /* Mode switch — repopulate datalist and reset input */
+    if (modeSelect) {
+        modeSelect.addEventListener('change', () => {
+            populateDatalist();
+            input.value = '';
+            input.placeholder = modeSelect.value === 'id'
+                ? 'Search by Reel ID…'
+                : 'Search by Name / Title…';
+            input.focus();
+        });
+    }
 }
 
 function populateDatalist() {
     const dl = document.getElementById('reelOptions');
+    const modeSelect = document.getElementById('reelSearchMode');
     if (!dl) return;
+    const mode = modeSelect?.value || 'id';
     dl.innerHTML = allReels.map((r) => {
-        const label = r.id + ' — ' + (r.title || 'Untitled');
-        return `<option value="${escapeAttr(label)}"></option>`;
+        const val = mode === 'id' ? r.id : (r.title || 'Untitled');
+        return `<option value="${escapeAttr(val)}"></option>`;
     }).join('');
 }
 
