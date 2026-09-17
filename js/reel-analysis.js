@@ -1,8 +1,6 @@
 /* ============================================================
    RUDRA BHAKTI — REEL ANALYSIS SECTION
-   - Defensive render (fixes blank on first open)
-   - Searchable picker by ID + title
-   - Responsive-safe
+   Defensive render + searchable picker (using existing .search)
    ============================================================ */
 import { db } from './firebase.js';
 import { ref, onValue } from "firebase/database";
@@ -52,23 +50,23 @@ export function init() {
     });
 }
 
-/* Called by app.js whenever this section becomes active */
+/* ============================================================
+   RENDER — defensively pick a reel if none active
+   ============================================================ */
 export function render() {
-    const noReelsState = document.getElementById('noReelsState');
     const analysisWrap = document.getElementById('analysisWrap');
+    const noReelsState = document.getElementById('noReelsState');
     const input = document.getElementById('reelSearchInput');
 
-    /* No reels at all */
     if (!allReels.length) {
         if (noReelsState) noReelsState.hidden = false;
         if (analysisWrap) analysisWrap.hidden = true;
         if (input) input.value = '';
         return;
     }
-
     if (noReelsState) noReelsState.hidden = true;
 
-    /* Ensure activeReelId is valid — always pick the first if not set/invalid */
+    /* ALWAYS ensure a valid activeReelId — this is the fix for "blank on first open" */
     if (!activeReelId || !allReels.find((r) => r.id === activeReelId)) {
         activeReelId = allReels[0].id;
     }
@@ -76,15 +74,11 @@ export function render() {
     const reel = allReels.find((r) => r.id === activeReelId);
     if (!reel) return;
 
-    /* Keep search input in sync with the current selection */
-    if (input) {
-        const display = reel.id + ' — ' + (reel.title || 'Untitled');
-        if (input.value !== display && document.activeElement !== input) {
-            input.value = display;
-        }
+    /* Keep the search input reflecting current selection (only if user isn't typing) */
+    if (input && document.activeElement !== input) {
+        input.value = reel.id + ' — ' + (reel.title || 'Untitled');
     }
 
-    /* Render everything */
     const stats = computeStats(reel, getReelItems(reel.id));
     renderHero(stats);
     renderKPIs(stats);
@@ -101,29 +95,22 @@ export function render() {
 }
 
 /* ============================================================
-   SEARCH INPUT (datalist-backed)
+   SEARCH (uses native datalist — no new CSS)
    ============================================================ */
 function bindSearchInput() {
     const input = document.getElementById('reelSearchInput');
     if (!input) return;
 
-    /* Commit on change (blur / Enter / datalist pick) */
     input.addEventListener('change', () => {
         const val = input.value.trim();
-
-        /* Empty → reset to currently active reel */
         if (!val) { render(); return; }
 
-        /* Try exact ID */
         let reel = allReels.find((r) => r.id === val);
 
-        /* Try "RB001 — Title" prefix */
         if (!reel) {
             const id = val.split(' — ')[0].trim();
             reel = allReels.find((r) => r.id === id);
         }
-
-        /* Try partial (ID or title contains) */
         if (!reel) {
             const q = val.toLowerCase();
             reel = allReels.find((r) =>
@@ -131,24 +118,13 @@ function bindSearchInput() {
                 (r.title || '').toLowerCase().includes(q)
             );
         }
-
         if (reel) activeReelId = reel.id;
         render();
     });
 
-    /* Enter commits immediately */
     input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            input.blur();
-        }
-    });
-
-    /* Escape reverts */
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            input.blur();
-        }
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') input.blur();
     });
 }
 
