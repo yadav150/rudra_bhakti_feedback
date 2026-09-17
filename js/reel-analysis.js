@@ -1,5 +1,8 @@
 /* ============================================================
    RUDRA BHAKTI — REEL ANALYSIS SECTION
+   - Defensive render (fixes blank on first open)
+   - Searchable picker by ID + title
+   - Responsive-safe
    ============================================================ */
 import { db } from './firebase.js';
 import { ref, onValue } from "firebase/database";
@@ -20,7 +23,7 @@ export function init() {
     if (started) return;
     started = true;
 
-    bindSelector();
+    bindSearchInput();
 
     unsubReels = onValue(ref(db, 'reels'), (snap) => {
         allReels = [];
@@ -28,7 +31,8 @@ export function init() {
             allReels.push({ id: child.key, ...child.val() });
         });
         allReels.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
-        handleReelsUpdate();
+        populateDatalist();
+        render();
         window.markReady && window.markReady();
     }, (err) => {
         console.error('Reels listener error:', err);
@@ -48,25 +52,117 @@ export function init() {
     });
 }
 
+/* Called by app.js whenever this section becomes active */
 export function render() {
-    if (activeReelId) {
-        const reel = allReels.find((r) => r.id === activeReelId);
-        if (reel) {
-            const stats = computeStats(reel, getReelItems(reel.id));
-            renderHero(stats);
-            renderKPIs(stats);
-            renderBehavior(stats);
-            renderTimeline(stats);
-            renderHourChart(stats);
-            renderWeekdayChart(stats);
-            renderFeeling(stats);
-            renderIntent(stats);
-            renderWritten(stats);
-            renderRecommendation(stats);
-            const wrap = document.getElementById('analysisWrap');
-            if (wrap) wrap.hidden = false;
+    const noReelsState = document.getElementById('noReelsState');
+    const analysisWrap = document.getElementById('analysisWrap');
+    const input = document.getElementById('reelSearchInput');
+
+    /* No reels at all */
+    if (!allReels.length) {
+        if (noReelsState) noReelsState.hidden = false;
+        if (analysisWrap) analysisWrap.hidden = true;
+        if (input) input.value = '';
+        return;
+    }
+
+    if (noReelsState) noReelsState.hidden = true;
+
+    /* Ensure activeReelId is valid — always pick the first if not set/invalid */
+    if (!activeReelId || !allReels.find((r) => r.id === activeReelId)) {
+        activeReelId = allReels[0].id;
+    }
+
+    const reel = allReels.find((r) => r.id === activeReelId);
+    if (!reel) return;
+
+    /* Keep search input in sync with the current selection */
+    if (input) {
+        const display = reel.id + ' — ' + (reel.title || 'Untitled');
+        if (input.value !== display && document.activeElement !== input) {
+            input.value = display;
         }
     }
+
+    /* Render everything */
+    const stats = computeStats(reel, getReelItems(reel.id));
+    renderHero(stats);
+    renderKPIs(stats);
+    renderBehavior(stats);
+    renderTimeline(stats);
+    renderHourChart(stats);
+    renderWeekdayChart(stats);
+    renderFeeling(stats);
+    renderIntent(stats);
+    renderWritten(stats);
+    renderRecommendation(stats);
+
+    if (analysisWrap) analysisWrap.hidden = false;
+}
+
+/* ============================================================
+   SEARCH INPUT (datalist-backed)
+   ============================================================ */
+function bindSearchInput() {
+    const input = document.getElementById('reelSearchInput');
+    if (!input) return;
+
+    /* Commit on change (blur / Enter / datalist pick) */
+    input.addEventListener('change', () => {
+        const val = input.value.trim();
+
+        /* Empty → reset to currently active reel */
+        if (!val) { render(); return; }
+
+        /* Try exact ID */
+        let reel = allReels.find((r) => r.id === val);
+
+        /* Try "RB001 — Title" prefix */
+        if (!reel) {
+            const id = val.split(' — ')[0].trim();
+            reel = allReels.find((r) => r.id === id);
+        }
+
+        /* Try partial (ID or title contains) */
+        if (!reel) {
+            const q = val.toLowerCase();
+            reel = allReels.find((r) =>
+                r.id.toLowerCase().includes(q) ||
+                (r.title || '').toLowerCase().includes(q)
+            );
+        }
+
+        if (reel) activeReelId = reel.id;
+        render();
+    });
+
+    /* Enter commits immediately */
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+        }
+    });
+
+    /* Escape reverts */
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            input.blur();
+        }
+    });
+}
+
+function populateDatalist() {
+    const dl = document.getElementById('reelOptions');
+    if (!dl) return;
+    dl.innerHTML = allReels.map((r) => {
+        const label = r.id + ' — ' + (r.title || 'Untitled');
+        return `<option value="${escapeAttr(label)}"></option>`;
+    }).join('');
+}
+
+function getReelItems(reelId) {
+    return allFeedback.filter((f) => f.reelId === reelId);
 }
 
 /* ============================================================
@@ -149,50 +245,6 @@ function chartEmpty(title, text) {
             ${text ? `<span>${escapeHTML(text)}</span>` : ''}
         </div>
     `;
-}
-
-/* ============================================================
-   SELECTOR
-   ============================================================ */
-function bindSelector() {
-    const sel = document.getElementById('reelSelect');
-    if (!sel) return;
-    sel.addEventListener('change', () => {
-        activeReelId = sel.value;
-        render();
-    });
-}
-
-function handleReelsUpdate() {
-    const noReelsState = document.getElementById('noReelsState');
-    const analysisWrap = document.getElementById('analysisWrap');
-    const sel = document.getElementById('reelSelect');
-
-    if (!allReels.length) {
-        if (noReelsState) noReelsState.hidden = false;
-        if (analysisWrap) analysisWrap.hidden = true;
-        if (sel) sel.innerHTML = '';
-        return;
-    }
-    if (noReelsState) noReelsState.hidden = true;
-
-    if (!activeReelId || !allReels.find((r) => r.id === activeReelId)) {
-        activeReelId = allReels[0].id;
-    }
-
-    if (sel) {
-        sel.innerHTML = allReels.map((r) => {
-            const label = r.id + ' — ' + (r.title || 'Untitled');
-            const s = r.id === activeReelId ? ' selected' : '';
-            return `<option value="${escapeAttr(r.id)}"${s}>${escapeHTML(truncate(label, 70))}</option>`;
-        }).join('');
-    }
-
-    render();
-}
-
-function getReelItems(reelId) {
-    return allFeedback.filter((f) => f.reelId === reelId);
 }
 
 /* ============================================================
@@ -308,7 +360,7 @@ function computeStats(reel, items) {
 }
 
 /* ============================================================
-   RENDER HELPERS
+   RENDER SECTIONS
    ============================================================ */
 function renderHero(stats) {
     const el = document.getElementById('reelHeroCard');
