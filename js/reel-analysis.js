@@ -228,8 +228,20 @@ function chartEmpty(title, text) {
    ============================================================ */
 function computeStats(reel, items) {
     const total = items.length;
-    if (!total) return { reel, items, total: 0 };
-
+    if (!total) return {
+    reel, items, total: 0,
+    avg: 0, stdDev: 0,
+    recommendPct: 0, repeatPct: 0,
+    feelings: [], topFeeling: undefined,
+    wants: [], topWant: undefined,
+    writtenCount: 0, writtenPct: 0, avgMsgLen: 0,
+    firstTs: 0, lastTs: 0, firstDelayMs: 0,
+    spanDays: 1, velocity: 0,
+    hourBuckets: new Array(12).fill(0),
+    weekdayBuckets: { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 },
+    peakHourBucket: 0, peakHourLabel: null, peakWeekday: undefined,
+    days: {}, topWords: []
+};
     const ratings = items.map((f) => Number(f.rating)).filter((r) => r >= 1 && r <= 5);
     const avg = ratings.length ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0;
     let variance = 0;
