@@ -1,23 +1,22 @@
 /* ============================================================
    RUDRA BHAKTI — AUDIT: OPTION INTELLIGENCE
-   Aggregate option frequency across questions.
+   Exact option fields from index.html (5 option-based questions).
    ============================================================ */
 import {
     createBarChart, createDonutChart,
     pct, escapeHTML, emptyBlock, COLORS, PALETTE
 } from './audit-charts.js';
 
-let selectedQuestion = 'all';
-
-const QUESTION_KEYS = [
-    { key: 'feeling',      label: 'Feeling' },
-    { key: 'more',         label: 'Would Watch More' },
-    { key: 'wantMore',     label: 'Wants More Of' },
-    { key: 'engageAgain',  label: 'Engage Again' },
-    { key: 'rating',       label: 'Rating' },
-    { key: 'stoodOut',     label: 'Stood Out (legacy)' },
-    { key: 'improve',      label: 'Improve (legacy)' }
+/* Exact option fields from index.html — nothing else */
+const OPTION_FIELDS = [
+    { key: 'feeling',     label: 'Feeling' },
+    { key: 'more',        label: 'Would Watch More' },
+    { key: 'wantMore',    label: 'Wants More Of' },
+    { key: 'engageAgain', label: 'Engage Again' },
+    { key: 'rating',      label: 'Rating (1-5)' }
 ];
+
+let selectedQuestion = 'all';
 
 export function init(state) {}
 
@@ -36,7 +35,7 @@ export function render(state) {
             <div class="toolbar" style="margin-bottom:14px;">
                 <select id="auditOptQuestion" class="select" style="flex:1;min-width:200px;">
                     <option value="all">All Questions</option>
-                    ${QUESTION_KEYS.map(q => `<option value="${q.key}">${escapeHTML(q.label)}</option>`).join('')}
+                    ${OPTION_FIELDS.map(q => `<option value="${q.key}">${escapeHTML(q.label)}</option>`).join('')}
                 </select>
             </div>
             <div id="auditOptResults"></div>
@@ -68,7 +67,7 @@ function renderOptions(state) {
     const reelMap = {};
 
     const keysToScan = selectedQuestion === 'all'
-        ? QUESTION_KEYS.map(q => q.key)
+        ? OPTION_FIELDS.map(q => q.key)
         : [selectedQuestion];
 
     keysToScan.forEach(key => {
@@ -98,13 +97,11 @@ function renderOptions(state) {
     const donutLabels = restCount ? [...top.map(([k]) => k), 'Other'] : top.map(([k]) => k);
     const donutData = restCount ? [...top.map(([, v]) => v), restCount] : top.map(([, v]) => v);
 
-    const maxCount = sorted[0][1];
-
     container.innerHTML = `
         <div class="stats" style="margin-bottom:18px;">
             <div class="stat">
                 <div class="stat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
                 </div>
                 <div class="stat-body">
                     <span class="stat-label">Unique Options</span>
@@ -113,7 +110,7 @@ function renderOptions(state) {
             </div>
             <div class="stat">
                 <div class="stat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                 </div>
                 <div class="stat-body">
                     <span class="stat-label">Total Selections</span>
@@ -122,7 +119,7 @@ function renderOptions(state) {
             </div>
             <div class="stat">
                 <div class="stat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3 6.5 7 1-5 4.9 1.2 7L12 18l-6.2 3.4L7 14.4 2 9.5l7-1z"/></svg>
                 </div>
                 <div class="stat-body">
                     <span class="stat-label">Top Option</span>
@@ -137,7 +134,7 @@ function renderOptions(state) {
                 <div class="panel-body"><div class="chart-wrap"><canvas id="optDonut"></canvas></div></div>
             </div>
             <div class="panel-card">
-                <div class="panel-head"><span class="panel-title">Top 10 Options</span></div>
+                <div class="panel-head"><span class="panel-title">Top Options</span></div>
                 <div class="panel-body"><div class="chart-wrap"><canvas id="optBar"></canvas></div></div>
             </div>
         </div>
