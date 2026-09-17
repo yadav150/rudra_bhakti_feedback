@@ -251,16 +251,6 @@ function renderList() {
         });
     });
 
-    notifList.querySelectorAll('[data-see-more]').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.seeMore;
-            if (!id) return;
-            if (!readIds.has(id)) markRead(id);
-            window.navigateTo && window.navigateTo('feedback-view', { id });
-        });
-    });
-
     renderPagination('notifPagination', currentPage, totalPages, (p) => {
         currentPage = p;
         renderList();
@@ -316,12 +306,6 @@ function renderNotif(f) {
                 <span>${safe(timeAgo(f.submittedAt))}</span>
                 <span>${safe(formatDate(f.submittedAt))}</span>
             </div>
-            <button type="button" class="btn btn-ghost" data-see-more="${safe(f.id)}" style="align-self:flex-start;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-                <span>See more</span>
-            </button>
         </article>
     `;
 }
