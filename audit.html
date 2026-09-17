@@ -21,10 +21,11 @@
   }
 }
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-<!-- PAGE LOADER -->
 <div class="page-loader" id="pageLoader" aria-hidden="true">
     <div class="page-loader-spinner"></div>
 </div>
@@ -41,71 +42,23 @@
                 </div>
             </div>
 
-            <nav class="dash-nav dash-nav--desktop dash-nav--wide" aria-label="Audit navigation" id="auditNav">
-                <a href="#executive" class="dash-nav-link" data-page="executive">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                    <span>Executive</span>
-                </a>
-                <a href="#reels" class="dash-nav-link" data-page="reels">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>
-                    <span>Reels</span>
-                </a>
-                <a href="#behaviour" class="dash-nav-link" data-page="behaviour">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                    <span>Behaviour</span>
-                </a>
-                <a href="#questions" class="dash-nav-link" data-page="questions">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-                    <span>Questions</span>
-                </a>
-                <a href="#options" class="dash-nav-link" data-page="options">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-                    <span>Options</span>
-                </a>
-                <a href="#trends" class="dash-nav-link" data-page="trends">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
-                    <span>Trends</span>
-                </a>
-                <a href="#relationships" class="dash-nav-link" data-page="relationships">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M6 9v2a3 3 0 003 3h6a3 3 0 003-3V9"/></svg>
-                    <span>Relations</span>
-                </a>
-                <a href="#explorer" class="dash-nav-link" data-page="explorer">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                    <span>Explorer</span>
-                </a>
-                <a href="#trail" class="dash-nav-link" data-page="trail">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                    <span>Trail</span>
-                </a>
-                <a href="#integrity" class="dash-nav-link" data-page="integrity">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>Integrity</span>
-                </a>
-                <a href="#diagnostics" class="dash-nav-link" data-page="diagnostics">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                    <span>Diagnostics</span>
-                </a>
-                <a href="#auth" class="dash-nav-link" data-page="auth">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                    <span>Auth</span>
-                </a>
-                <a href="#firebase" class="dash-nav-link" data-page="firebase">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
-                    <span>Firebase</span>
-                </a>
-                <a href="#rules" class="dash-nav-link" data-page="rules">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-                    <span>Rules</span>
-                </a>
-                <a href="#settings" class="dash-nav-link" data-page="settings">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-                    <span>Settings</span>
-                </a>
-                <a href="#chatbot" class="dash-nav-link" data-page="chatbot">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    <span>Chatbot</span>
-                </a>
+            <nav class="dash-nav dash-nav--desktop dash-nav--wide" aria-label="Audit navigation">
+                <a href="#executive" class="dash-nav-link" data-page="executive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Executive</span></a>
+                <a href="#reels" class="dash-nav-link" data-page="reels"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg><span>Reels</span></a>
+                <a href="#behaviour" class="dash-nav-link" data-page="behaviour"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Behaviour</span></a>
+                <a href="#questions" class="dash-nav-link" data-page="questions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span>Questions</span></a>
+                <a href="#options" class="dash-nav-link" data-page="options"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Options</span></a>
+                <a href="#trends" class="dash-nav-link" data-page="trends"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>Trends</span></a>
+                <a href="#relationships" class="dash-nav-link" data-page="relationships"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M6 9v2a3 3 0 003 3h6a3 3 0 003-3V9"/></svg><span>Relations</span></a>
+                <a href="#explorer" class="dash-nav-link" data-page="explorer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span>Explorer</span></a>
+                <a href="#trail" class="dash-nav-link" data-page="trail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Trail</span></a>
+                <a href="#integrity" class="dash-nav-link" data-page="integrity"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Integrity</span></a>
+                <a href="#diagnostics" class="dash-nav-link" data-page="diagnostics"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Diagnostics</span></a>
+                <a href="#auth" class="dash-nav-link" data-page="auth"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>Auth</span></a>
+                <a href="#firebase" class="dash-nav-link" data-page="firebase"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg><span>Firebase</span></a>
+                <a href="#rules" class="dash-nav-link" data-page="rules"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Rules</span></a>
+                <a href="#settings" class="dash-nav-link" data-page="settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6"/></svg><span>Settings</span></a>
+                <a href="#chatbot" class="dash-nav-link" data-page="chatbot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Chatbot</span></a>
             </nav>
 
             <div class="dash-account">
@@ -128,7 +81,6 @@
         </div>
     </header>
 
-    <!-- MOBILE DRAWER -->
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
     <aside class="drawer" id="drawer" aria-hidden="true">
         <div class="drawer-head">
@@ -150,7 +102,7 @@
             <a href="#executive" class="drawer-link" data-page="executive"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Executive</span></a>
             <a href="#reels" class="drawer-link" data-page="reels"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg><span>Reels</span></a>
             <a href="#behaviour" class="drawer-link" data-page="behaviour"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Behaviour</span></a>
-            <a href="#questions" class="drawer-link" data-page="questions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span>Questions</span></a>
+            <a href="#questions" class="drawer-link" data-page="questions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/></svg><span>Questions</span></a>
             <a href="#options" class="drawer-link" data-page="options"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Options</span></a>
             <a href="#trends" class="drawer-link" data-page="trends"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>Trends</span></a>
             <a href="#relationships" class="drawer-link" data-page="relationships"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/></svg><span>Relations</span></a>
@@ -181,74 +133,26 @@
 
     <main class="dash-main" id="dashMain">
 
-        <section class="page-section" id="page-executive" data-page="executive">
-            <div class="section-head"><h2>Executive Intelligence</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-reels" data-page="reels" hidden>
-            <div class="section-head"><h2>Reel Intelligence</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-behaviour" data-page="behaviour" hidden>
-            <div class="section-head"><h2>Behaviour Intelligence</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-questions" data-page="questions" hidden>
-            <div class="section-head"><h2>Question Intelligence</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-options" data-page="options" hidden>
-            <div class="section-head"><h2>Option Intelligence</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-trends" data-page="trends" hidden>
-            <div class="section-head"><h2>Trend & Performance</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-relationships" data-page="relationships" hidden>
-            <div class="section-head"><h2>Relationship Explorer</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-explorer" data-page="explorer" hidden>
-            <div class="section-head"><h2>Data Explorer</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-trail" data-page="trail" hidden>
-            <div class="section-head"><h2>Audit Trail</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-integrity" data-page="integrity" hidden>
-            <div class="section-head"><h2>Data Integrity</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-diagnostics" data-page="diagnostics" hidden>
-            <div class="section-head"><h2>System Diagnostics</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-auth" data-page="auth" hidden>
-            <div class="section-head"><h2>Authentication Audit</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-firebase" data-page="firebase" hidden>
-            <div class="section-head"><h2>Firebase Explorer</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-rules" data-page="rules" hidden>
-            <div class="section-head"><h2>Rules Inspector</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-settings" data-page="settings" hidden>
-            <div class="section-head"><h2>Settings</h2><p>Loading…</p></div>
-        </section>
-
-        <section class="page-section" id="page-chatbot" data-page="chatbot" hidden>
-            <div class="section-head"><h2>Intelligence Chatbot</h2><p>Loading…</p></div>
-        </section>
+        <section class="page-section" id="page-executive" data-page="executive"><div class="section-head"><h2>Executive Intelligence</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-reels" data-page="reels" hidden><div class="section-head"><h2>Reel Intelligence</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-behaviour" data-page="behaviour" hidden><div class="section-head"><h2>Behaviour Intelligence</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-questions" data-page="questions" hidden><div class="section-head"><h2>Question Intelligence</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-options" data-page="options" hidden><div class="section-head"><h2>Option Intelligence</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-trends" data-page="trends" hidden><div class="section-head"><h2>Trend & Performance</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-relationships" data-page="relationships" hidden><div class="section-head"><h2>Relationship Explorer</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-explorer" data-page="explorer" hidden><div class="section-head"><h2>Data Explorer</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-trail" data-page="trail" hidden><div class="section-head"><h2>Audit Trail</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-integrity" data-page="integrity" hidden><div class="section-head"><h2>Data Integrity</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-diagnostics" data-page="diagnostics" hidden><div class="section-head"><h2>System Diagnostics</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-auth" data-page="auth" hidden><div class="section-head"><h2>Authentication Audit</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-firebase" data-page="firebase" hidden><div class="section-head"><h2>Firebase Explorer</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-rules" data-page="rules" hidden><div class="section-head"><h2>Rules Inspector</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-settings" data-page="settings" hidden><div class="section-head"><h2>Settings</h2><p>Loading…</p></div></section>
+        <section class="page-section" id="page-chatbot" data-page="chatbot" hidden><div class="section-head"><h2>Intelligence Chatbot</h2><p>Loading…</p></div></section>
 
     </main>
 </div>
 
-<!-- LOGOUT MODAL -->
 <div class="modal modal--center" id="logoutModal" hidden>
     <div class="modal-backdrop" id="logoutBackdrop"></div>
     <div class="modal-card modal-card--sm" role="dialog" aria-modal="true">
@@ -266,6 +170,6 @@
     </div>
 </div>
 
-<script type="module" src="js/audit/audit-entry.js"></script>
+<script type="module" src="js/audit-app.js"></script>
 </body>
 </html>
