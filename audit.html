@@ -5,41 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="theme-color" content="#202020" />
-<title>Content Audit — Rudra Bhakti</title>
+<title>Audit — Rudra Bhakti</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css" />
 <link rel="stylesheet" href="audit.css" />
+
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
+    "firebase/database": "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js"
+  }
+}
+</script>
 </head>
 <body>
 
-<!-- LOGIN (reuses admin styles) -->
-<div class="auth-wrap" id="loginWrap">
-    <div class="auth-card">
-        <div class="auth-brand">
-            <div class="logo" aria-hidden="true">ॐ</div>
-            <div class="brand">Content Audit</div>
-            <div class="subtitle">Rudra Bhakti · Authorized only</div>
-        </div>
-        <form id="loginForm" class="auth-form" novalidate>
-            <div class="field">
-                <label for="loginEmail">Email</label>
-                <input type="email" id="loginEmail" placeholder="admin@rudrabhakti.com" autocomplete="email" />
-            </div>
-            <div class="field">
-                <label for="loginPassword">Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
-            </div>
-            <p class="form-error" id="loginError" role="alert"></p>
-            <button type="submit" class="btn btn-primary btn-block">
-                <span id="loginLabel">Sign In</span>
-            </button>
-        </form>
-    </div>
+<!-- PAGE LOADER -->
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+    <div class="page-loader-spinner"></div>
 </div>
 
-<!-- AUDIT DASHBOARD -->
 <div class="dash" id="dash" hidden>
 
     <header class="dash-header">
@@ -47,88 +36,85 @@
             <div class="brand-block">
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
-                    <strong>Content Audit</strong>
-                    <small>Rudra Bhakti</small>
+                    <strong>Audit</strong>
+                    <small>Intelligence Center</small>
                 </div>
             </div>
 
-            <nav class="dash-nav dash-nav--desktop" aria-label="Audit navigation">
-                <a href="#aud-executive" class="dash-nav-link is-active" data-nav="executive">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="9"/>
-                        <rect x="14" y="3" width="7" height="5"/>
-                        <rect x="14" y="12" width="7" height="9"/>
-                        <rect x="3" y="16" width="7" height="5"/>
-                    </svg>
+            <nav class="dash-nav dash-nav--desktop dash-nav--wide" aria-label="Audit navigation" id="auditNav">
+                <a href="#executive" class="dash-nav-link" data-page="executive">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
                     <span>Executive</span>
                 </a>
-                <a href="#aud-reels" class="dash-nav-link" data-nav="reels">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="4" width="20" height="16" rx="2"/>
-                        <path d="M10 9l5 3-5 3z"/>
-                    </svg>
+                <a href="#reels" class="dash-nav-link" data-page="reels">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>
                     <span>Reels</span>
                 </a>
-                <a href="#aud-patterns" class="dash-nav-link" data-nav="patterns">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
-                    </svg>
-                    <span>Patterns</span>
+                <a href="#behaviour" class="dash-nav-link" data-page="behaviour">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    <span>Behaviour</span>
                 </a>
-                <a href="#aud-risks" class="dash-nav-link" data-nav="risks">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                        <path d="M12 9v4M12 17h.01"/>
-                    </svg>
-                    <span>Risks</span>
+                <a href="#questions" class="dash-nav-link" data-page="questions">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                    <span>Questions</span>
                 </a>
-                <a href="#aud-actions" class="dash-nav-link" data-nav="actions">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <span>Actions</span>
+                <a href="#options" class="dash-nav-link" data-page="options">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    <span>Options</span>
                 </a>
-                <a href="#aud-history" class="dash-nav-link" data-nav="history">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
-                    </svg>
-                    <span>History</span>
+                <a href="#trends" class="dash-nav-link" data-page="trends">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+                    <span>Trends</span>
                 </a>
-                <a href="#aud-ask" class="dash-nav-link" data-nav="ask">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
-                        <path d="M12 17h.01"/>
-                    </svg>
-                    <span>Ask</span>
+                <a href="#relationships" class="dash-nav-link" data-page="relationships">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M6 9v2a3 3 0 003 3h6a3 3 0 003-3V9"/></svg>
+                    <span>Relations</span>
+                </a>
+                <a href="#explorer" class="dash-nav-link" data-page="explorer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <span>Explorer</span>
+                </a>
+                <a href="#trail" class="dash-nav-link" data-page="trail">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <span>Trail</span>
+                </a>
+                <a href="#integrity" class="dash-nav-link" data-page="integrity">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Integrity</span>
+                </a>
+                <a href="#diagnostics" class="dash-nav-link" data-page="diagnostics">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span>Diagnostics</span>
+                </a>
+                <a href="#auth" class="dash-nav-link" data-page="auth">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    <span>Auth</span>
+                </a>
+                <a href="#firebase" class="dash-nav-link" data-page="firebase">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+                    <span>Firebase</span>
+                </a>
+                <a href="#rules" class="dash-nav-link" data-page="rules">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    <span>Rules</span>
+                </a>
+                <a href="#settings" class="dash-nav-link" data-page="settings">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    <span>Settings</span>
+                </a>
+                <a href="#chatbot" class="dash-nav-link" data-page="chatbot">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    <span>Chatbot</span>
                 </a>
             </nav>
 
             <div class="dash-account">
-                <button type="button" class="btn btn-ghost" id="exportCsvBtn" title="Export CSV">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                    </svg>
-                    <span>CSV</span>
-                </button>
-                <button type="button" class="btn btn-primary" id="exportPdfBtn" title="Export PDF Report">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                    <span>PDF Report</span>
-                </button>
-                <a href="admin.html" class="btn-icon" title="Admin Panel">
+                <a href="admin.html" class="btn-icon" title="Switch to Admin" aria-label="Switch to Admin">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
                     </svg>
                 </a>
-                <button type="button" class="btn-icon" id="logoutBtn" title="Logout">
+                <button type="button" class="btn-icon" id="logoutBtn" aria-label="Logout" title="Logout">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
                     </svg>
@@ -149,538 +135,126 @@
             <div class="brand-block">
                 <div class="logo logo--sm" aria-hidden="true">ॐ</div>
                 <div class="brand-text">
-                    <strong>Content Audit</strong>
-                    <small>Rudra Bhakti</small>
+                    <strong>Audit</strong>
+                    <small>Intelligence Center</small>
                 </div>
             </div>
-            <button type="button" class="btn-icon" id="drawerClose" aria-label="Close">
+            <button type="button" class="btn-icon" id="drawerClose" aria-label="Close menu">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        <nav class="drawer-nav">
-            <a href="#aud-executive" class="drawer-link is-active" data-drawer="executive"><span>Executive</span></a>
-            <a href="#aud-reels" class="drawer-link" data-drawer="reels"><span>Reels</span></a>
-            <a href="#aud-patterns" class="drawer-link" data-drawer="patterns"><span>Patterns</span></a>
-            <a href="#aud-risks" class="drawer-link" data-drawer="risks"><span>Risks</span></a>
-            <a href="#aud-actions" class="drawer-link" data-drawer="actions"><span>Actions</span></a>
-            <a href="#aud-history" class="drawer-link" data-drawer="history"><span>History</span></a>
-            <a href="#aud-ask" class="drawer-link" data-drawer="ask"><span>Ask</span></a>
+
+        <nav class="drawer-nav" aria-label="Mobile audit navigation">
+            <a href="#executive" class="drawer-link" data-page="executive"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Executive</span></a>
+            <a href="#reels" class="drawer-link" data-page="reels"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg><span>Reels</span></a>
+            <a href="#behaviour" class="drawer-link" data-page="behaviour"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Behaviour</span></a>
+            <a href="#questions" class="drawer-link" data-page="questions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span>Questions</span></a>
+            <a href="#options" class="drawer-link" data-page="options"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Options</span></a>
+            <a href="#trends" class="drawer-link" data-page="trends"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>Trends</span></a>
+            <a href="#relationships" class="drawer-link" data-page="relationships"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/></svg><span>Relations</span></a>
+            <a href="#explorer" class="drawer-link" data-page="explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span>Explorer</span></a>
+            <a href="#trail" class="drawer-link" data-page="trail"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Trail</span></a>
+            <a href="#integrity" class="drawer-link" data-page="integrity"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Integrity</span></a>
+            <a href="#diagnostics" class="drawer-link" data-page="diagnostics"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Diagnostics</span></a>
+            <a href="#auth" class="drawer-link" data-page="auth"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>Auth</span></a>
+            <a href="#firebase" class="drawer-link" data-page="firebase"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg><span>Firebase</span></a>
+            <a href="#rules" class="drawer-link" data-page="rules"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/></svg><span>Rules</span></a>
+            <a href="#settings" class="drawer-link" data-page="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg><span>Settings</span></a>
+            <a href="#chatbot" class="drawer-link" data-page="chatbot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Chatbot</span></a>
+
+            <a href="admin.html" class="drawer-link drawer-link--primary" style="margin-top:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/></svg>
+                <span>Switch to Admin</span>
+            </a>
         </nav>
+
         <div class="drawer-foot">
-            <span class="drawer-email" id="drawerUserEmail">—</span>
+            <span class="drawer-email" id="drawerUserEmail">admin@rudrabhakti.com</span>
             <button type="button" class="drawer-logout" id="drawerLogout">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
-                </svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                 <span>Logout</span>
             </button>
         </div>
     </aside>
 
-    <main class="dash-main">
+    <main class="dash-main" id="dashMain">
 
-        <!-- FILTERS BAR -->
-        <section class="dash-section">
-            <div class="audit-filters">
-                                <div class="audit-filter-group">
-                    <label for="periodSelect">Period</label>
-                    <select id="periodSelect" class="select">
-                        <option value="today">Today</option>
-                        <option value="7d" selected>Last 7 days</option>
-                        <option value="30d">Last 30 days</option>
-                        <option value="90d">Last 90 days</option>
-                        <option value="all">All time</option>
-                        <option value="custom">Custom range</option>
-                    </select>
-                </div>
-                <div class="audit-filter-group" id="customRangeGroup" hidden>
-                    <label for="customStart">From</label>
-                    <input type="date" id="customStart" class="select" />
-                </div>
-                <div class="audit-filter-group" id="customEndGroup" hidden>
-                    <label for="customEnd">To</label>
-                    <input type="date" id="customEnd" class="select" />
-                </div>
-                <div class="audit-filter-group">
-                    <label for="compareSelect">Compare to</label>
-                    <select id="compareSelect" class="select">
-                        <option value="previous" selected>Previous period</option>
-                        <option value="alltime">All-time baseline</option>
-                    </select>
-                </div>
-                <div class="audit-filter-group">
-                    <label for="reelFilter">Reel</label>
-                    <select id="reelFilter" class="select">
-                        <option value="all">All reels</option>
-                    </select>
-                </div>
-                <div class="audit-filter-group audit-filter-group--actions">
-                    <button type="button" class="btn btn-secondary" id="snapshotBtn">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        Save Snapshot
-                    </button>
-                </div>
-            </div>
+        <section class="page-section" id="page-executive" data-page="executive">
+            <div class="section-head"><h2>Executive Intelligence</h2><p>Loading…</p></div>
         </section>
 
-        <!-- EXECUTIVE AUDIT -->
-        <section class="dash-section" id="aud-executive">
-            <div class="section-head">
-                <h2>Executive Audit</h2>
-                <p id="execScopeText">Loading…</p>
-            </div>
-
-            <div class="audit-score-card">
-                <div class="audit-score-left">
-                    <span class="audit-score-label">Content Health Score</span>
-                    <span class="audit-score-value" id="healthScore">—</span>
-                    <span class="audit-score-sub" id="healthScoreSub">Calculating…</span>
-                </div>
-                <div class="audit-score-meter">
-                    <div class="audit-score-meter-fill" id="healthMeter" style="width:0%"></div>
-                </div>
-            </div>
-
-            <div class="audit-exec-grid">
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Satisfaction</span>
-                    <span class="audit-exec-value" id="execSatisfaction">—</span>
-                    <span class="audit-exec-sub" id="execSatisfactionDelta">—</span>
-                </div>
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Recommendation</span>
-                    <span class="audit-exec-value" id="execRecommend">—</span>
-                    <span class="audit-exec-sub" id="execRecommendDelta">—</span>
-                </div>
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Future Interest</span>
-                    <span class="audit-exec-value" id="execFuture">—</span>
-                    <span class="audit-exec-sub" id="execFutureDelta">—</span>
-                </div>
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Repeat Intent</span>
-                    <span class="audit-exec-value" id="execRepeat">—</span>
-                    <span class="audit-exec-sub" id="execRepeatDelta">—</span>
-                </div>
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Interest / Hold</span>
-                    <span class="audit-exec-value" id="execHold">—</span>
-                    <span class="audit-exec-sub" id="execHoldDelta">—</span>
-                </div>
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Presentation</span>
-                    <span class="audit-exec-value" id="execPresentation">—</span>
-                    <span class="audit-exec-sub" id="execPresentationDelta">—</span>
-                </div>
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Emotional Response</span>
-                    <span class="audit-exec-value" id="execEmotion">—</span>
-                    <span class="audit-exec-sub" id="execEmotionDelta">—</span>
-                </div>
-                <div class="audit-exec-card">
-                    <span class="audit-exec-label">Momentum</span>
-                    <span class="audit-exec-value" id="execMomentum">—</span>
-                    <span class="audit-exec-sub" id="execMomentumSub">—</span>
-                </div>
-            </div>
-
-            <div class="audit-signals-grid">
-                <div class="audit-signal audit-signal--good">
-                    <span class="audit-signal-label">Strongest Signal</span>
-                    <span class="audit-signal-value" id="strongestSignal">—</span>
-                </div>
-                <div class="audit-signal audit-signal--weak">
-                    <span class="audit-signal-label">Weakest Signal</span>
-                    <span class="audit-signal-value" id="weakestSignal">—</span>
-                </div>
-                <div class="audit-signal audit-signal--risk">
-                    <span class="audit-signal-label">Biggest Risk</span>
-                    <span class="audit-signal-value" id="biggestRisk">—</span>
-                </div>
-                <div class="audit-signal audit-signal--opp">
-                    <span class="audit-signal-label">Biggest Opportunity</span>
-                    <span class="audit-signal-value" id="biggestOpportunity">—</span>
-                </div>
-            </div>
-
-            <div class="audit-narrative-card">
-                <div class="audit-narrative-head">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.2 1 2v.3h6v-.3c0-.8.4-1.5 1-2A7 7 0 0012 2z"/>
-                    </svg>
-                    <span>Audit Summary</span>
-                </div>
-                <p class="audit-narrative-text" id="auditSummary">Calculating…</p>
-            </div>
+        <section class="page-section" id="page-reels" data-page="reels" hidden>
+            <div class="section-head"><h2>Reel Intelligence</h2><p>Loading…</p></div>
         </section>
 
-        <!-- REEL AUDIT -->
-        <section class="dash-section" id="aud-reels">
-            <div class="section-head">
-                <h2>Reel-Level Audit</h2>
-                <p>Per-reel performance, classification and trend.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="reelAuditEmpty">
-                        <div class="empty-state-icon">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                                <path d="M10 9l5 3-5 3z"/>
-                            </svg>
-                        </div>
-                        <h3>No reels to audit yet</h3>
-                        <p>Add reels and collect feedback to enable per-reel auditing.</p>
-                    </div>
-                    <div id="reelAuditList" hidden></div>
-                    <div class="pagination" id="reelAuditPagination" hidden></div>
-                </div>
-            </div>
+        <section class="page-section" id="page-behaviour" data-page="behaviour" hidden>
+            <div class="section-head"><h2>Behaviour Intelligence</h2><p>Loading…</p></div>
         </section>
 
-                <!-- REEL COMPARISON LAB -->
-        <section class="dash-section" id="aud-compare">
-            <div class="section-head">
-                <h2>Reel Comparison Lab</h2>
-                <p>Select 2–4 reels to compare metrics side by side.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body">
-                    <div class="compare-lab-chips" id="compareLabChips"></div>
-                    <div class="compare-lab-result" id="compareLabResult">
-                        <div class="chart-empty"><p>Select at least 2 reels to compare.</p></div>
-                    </div>
-                </div>
-            </div>
+        <section class="page-section" id="page-questions" data-page="questions" hidden>
+            <div class="section-head"><h2>Question Intelligence</h2><p>Loading…</p></div>
         </section>
 
-                <!- EXPERIMENT INTELLIGENCE -->
-        <section class="dash-section" id="aud-experiment">
-            <div class="section-head">
-                <h2>Experiment Intelligence</h2>
-                <p>Compare two groups of reels to test which pattern performs better.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body">
-                    <div class="experiment-groups">
-                        <div class="experiment-group">
-                            <div class="experiment-group-head">
-                                <span class="experiment-group-label">Group A · Established Pattern</span>
-                            </div>
-                            <div class="experiment-chips" id="experimentChipsA"></div>
-                        </div>
-                        <div class="experiment-group">
-                            <div class="experiment-group-head">
-                                <span class="experiment-group-label">Group B · Experimental Pattern</span>
-                            </div>
-                            <div class="experiment-chips" id="experimentChipsB"></div>
-                        </div>
-                    </div>
-                    <div class="experiment-result" id="experimentResult">
-                        <div class="chart-empty"><p>Select reels in both groups to compare.</p></div>
-                    </div>
-                </div>
-            </div>
+        <section class="page-section" id="page-options" data-page="options" hidden>
+            <div class="section-head"><h2>Option Intelligence</h2><p>Loading…</p></div>
         </section>
 
-        <!-- PATTERNS -->
-        <section class="dash-section" id="aud-patterns">
-            <div class="section-head">
-                <h2>Content Patterns &amp; DNA</h2>
-                <p>Observed associations and recurring characteristics. Correlation only — not causation.</p>
-            </div>
-            <div class="audit-card-grid" id="patternGridAudit"></div>
+        <section class="page-section" id="page-trends" data-page="trends" hidden>
+            <div class="section-head"><h2>Trend & Performance</h2><p>Loading…</p></div>
         </section>
 
-        <!-- AUDIENCE VOICE -->
-        <section class="dash-section">
-            <div class="section-head">
-                <h2>Audience Voice</h2>
-                <p>Themes from written feedback only.</p>
-            </div>
-            <div class="audit-voice-grid" id="auditVoiceGrid"></div>
+        <section class="page-section" id="page-relationships" data-page="relationships" hidden>
+            <div class="section-head"><h2>Relationship Explorer</h2><p>Loading…</p></div>
         </section>
 
-        <!-- CONTRADICTIONS -->
-        <section class="dash-section">
-            <div class="section-head">
-                <h2>Contradiction Detector</h2>
-                <p>Unusual combinations in responses.</p>
-            </div>
-            <div class="alert-list" id="auditContradictions"></div>
+        <section class="page-section" id="page-explorer" data-page="explorer" hidden>
+            <div class="section-head"><h2>Data Explorer</h2><p>Loading…</p></div>
         </section>
 
-        <!-- RISKS -->
-        <section class="dash-section" id="aud-risks">
-            <div class="section-head">
-                <h2>Risk Radar</h2>
-                <p>Detected risks with severity and evidence.</p>
-            </div>
-            <div class="alert-list" id="auditRisks"></div>
+        <section class="page-section" id="page-trail" data-page="trail" hidden>
+            <div class="section-head"><h2>Audit Trail</h2><p>Loading…</p></div>
         </section>
 
-        <!-- OPPORTUNITIES -->
-        <section class="dash-section">
-            <div class="section-head">
-                <h2>Opportunity Radar</h2>
-                <p>Detected opportunities with evidence and confidence.</p>
-            </div>
-            <div class="alert-list" id="auditOpportunities"></div>
+        <section class="page-section" id="page-integrity" data-page="integrity" hidden>
+            <div class="section-head"><h2>Data Integrity</h2><p>Loading…</p></div>
         </section>
 
-        <!-- PORTFOLIO -->
-        <section class="dash-section">
-            <div class="section-head">
-                <h2>Content Portfolio</h2>
-                <p>Auto-classification based on performance, trend and confidence.</p>
-            </div>
-            <div class="audit-card-grid" id="portfolioGridAudit"></div>
+        <section class="page-section" id="page-diagnostics" data-page="diagnostics" hidden>
+            <div class="section-head"><h2>System Diagnostics</h2><p>Loading…</p></div>
         </section>
 
-        <!-- RECOMMENDATIONS -->
-        <section class="dash-section" id="aud-actions">
-            <div class="section-head">
-                <h2>Recommendations</h2>
-                <p>Evidence-based actions with priority and confidence.</p>
-            </div>
-            <div class="audit-reco-list" id="recommendationsList"></div>
+        <section class="page-section" id="page-auth" data-page="auth" hidden>
+            <div class="section-head"><h2>Authentication Audit</h2><p>Loading…</p></div>
         </section>
 
-        <!-- GROWTH ROADMAP -->
-        <section class="dash-section">
-            <div class="section-head">
-                <h2>Growth Roadmap</h2>
-                <p>Recommendations organized by timeline.</p>
-            </div>
-            <div class="audit-roadmap" id="roadmapWrap"></div>
-        </section>
-                <!-- RECOMMENDATION OUTCOMES -->
-        <section class="dash-section" id="aud-outcomes">
-            <div class="section-head">
-                <h2>Recommendation Outcomes</h2>
-                <p>Track what was actioned and measure its impact. Completing a recommendation captures the current baseline automatically.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="outcomesEmpty">
-                        <div class="empty-state-icon">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                        </div>
-                        <h3>No recommendations tracked yet</h3>
-                        <p>Mark a recommendation as In Progress or Completed to begin tracking outcomes.</p>
-                    </div>
-                    <div id="outcomesList" hidden></div>
-                </div>
-            </div>
+        <section class="page-section" id="page-firebase" data-page="firebase" hidden>
+            <div class="section-head"><h2>Firebase Explorer</h2><p>Loading…</p></div>
         </section>
 
-
-        <!-- HISTORY -->
-        <section class="dash-section" id="aud-history">
-            <div class="section-head">
-                <h2>Audit History</h2>
-                <p>Saved snapshots. Historical records stay frozen.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="historyEmpty">
-                        <div class="empty-state-icon">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                        </div>
-                        <h3>No snapshots yet</h3>
-                        <p>Click “Save Snapshot” to store the current audit.</p>
-                    </div>
-                    <div id="historyList" hidden></div>
-                </div>
-            </div>
+        <section class="page-section" id="page-rules" data-page="rules" hidden>
+            <div class="section-head"><h2>Rules Inspector</h2><p>Loading…</p></div>
         </section>
 
-                <!-- INSIGHT LIFECYCLE -->
-        <section class="dash-section" id="aud-lifecycle">
-            <div class="section-head">
-                <h2>Insight Lifecycle</h2>
-                <p>How each key metric is evolving across saved snapshots.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body panel-body--flush">
-                    <div class="empty-state" id="lifecycleEmpty">
-                        <div class="empty-state-icon">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                        </div>
-                        <h3>Not enough snapshots yet</h3>
-                        <p>Save at least 2 snapshots to enable lifecycle tracking.</p>
-                    </div>
-                    <div id="lifecycleList" hidden></div>
-                </div>
-            </div>
+        <section class="page-section" id="page-settings" data-page="settings" hidden>
+            <div class="section-head"><h2>Settings</h2><p>Loading…</p></div>
         </section>
 
-
-        <!-- ASK YOUR DATA -->
-        <section class="dash-section" id="aud-ask">
-            <div class="section-head">
-                <h2>Ask Your Data</h2>
-                <p>Answers grounded in real Firebase data only.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body">
-                    <div class="ask-grid" id="askGridAudit"></div>
-                    <div class="ask-response" id="askResponseAudit"></div>
-                </div>
-            </div>
-        </section>
-
-                <!-- DATA QUALITY AUDIT -->
-        <section class="dash-section" id="aud-quality">
-            <div class="section-head">
-                <h2>Data Quality Audit</h2>
-                <p>Issues detected in the underlying Firebase data.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body panel-body--flush">
-                    <div id="qualitySummary" class="quality-summary"></div>
-                    <div class="alert-list" id="qualityIssues"></div>
-                </div>
-            </div>
-        </section>
-                <!-- ANOMALY DETECTION -->
-        <section class="dash-section" id="aud-anomaly">
-            <div class="section-head">
-                <h2>Anomaly Detection</h2>
-                <p>Suspicious patterns flagged from real submission data.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body panel-body--flush">
-                    <div id="anomalySummary" class="quality-summary"></div>
-                    <div class="alert-list" id="anomalyIssues"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SETTINGS -->
-        <section class="dash-section">
-            <div class="section-head">
-                <h2>Audit Settings</h2>
-                <p>Thresholds and weights. Changes recalculate the audit automatically.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body">
-                    <div class="audit-settings-grid">
-                        <div class="audit-setting">
-                            <label for="minSample">Min sample size</label>
-                            <input type="number" id="minSample" min="1" max="500" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="strongSample">Strong confidence target</label>
-                            <input type="number" id="strongSample" min="1" max="2000" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="goodRating">Good rating threshold</label>
-                            <input type="number" id="goodRating" min="1" max="5" step="0.1" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="poorRating">Poor rating threshold</label>
-                            <input type="number" id="poorRating" min="1" max="5" step="0.1" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="significantChange">Significant change (%)</label>
-                            <input type="number" id="significantChange" min="1" max="100" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="weightRating">Weight · Rating</label>
-                            <input type="number" id="weightRating" min="0" max="1" step="0.05" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="weightRecommend">Weight · Recommend</label>
-                            <input type="number" id="weightRecommend" min="0" max="1" step="0.05" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="weightFuture">Weight · Future</label>
-                            <input type="number" id="weightFuture" min="0" max="1" step="0.05" />
-                        </div>
-                        <div class="audit-setting">
-                            <label for="weightRepeat">Weight · Repeat</label>
-                            <input type="number" id="weightRepeat" min="0" max="1" step="0.05" />
-                        </div>
-                    </div>
-                    <div class="audit-settings-actions">
-                        <button type="button" class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
-                        <button type="button" class="btn btn-ghost" id="resetSettingsBtn">Reset Defaults</button>
-                        <span class="audit-settings-note" id="settingsNote"></span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- METHODOLOGY -->
-        <section class="dash-section">
-            <div class="section-head">
-                <h2>Audit Methodology</h2>
-                <p>How each score is calculated.</p>
-            </div>
-            <div class="panel-card">
-                <div class="panel-body">
-                    <ul class="audit-methodology">
-                        <li><strong>Satisfaction</strong> = average valid rating ÷ 5 × 100</li>
-                        <li><strong>Recommendation</strong> = positive recommendation responses ÷ valid recommendation responses × 100</li>
-                        <li><strong>Future Interest</strong> = positive future-interest responses ÷ valid responses × 100</li>
-                        <li><strong>Repeat Intent</strong> = positive repeat-intent responses ÷ valid responses × 100</li>
-                        <li><strong>Interest/Hold</strong> = positive held-interest responses ÷ valid held-interest responses × 100</li>
-                        <li><strong>Presentation</strong> = weighted positive presentation responses ÷ valid presentation responses × 100</li>
-                        <li><strong>Emotional Response</strong> = positive emotional responses ÷ valid emotional responses × 100</li>
-                        <li><strong>Health Score</strong> = weighted sum of the four primary metrics (rating, recommendation, future interest, repeat intent) using configured weights</li>
-                        <li><strong>Growth</strong> = current period value − previous equivalent period value (percentage-point change)</li>
-                        <li><strong>Confidence</strong> = based on sample size and completeness, using configured thresholds</li>
-                        <li>All metrics recalculate automatically on data change, filter change or settings change.</li>
-                    </ul>
-                </div>
-            </div>
+        <section class="page-section" id="page-chatbot" data-page="chatbot" hidden>
+            <div class="section-head"><h2>Intelligence Chatbot</h2><p>Loading…</p></div>
         </section>
 
     </main>
 </div>
-    <!-- SESSION TIMEOUT MODAL -->
-<div class="modal modal--center" id="sessionModal" hidden>
-    <div class="modal-backdrop"></div>
-    <div class="modal-card modal-card--sm">
-        <div class="modal-body modal-body--confirm">
-            <div class="confirm-icon confirm-icon--danger">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                </svg>
-            </div>
-            <h2 class="confirm-title">Session expiring</h2>
-            <p class="confirm-text">You will be logged out in <strong id="sessionCountdown">2:00</strong> due to inactivity.</p>
-            <div class="confirm-actions">
-                <button type="button" class="btn btn-primary" id="sessionStay">Stay Signed In</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Logout modal (reuses admin) -->
+<!-- LOGOUT MODAL -->
 <div class="modal modal--center" id="logoutModal" hidden>
     <div class="modal-backdrop" id="logoutBackdrop"></div>
-    <div class="modal-card modal-card--sm">
+    <div class="modal-card modal-card--sm" role="dialog" aria-modal="true">
         <div class="modal-body modal-body--confirm">
             <div class="confirm-icon confirm-icon--danger">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
-                </svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
             </div>
             <h2 class="confirm-title">Logout?</h2>
             <p class="confirm-text">Are you sure you want to logout?</p>
@@ -692,11 +266,6 @@
     </div>
 </div>
 
-<!-- jsPDF + autotable for PDF export with carts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-<script type="module" src="audit.js"></script>
+<script type="module" src="js/audit-entry.js"></script>
 </body>
 </html>
