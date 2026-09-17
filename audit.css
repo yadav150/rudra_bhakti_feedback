@@ -1,8 +1,7 @@
 /* ============================================================
-   RUDRA BHAKTI — AUDIT STYLES (extends admin.css)
+   RUDRA BHAKTI — AUDIT (extends admin.css)
    ============================================================ */
 
-/* Wide nav for 16 items — horizontal scroll on tight screens */
 .dash-nav--wide {
     overflow-x: auto;
     overflow-y: hidden;
@@ -12,19 +11,19 @@
     padding: 4px 0;
     max-width: 100%;
 }
-.dash-nav--wide::-webkit-scrollbar {
-    height: 4px;
-}
+.dash-nav--wide::-webkit-scrollbar { height: 4px; }
 .dash-nav--wide::-webkit-scrollbar-thumb {
     background: rgba(0,0,0,.15);
     border-radius: 99px;
 }
-.dash-nav--wide .dash-nav-link {
-    flex-shrink: 0;
-}
+.dash-nav--wide .dash-nav-link { flex-shrink: 0; }
 
-/* Section placeholder (removed once modules are built) */
-.section-head p:only-child {
-    color: var(--muted);
-    font-size: 13px;
+/* Chart.js container theming */
+.chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    padding: 4px 0;
 }
+.chart-wrap--tall { height: 320px; }
+.chart-wrap--short { height: 200px; }
