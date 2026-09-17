@@ -5,11 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="theme-color" content="#202020" />
-<title>Admin — Rudra Bhakti Feedback</title>
+<title>Admin — Rudra Bhakti</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css" />
+
+<!-- Firebase import map -->
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
+    "firebase/database": "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js"
+  }
+}
+</script>
+
+<!-- CDN globals -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -73,7 +87,7 @@
     </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- DASHBOARD (SPA) -->
 <div class="dash" id="dash" hidden>
 
     <header class="dash-header">
@@ -87,7 +101,7 @@
             </div>
 
             <nav class="dash-nav dash-nav--desktop" aria-label="Dashboard navigation">
-                <a href="admin.html" class="dash-nav-link is-active">
+                <a href="#executive" class="dash-nav-link" data-page="executive">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="3" width="7" height="9"/>
                         <rect x="14" y="3" width="7" height="5"/>
@@ -96,34 +110,34 @@
                     </svg>
                     <span>Executive</span>
                 </a>
-                <a href="reels.html" class="dash-nav-link">
+                <a href="#reels" class="dash-nav-link" data-page="reels">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="2" y="4" width="20" height="16" rx="2"/>
                         <path d="M10 9l5 3-5 3z"/>
                     </svg>
                     <span>Reels</span>
                 </a>
-                <a href="feedback.html" class="dash-nav-link">
+                <a href="#feedback" class="dash-nav-link" data-page="feedback">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
                     </svg>
                     <span>Feedback</span>
                 </a>
-                <a href="reel-analysis.html" class="dash-nav-link">
+                <a href="#reel-analysis" class="dash-nav-link" data-page="reel-analysis">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M3 3v18h18"/>
                         <path d="M7 15l4-4 3 3 5-5"/>
                     </svg>
                     <span>Reel Analysis</span>
                 </a>
-                <a href="notifications.html" class="dash-nav-link">
+                <a href="#notifications" class="dash-nav-link" data-page="notifications">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
                         <path d="M13.73 21a2 2 0 01-3.46 0"/>
                     </svg>
                     <span>Notifications</span>
                 </a>
-                <a href="audit.html" class="dash-nav-link">
+                <a href="audit.html" class="dash-nav-link" data-external="audit">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M9 11l3 3L22 4"/>
                         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
@@ -166,7 +180,7 @@
         </div>
 
         <nav class="drawer-nav" aria-label="Mobile navigation">
-            <a href="admin.html" class="drawer-link is-active">
+            <a href="#executive" class="drawer-link" data-page="executive">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="7" height="9"/>
                     <rect x="14" y="3" width="7" height="5"/>
@@ -175,40 +189,47 @@
                 </svg>
                 <span>Executive</span>
             </a>
-            <a href="reels.html" class="drawer-link">
+            <a href="#reels" class="drawer-link" data-page="reels">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="2" y="4" width="20" height="16" rx="2"/>
                     <path d="M10 9l5 3-5 3z"/>
                 </svg>
                 <span>Reels</span>
             </a>
-            <a href="feedback.html" class="drawer-link">
+            <a href="#feedback" class="drawer-link" data-page="feedback">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
                 </svg>
                 <span>Feedback</span>
             </a>
-            <a href="reel-analysis.html" class="drawer-link">
+            <a href="#reel-analysis" class="drawer-link" data-page="reel-analysis">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 3v18h18"/>
                     <path d="M7 15l4-4 3 3 5-5"/>
                 </svg>
                 <span>Reel Analysis</span>
             </a>
-            <a href="notifications.html" class="drawer-link">
+            <a href="#notifications" class="drawer-link" data-page="notifications">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 01-3.46 0"/>
                 </svg>
                 <span>Notifications</span>
             </a>
-            <a href="audit.html" class="drawer-link">
+            <a href="audit.html" class="drawer-link" data-external="audit">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 11l3 3L22 4"/>
                     <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                 </svg>
                 <span>Audit Report</span>
             </a>
+
+            <button type="button" class="drawer-link drawer-link--primary" id="drawerAddReel">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>Add Reel</span>
+            </button>
         </nav>
 
         <div class="drawer-foot">
@@ -222,10 +243,10 @@
         </div>
     </aside>
 
-    <main class="dash-main">
+    <main class="dash-main" id="dashMain">
 
-        <!-- EXECUTIVE -->
-        <section class="dash-section" id="sec-executive">
+        <!-- ============================== EXECUTIVE ============================== -->
+        <section class="page-section" id="page-executive" data-page="executive">
             <div class="section-head">
                 <h2>Executive Intelligence</h2>
                 <p>Top-level audience signals across all reels.</p>
@@ -245,7 +266,6 @@
                         <span class="exec-sub" id="execSatisfactionSub">Not enough data</span>
                     </div>
                 </div>
-
                 <div class="exec-card">
                     <div class="exec-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -258,7 +278,6 @@
                         <span class="exec-sub" id="execRecommendSub">Not enough data</span>
                     </div>
                 </div>
-
                 <div class="exec-card">
                     <div class="exec-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -272,7 +291,6 @@
                         <span class="exec-sub" id="execRepeatSub">Not enough data</span>
                     </div>
                 </div>
-
                 <div class="exec-card">
                     <div class="exec-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -287,7 +305,6 @@
                         <span class="exec-sub" id="execEmotionSub">Not enough data</span>
                     </div>
                 </div>
-
                 <div class="exec-card">
                     <div class="exec-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -301,7 +318,6 @@
                         <span class="exec-sub" id="execMomentumSub">Not enough data</span>
                     </div>
                 </div>
-
                 <div class="exec-card">
                     <div class="exec-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -337,10 +353,382 @@
             </div>
         </section>
 
+        <!-- ============================== REELS ============================== -->
+        <section class="page-section" id="page-reels" data-page="reels" hidden>
+            <div class="section-head">
+                <h2>Reels</h2>
+                <p>All reels registered for feedback collection.</p>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-body panel-body--flush">
+                    <div class="empty-state" id="reelsEmpty" hidden>
+                        <div class="empty-state-icon">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <path d="M10 9l5 3-5 3z"/>
+                            </svg>
+                        </div>
+                        <h3>No reels added yet</h3>
+                        <p>Add your first reel to begin collecting feedback.</p>
+                        <button type="button" class="btn btn-primary" id="emptyAddReel">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            Add Reel
+                        </button>
+                    </div>
+                    <div id="reelsList" hidden></div>
+                    <div class="pagination" id="reelsPagination" hidden></div>
+                </div>
+            </div>
+
+            <div class="sub-block">
+                <div class="section-head section-head--sub">
+                    <h3>Reel Intelligence</h3>
+                    <p>Per-reel performance, comparison against account baseline.</p>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-body panel-body--flush">
+                        <div class="empty-state" id="reelIntelEmpty" hidden>
+                            <div class="empty-state-icon">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 3v18h18"/>
+                                    <path d="M7 15l4-4 3 3 5-5"/>
+                                </svg>
+                            </div>
+                            <h3>No reel intelligence data</h3>
+                            <p>Per-reel insights appear once feedback is collected.</p>
+                        </div>
+                        <div id="reelIntelList" hidden></div>
+                        <div class="pagination" id="reelIntelPagination" hidden></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sub-block">
+                <div class="section-head section-head--sub">
+                    <h3>Reel Comparison</h3>
+                    <p>Select two or more reels to compare real metrics side by side.</p>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-body">
+                        <div class="compare-select" id="compareSelect"></div>
+                        <div class="compare-result" id="compareResult">
+                            <div class="chart-empty">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 3v18h18"/>
+                                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                                </svg>
+                                <p>Select at least 2 reels to compare</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================== FEEDBACK ============================== -->
+        <section class="page-section" id="page-feedback" data-page="feedback" hidden>
+            <div class="section-head">
+                <h2>Feedback</h2>
+                <p>Every individual response collected across all reels.</p>
+            </div>
+
+            <div class="toolbar">
+                <div class="search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="search" id="searchInput" placeholder="Search feedback…" />
+                </div>
+                <select id="filterRating" class="select">
+                    <option value="all">All Ratings</option>
+                    <option value="5">5 only</option>
+                    <option value="4">4 only</option>
+                    <option value="3">3 only</option>
+                    <option value="2">2 only</option>
+                    <option value="1">1 only</option>
+                    <option value="4plus">4 and above</option>
+                </select>
+                <select id="filterDate" class="select">
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                </select>
+                <select id="sortBy" class="select">
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="highest">Highest rating</option>
+                    <option value="lowest">Lowest rating</option>
+                </select>
+            </div>
+
+            <div class="list-wrap">
+                <div class="list-head"><span id="resultCount">0 results</span></div>
+                <div class="list" id="feedbackList"></div>
+                <div class="pagination" id="feedbackPagination" hidden></div>
+            </div>
+        </section>
+
+        <!-- ============================== REEL ANALYSIS ============================== -->
+        <section class="page-section" id="page-reel-analysis" data-page="reel-analysis" hidden>
+            <div class="section-head">
+                <h2>Reel Analysis</h2>
+                <p>Per-reel feedback behavior, timing, engagement and strategic guidance.</p>
+            </div>
+            <div class="toolbar">
+                <select id="reelSelect" class="select" style="flex:1;min-width:220px;"></select>
+            </div>
+
+            <div id="analysisWrap" hidden>
+                <section class="dash-section">
+                    <div class="panel-card" id="reelHeroCard"></div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Key Signals</h3>
+                        <p>Aggregate performance for this reel.</p>
+                    </div>
+                    <div class="stats" id="kpiGrid"></div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Response Behavior</h3>
+                        <p>How and when feedback arrived after publishing.</p>
+                    </div>
+                    <div class="exec-grid" id="behaviorGrid"></div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Response Timeline</h3>
+                        <p>Daily feedback volume since this reel was added.</p>
+                    </div>
+                    <div class="panel-card">
+                        <div class="panel-head">
+                            <span class="panel-title">Daily Volume</span>
+                            <span class="panel-meta" id="timelineMeta"></span>
+                        </div>
+                        <div class="panel-body">
+                            <div id="timelineChart"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Timing Patterns</h3>
+                        <p>When your audience engages. Times shown in IST.</p>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div class="panel-card">
+                            <div class="panel-head">
+                                <span class="panel-title">Hour of Day</span>
+                                <span class="panel-meta">2-hour buckets</span>
+                            </div>
+                            <div class="panel-body"><div id="hourChart"></div></div>
+                        </div>
+                        <div class="panel-card">
+                            <div class="panel-head">
+                                <span class="panel-title">Day of Week</span>
+                            </div>
+                            <div class="panel-body"><div id="weekdayChart"></div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Emotional Signature</h3>
+                        <p>Which feeling dominates the response to this reel.</p>
+                    </div>
+                    <div class="panel-card">
+                        <div class="panel-body"><div id="feelingChart"></div></div>
+                    </div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Intent Signals</h3>
+                        <p>What the audience wants next and how likely they are to return.</p>
+                    </div>
+                    <div class="perception-grid" id="intentGrid"></div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Written Engagement</h3>
+                        <p>How often and how deeply the audience writes in.</p>
+                    </div>
+                    <div class="analytics-grid" id="writtenGrid"></div>
+                    <div class="panel-card" style="margin-top:14px;">
+                        <div class="panel-head">
+                            <span class="panel-title">Common Themes</span>
+                        </div>
+                        <div class="panel-body"><div id="writtenThemes"></div></div>
+                    </div>
+                </section>
+
+                <section class="dash-section">
+                    <div class="section-head section-head--sub">
+                        <h3>Final Recommendation</h3>
+                        <p>Strategic guidance generated from this reel's data.</p>
+                    </div>
+                    <div id="recommendationBlock"></div>
+                </section>
+            </div>
+
+            <div id="noReelsState" hidden>
+                <section class="dash-section">
+                    <div class="panel-card">
+                        <div class="panel-body panel-body--flush">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                        <path d="M10 9l5 3-5 3z"/>
+                                    </svg>
+                                </div>
+                                <h3>No reels added yet</h3>
+                                <p>Add reels to begin analysis.</p>
+                                <a href="#reels" class="btn btn-primary" data-page="reels" style="margin-top:18px;">
+                                    <span>Go to Reels</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <!-- ============================== NOTIFICATIONS ============================== -->
+        <section class="page-section" id="page-notifications" data-page="notifications" hidden>
+            <div class="section-head">
+                <h2>Notifications</h2>
+                <p>Real-time alerts whenever new feedback is submitted.</p>
+            </div>
+
+            <div class="notif-toolbar">
+                <div class="notif-stats">
+                    <span class="notif-count" id="notifCount">0 notifications</span>
+                    <span class="notif-unread-count" id="notifUnread">0 unread</span>
+                </div>
+                <div class="notif-actions">
+                    <select class="select" id="filterNotif">
+                        <option value="all">All</option>
+                        <option value="unread">Unread only</option>
+                        <option value="today">Today</option>
+                        <option value="7d">Last 7 days</option>
+                    </select>
+                    <button type="button" class="btn btn-ghost" id="markAllRead">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span>Mark all read</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="list-wrap">
+                <div class="list" id="notifList"></div>
+                <div class="empty-state" id="notifEmpty" hidden>
+                    <div class="empty-state-icon">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                        </svg>
+                    </div>
+                    <h3 id="notifEmptyTitle">No notifications yet</h3>
+                    <p id="notifEmptyText">Notifications will appear here whenever feedback is submitted.</p>
+                </div>
+                <div class="pagination" id="notifPagination" hidden></div>
+            </div>
+        </section>
+
+        <!-- ============================== FEEDBACK VIEW ============================== -->
+        <section class="page-section" id="page-feedback-view" data-page="feedback-view" hidden>
+            <div class="toolbar" style="margin-bottom:16px;">
+                <button type="button" class="btn btn-ghost" id="backBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Back</span>
+                </button>
+                <div style="flex:1;min-width:0;">
+                    <span class="exec-label" style="display:block;">Feedback Review</span>
+                    <span style="font-size:13px;font-weight:600;" id="viewMeta">—</span>
+                </div>
+                <button type="button" class="btn btn-ghost" id="downloadBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    <span>Download</span>
+                </button>
+                <button type="button" class="btn btn-primary" id="shareBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                    </svg>
+                    <span>Share Image</span>
+                </button>
+            </div>
+
+            <div class="panel-card" id="errorCard" hidden>
+                <div class="panel-body panel-body--flush">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 8v5M12 16h.01"/>
+                            </svg>
+                        </div>
+                        <h3 id="errorTitle">Feedback not found</h3>
+                        <p id="errorText">This feedback may have been removed or the link is incorrect.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="viewWrap" hidden>
+                <div class="capture-area" id="captureArea">
+                    <div class="capture-brand">
+                        <div class="capture-logo" aria-hidden="true">ॐ</div>
+                        <div class="capture-brand-text">
+                            <strong>Rudra Bhakti</strong>
+                            <small>Feedback Review</small>
+                        </div>
+                    </div>
+
+                    <div id="captureReel" style="margin-bottom:20px;"></div>
+                    <div id="captureRating"></div>
+                    <div class="row-grid" id="captureGrid" style="margin-bottom:20px;"></div>
+
+                    <div id="captureMessage" hidden>
+                        <div class="row-item row-message" style="grid-column:1/-1;">
+                            <span class="row-item-label">Message</span>
+                            <span class="row-item-value" id="captureMessageText" style="text-align:justify;line-height:1.65;"></span>
+                        </div>
+                    </div>
+
+                    <div class="capture-foot">
+                        <span id="captureDate">—</span>
+                        <span>rudrabhakti · devotional feedback</span>
+                    </div>
+                </div>
+
+                <div id="shareStatus" class="form-success" style="margin-top:16px;" hidden></div>
+            </div>
+        </section>
+
     </main>
 </div>
 
-<!-- LOGOUT CONFIRM MODAL -->
+<!-- LOGOUT MODAL -->
 <div class="modal modal--center" id="logoutModal" hidden>
     <div class="modal-backdrop" id="logoutBackdrop"></div>
     <div class="modal-card modal-card--sm" role="dialog" aria-modal="true" aria-labelledby="logoutHeading">
@@ -360,6 +748,134 @@
     </div>
 </div>
 
-<script type="module" src="admin.js"></script>
+<!-- ADD REEL MODAL -->
+<div class="modal" id="addReelModal" hidden>
+    <div class="modal-backdrop" id="addReelBackdrop"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addReelHeading">
+        <div class="modal-head">
+            <h2 id="addReelHeading">Add Reel</h2>
+            <button type="button" class="btn-icon modal-close" id="closeAddReel" aria-label="Close">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <label for="reelUrl">Facebook Reel URL</label>
+                <input type="url" id="reelUrl" placeholder="https://www.facebook.com/reel/..." autocomplete="off" />
+            </div>
+            <p class="form-error" id="reelUrlError" role="alert"></p>
+
+            <div class="reel-manual" id="reelManual" hidden>
+                <p class="reel-manual-note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v5M12 16h.01"/>
+                    </svg>
+                    Facebook blocks automatic metadata fetch from browsers. Enter details manually below.
+                </p>
+                <div class="field">
+                    <label for="reelTitleInput">Reel Title</label>
+                    <input type="text" id="reelTitleInput" placeholder="Enter a title for this Reel" maxlength="180" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label for="reelThumbInput">Thumbnail URL (optional)</label>
+                    <input type="url" id="reelThumbInput" placeholder="https://..." autocomplete="off" />
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block fetch-btn" id="fetchReel">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span id="fetchLabel">Fetch Details</span>
+                <svg class="btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </button>
+            <div class="reel-preview" id="reelPreview" hidden></div>
+        </div>
+    </div>
+</div>
+
+<!-- NOTIFICATIONS-SPECIFIC STYLES (inline) -->
+<style>
+.notif-row.is-unread{border-left:3px solid var(--dark);}
+.notif-icon{
+    width:40px;height:40px;border-radius:11px;background:#eeeeea;color:var(--dark);
+    display:grid;place-items:center;flex-shrink:0;
+}
+.notif-icon svg{width:18px;height:18px;}
+.notif-titles{display:grid;gap:3px;min-width:0;flex:1;}
+.notif-sub{
+    font-size:12px;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;
+}
+.notif-new{
+    padding:3px 10px;background:var(--dark);color:#fff;border-radius:99px;
+    font-size:10px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;
+    align-self:flex-start;margin-top:2px;flex-shrink:0;
+}
+.notif-toolbar{
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+    padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:16px;
+}
+.notif-stats{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.notif-count{font-size:13px;font-weight:700;color:var(--text);}
+.notif-unread-count{font-size:12px;color:var(--muted);font-weight:600;}
+.notif-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+.capture-area{
+    width:800px;max-width:100%;margin:0 auto;
+    padding:56px 60px;
+    background:linear-gradient(160deg,#fdfcf9 0%,#f5f5f2 100%);
+    border:1px solid var(--border);border-radius:22px;color:var(--text);
+    font-family:Inter,system-ui,sans-serif;
+    box-shadow:0 12px 45px rgba(0,0,0,.045);
+}
+.capture-brand{
+    display:flex;align-items:center;gap:14px;
+    padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:28px;
+}
+.capture-logo{
+    width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(145deg,#171717,#626262);color:#fff;font-size:22px;flex-shrink:0;
+}
+.capture-brand-text{display:grid;gap:2px;}
+.capture-brand-text strong{font-size:18px;font-weight:800;letter-spacing:-.4px;}
+.capture-brand-text small{
+    font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);
+}
+.capture-rating{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:10px 18px;background:var(--dark);color:#fff;border-radius:99px;
+    font-size:15px;font-weight:800;margin-bottom:28px;
+}
+.capture-rating svg{width:18px;height:18px;}
+.capture-foot{
+    display:flex;justify-content:space-between;align-items:center;
+    padding-top:18px;border-top:1px solid var(--border);
+    font-size:12px;color:var(--muted);font-weight:600;
+}
+
+@media (max-width:640px){
+    .notif-toolbar{padding:12px;}
+    .notif-stats{width:100%;justify-content:space-between;}
+    .notif-actions{width:100%;}
+    .notif-actions .select{flex:1;min-width:0;}
+    .notif-actions .btn{flex:1;}
+    .notif-row .row-top{flex-wrap:wrap;}
+    .notif-icon{width:36px;height:36px;}
+    .notif-icon svg{width:16px;height:16px;}
+    .capture-area{padding:28px 22px;border-radius:16px;}
+    .capture-logo{width:44px;height:44px;font-size:18px;}
+    .capture-brand-text strong{font-size:16px;}
+    .capture-rating{font-size:13px;padding:8px 14px;}
+}
+@media (max-width:860px){
+    .capture-area{padding:36px 28px;}
+}
+</style>
+
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
