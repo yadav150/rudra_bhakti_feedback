@@ -453,7 +453,7 @@ function resetModal() {
 }
 
 function bindModal() {
-    const openers = ['emptyAddReel', 'drawerAddReel'];
+    const openers = ['emptyAddReel'];
     openers.forEach((id) => {
         const btn = document.getElementById(id);
         if (btn) btn.addEventListener('click', openAddReelModal);
