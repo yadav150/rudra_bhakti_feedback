@@ -109,7 +109,7 @@ const PAGES = {
     'feedback':        { el: 'page-feedback',        mod: Feedback,        title: 'Feedback' },
     'reel-analysis':   { el: 'page-reel-analysis',   mod: ReelAnalysis,    title: 'Reel Analysis' },
     'notifications':   { el: 'page-notifications',   mod: Notifications,   title: 'Notifications' }
-
+};
 function getHashRoute() {
     const h = (location.hash || '').replace(/^#/, '').trim();
     if (!h) return { page: 'executive', params: {} };
