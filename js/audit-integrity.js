@@ -4,8 +4,11 @@
    ============================================================ */
 import {
     createBarChart, createDonutChart,
-    escapeHTML, emptyBlock, COLORS
+    escapeHTML, emptyBlock, COLORS,
+    paginate, renderPagination
 } from './audit-charts.js';
+
+let integrityPage = 1;
 
 export function init(state) {}
 
@@ -88,6 +91,7 @@ export function render(state) {
     const healthPct = totalRecords ? Math.max(0, Math.round(((totalRecords - total) / totalRecords) * 100)) : 100;
 
     const healthIcon = healthPct >= 90 ? '🟢' : healthPct >= 70 ? '🟡' : '🔴';
+    const paged = paginate(issues, integrityPage, 5);
 
     el.innerHTML = `
         <div class="section-head">
@@ -162,7 +166,7 @@ export function render(state) {
                 <span class="panel-meta">${total} issue${total === 1 ? '' : 's'}</span>
             </div>
             <div class="panel-body panel-body--flush">
-                ${total ? issues.map(i => {
+                ${total ? paged.items.map(i => {
                     const clsMap = { critical: 'attention', significant: 'warning', minor: 'info' };
                     const classKey = clsMap[i.severity] || 'info';
                     return `
@@ -178,8 +182,14 @@ export function render(state) {
                     `;
                 }).join('') : emptyBlock('No integrity issues detected ✓')}
             </div>
+            <div class="pagination" id="integrityPagination" hidden></div>
         </div>
     `;
+
+    renderPagination('integrityPagination', paged.page, paged.totalPages, (p) => {
+        integrityPage = p;
+        render(state);
+    });
 
     if (total > 0) {
         createBarChart('integBar',
