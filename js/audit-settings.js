@@ -8,11 +8,6 @@ import {
     escapeHTML, emptyBlock
 } from './audit-charts.js';
 
-function applyTheme(theme) {
-    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    else document.documentElement.removeAttribute('data-theme');
-}
-
 export function init(state) {}
 
 export function render(state) {
@@ -153,7 +148,8 @@ async function loadPrefs() {
             const refresh = document.getElementById('prefRefresh');
             if (theme && p.theme) theme.value = p.theme;
             if (refresh && p.refreshMs) refresh.value = p.refreshMs;
-            if (p.theme) applyTheme(p.theme);
+            if (p.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.removeAttribute('data-theme');
         }
     } catch (err) { /* silent */ }
 }
@@ -163,7 +159,8 @@ async function savePrefs() {
     const refreshMs = Number(document.getElementById('prefRefresh')?.value || 120);
     try {
         await set(ref(db, 'adminSettings/prefs'), { theme, refreshMs });
-        applyTheme(theme);
+        if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
         alert('Preferences saved');
     } catch (err) {
         alert('Save failed: ' + err.message);
