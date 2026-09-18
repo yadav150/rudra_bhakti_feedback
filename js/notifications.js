@@ -360,8 +360,22 @@ async function markAllRead() {
     });
     const btn = document.getElementById('markAllRead');
     if (btn) btn.disabled = true;
-    try {
+        try {
         await update(ref(db), updates);
+        try {
+            const { auth: __auth } = await import('./firebase.js');
+            const { ref: __ref, push: __push, set: __set } = await import("firebase/database");
+            const entryRef = __push(__ref(db, 'auditLog'));
+            await __set(entryRef, {
+                ts: Date.now(),
+                action: 'update',
+                module: 'notifications',
+                target: 'readIds',
+                before: unread.length + ' unread',
+                after: '0 unread',
+                user: __auth.currentUser?.email || 'admin'
+            });
+        } catch (e) { /* silent */ }
     } catch (err) {
         console.error('Mark all read failed:', err);
     } finally {
