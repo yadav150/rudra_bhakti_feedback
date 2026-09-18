@@ -4,11 +4,13 @@
    ============================================================ */
 import {
     createBarChart,
-    pct, escapeHTML, emptyBlock, COLORS
+    pct, escapeHTML, emptyBlock, COLORS,
+    paginate, renderPagination
 } from './audit-charts.js';
 
 let searchMode = 'id';
 let searchQuery = '';
+let reelsPage = 1;
 
 export function init(state) { /* no-op */ }
 
@@ -47,16 +49,18 @@ export function render(state) {
         input.value = searchQuery;
         updatePlaceholder(input, mode.value);
 
-        mode.addEventListener('change', () => {
+                mode.addEventListener('change', () => {
             searchMode = mode.value;
             searchQuery = '';
+            reelsPage = 1;
             input.value = '';
             updatePlaceholder(input, mode.value);
             renderResults(window.__auditState);
         });
 
-        input.addEventListener('input', () => {
+                input.addEventListener('input', () => {
             searchQuery = input.value.trim().toLowerCase();
+            reelsPage = 1;
             renderResults(window.__auditState);
         });
     }
@@ -107,7 +111,8 @@ function renderResults(state) {
         };
     });
 
-    const withData = reelStats.filter(x => x.count > 0).sort((a, b) => b.count - a.count);
+        const withData = reelStats.filter(x => x.count > 0).sort((a, b) => b.count - a.count);
+    const paged = paginate(filtered, reelsPage, 5);
 
     container.innerHTML = `
         ${withData.length ? `
@@ -129,7 +134,7 @@ function renderResults(state) {
                 <span class="panel-meta">${filtered.length} of ${reels.length}</span>
             </div>
             <div class="panel-body panel-body--flush">
-                ${filtered.length ? filtered.map(r => {
+                ${filtered.length ? paged.items.map(r => {
                     const s = reelStats.find(x => x.id === r.id) || { count: 0, avg: 0, recommend: 0 };
                     const label = s.count < 3
                         ? { text: 'Insufficient Data', cls: 'insufficient' }
@@ -150,11 +155,17 @@ function renderResults(state) {
                                 <div class="intel-metric"><div class="intel-metric-label">Recommend</div><div class="intel-metric-value">${s.count ? s.recommend + '%' : '—'}</div></div>
                             </div>
                         </div>
-                    `;
+                                        `;
                 }).join('') : emptyBlock('No reels match this search')}
             </div>
+            <div class="pagination" id="reelsPagination" hidden></div>
         </div>
     `;
+
+    renderPagination('reelsPagination', paged.page, paged.totalPages, (p) => {
+        reelsPage = p;
+        renderResults(window.__auditState);
+    });
 
     if (withData.length) {
         createBarChart('reelsBarResponses',
