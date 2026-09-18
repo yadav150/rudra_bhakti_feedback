@@ -8,6 +8,11 @@ import {
     escapeHTML, emptyBlock
 } from './audit-charts.js';
 
+function applyTheme(theme) {
+    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+}
+
 export function init(state) {}
 
 export function render(state) {
