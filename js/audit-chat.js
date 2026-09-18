@@ -130,7 +130,7 @@ async function sendMessage() {
                 'Authorization': 'Bearer ' + groqKey
             },
             body: JSON.stringify({
-                model: 'llama-3.1-70b-versatile',
+                model: 'openai/gpt-oss-120b',
                 messages: [
                     { role: 'system', content: 'You are an audit analyst for Rudra Bhakti, a devotional content channel. Answer questions strictly based on the provided data. Use numbers, cite counts/IDs. If data is insufficient, say so clearly. Be concise (2-4 sentences). Do not invent facts. Use Indian English style.' },
                     { role: 'user', content: context + '\n\nQuestion: ' + text }
