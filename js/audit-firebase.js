@@ -5,13 +5,15 @@
 import { db } from './firebase.js';
 import { ref, get, set, remove, onValue, off } from "firebase/database";
 import {
-    escapeHTML, emptyBlock
+    escapeHTML, emptyBlock,
+    paginate, renderPagination
 } from './audit-charts.js';
 
 let currentPath = '';
 let liveData = null;
 let liveUnsub = null;
 let isLive = false;
+let fbPage = 1;
 
 export function init(state) {
     /* Bind once when module first loads */
@@ -70,6 +72,7 @@ async function navigateToPath(path) {
     isLive = false;
 
     currentPath = path.replace(/^\/+|\/+$/g, '');
+    fbPage = 1;
 
     if (!currentPath) {
         const c = document.getElementById('auditFbResults');
@@ -103,6 +106,7 @@ function renderData() {
     const isObject = data && typeof data === 'object' && !Array.isArray(data);
     const keys = isObject ? Object.keys(data) : [];
     const type = Array.isArray(data) ? 'array' : typeof data;
+    const paged = isObject ? paginate(keys, fbPage, 5) : null;
 
     container.innerHTML = `
         <div class="panel-card" style="margin-bottom:14px;">
@@ -128,7 +132,7 @@ function renderData() {
 
                 ${isObject ? `
                     <div id="fbChildren">
-                        ${keys.slice(0, 200).map(k => {
+                        ${paged.items.map(k => {
                             const v = data[k];
                             const vType = Array.isArray(v) ? 'array' : typeof v;
                             const preview = vType === 'object' ? `{${Object.keys(v || {}).length} children}` : String(v).slice(0, 60);
@@ -160,8 +164,8 @@ function renderData() {
                                 </div>
                             `;
                         }).join('')}
-                        ${keys.length > 200 ? `<div style="padding:12px 20px;color:var(--muted);font-size:12px;">… ${keys.length - 200} more not shown</div>` : ''}
                     </div>
+                    <div class="pagination" id="fbPagination" hidden></div>
                 ` : `
                     <div class="row-item">
                         <span class="row-item-label">Value</span>
@@ -173,6 +177,14 @@ function renderData() {
             </div>
         </div>
     `;
+
+    /* Bind actions */
+    if (isObject && paged) {
+        renderPagination('fbPagination', paged.page, paged.totalPages, (p) => {
+            fbPage = p;
+            renderData();
+        });
+    }
 
     /* Bind actions */
     container.querySelectorAll('[data-fb-open]').forEach(btn => {
