@@ -3,11 +3,14 @@
    Search across reels + feedback. Full record inspection.
    ============================================================ */
 import {
-    escapeHTML, emptyBlock
+    escapeHTML, emptyBlock,
+    paginate, renderPagination
 } from './audit-charts.js';
 
 let searchQuery = '';
 let searchType = 'all';
+let expReelsPage = 1;
+let expFeedbackPage = 1;
 
 export function init(state) {}
 
@@ -45,13 +48,17 @@ export function render(state) {
         type.value = searchType;
         input.value = searchQuery;
 
-        type.addEventListener('change', () => {
+                type.addEventListener('change', () => {
             searchType = type.value;
+            expReelsPage = 1;
+            expFeedbackPage = 1;
             renderResults(window.__auditState);
         });
 
         input.addEventListener('input', () => {
             searchQuery = input.value.trim().toLowerCase();
+            expReelsPage = 1;
+            expFeedbackPage = 1;
             renderResults(window.__auditState);
         });
     }
@@ -87,6 +94,9 @@ function renderResults(state) {
         );
     }) : [];
 
+    const pagedReels = paginate(matchedReels, expReelsPage, 5);
+    const pagedFeedback = paginate(matchedFeedback, expFeedbackPage, 5);
+
     container.innerHTML = `
         <div class="stats" style="margin-bottom:14px;">
             <div class="stat">
@@ -113,7 +123,7 @@ function renderResults(state) {
             <div class="panel-card" style="margin-bottom:14px;">
                 <div class="panel-head"><span class="panel-title">Reels</span><span class="panel-meta">${matchedReels.length} record${matchedReels.length === 1 ? '' : 's'}</span></div>
                 <div class="panel-body panel-body--flush">
-                    ${matchedReels.slice(0, 50).map(r => {
+                    ${pagedReels.items.map(r => {
                         const fbCount = feedback.filter(f => f.reelId === r.id).length;
                         return `
                             <div class="intel-row">
@@ -129,6 +139,7 @@ function renderResults(state) {
                         `;
                     }).join('')}
                 </div>
+                <div class="pagination" id="expReelsPagination" hidden></div>
             </div>
         ` : ''}
 
@@ -136,7 +147,7 @@ function renderResults(state) {
             <div class="panel-card">
                 <div class="panel-head"><span class="panel-title">Feedback Records</span><span class="panel-meta">${matchedFeedback.length} record${matchedFeedback.length === 1 ? '' : 's'}</span></div>
                 <div class="panel-body panel-body--flush">
-                    ${matchedFeedback.slice(0, 50).map(f => `
+                    ${pagedFeedback.items.map(f => `
                         <div class="intel-row">
                             <div class="intel-head">
                                 <span class="intel-id">${escapeHTML(f.reelId || '—')}</span>
@@ -151,9 +162,19 @@ function renderResults(state) {
                         </div>
                     `).join('')}
                 </div>
+                <div class="pagination" id="expFeedbackPagination" hidden></div>
             </div>
         ` : ''}
 
         ${!matchedReels.length && !matchedFeedback.length ? emptyBlock('No records match this search') : ''}
     `;
+
+    renderPagination('expReelsPagination', pagedReels.page, pagedReels.totalPages, (p) => {
+        expReelsPage = p;
+        renderResults(window.__auditState);
+    });
+    renderPagination('expFeedbackPagination', pagedFeedback.page, pagedFeedback.totalPages, (p) => {
+        expFeedbackPage = p;
+        renderResults(window.__auditState);
+    });
 }
