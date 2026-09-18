@@ -88,3 +88,38 @@
     letter-spacing: 0.6px;
 }
 .rel-field-value { color: var(--text); word-break: break-word; }
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+html[data-theme="dark"] {
+    --bg: #141414;
+    --card: #1e1e1e;
+    --text: #ececec;
+    --muted: #909090;
+    --border: #2e2e2e;
+    --soft: #262626;
+    --dark: #ececec;
+}
+html[data-theme="dark"] body {
+    background: var(--bg);
+    color: var(--text);
+}
+html[data-theme="dark"] .dash-header {
+    background: rgba(20, 20, 20, 0.92);
+    border-bottom-color: var(--border);
+}
+html[data-theme="dark"] .field input,
+html[data-theme="dark"] .select,
+html[data-theme="dark"] .search,
+html[data-theme="dark"] textarea {
+    background: var(--soft);
+    color: var(--text);
+    border-color: var(--border);
+}
+html[data-theme="dark"] .field input:focus,
+html[data-theme="dark"] .search:focus-within {
+    background: var(--card);
+}
+html[data-theme="dark"] .page-loader {
+    background: rgba(20, 20, 20, 0.55);
+}
