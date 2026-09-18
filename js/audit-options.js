@@ -4,7 +4,8 @@
    ============================================================ */
 import {
     createBarChart, createDonutChart,
-    pct, escapeHTML, emptyBlock, COLORS, PALETTE
+    pct, escapeHTML, emptyBlock, COLORS, PALETTE,
+    paginate, renderPagination
 } from './audit-charts.js';
 
 /* Exact option fields from index.html — nothing else */
@@ -17,6 +18,7 @@ const OPTION_FIELDS = [
 ];
 
 let selectedQuestion = 'all';
+let optionsPage = 1;
 
 export function init(state) {}
 
@@ -42,8 +44,9 @@ export function render(state) {
         `;
         const sel = document.getElementById('auditOptQuestion');
         sel.value = selectedQuestion;
-        sel.addEventListener('change', () => {
+                sel.addEventListener('change', () => {
             selectedQuestion = sel.value;
+            optionsPage = 1;
             renderOptions(window.__auditState);
         });
     }
@@ -84,8 +87,9 @@ function renderOptions(state) {
         });
     });
 
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const total = sorted.reduce((s, [, v]) => s + v, 0);
+    const paged = paginate(sorted, optionsPage, 5);
 
     if (!sorted.length) {
         container.innerHTML = `<div class="panel-card"><div class="panel-body">${emptyBlock('No options recorded yet')}</div></div>`;
@@ -145,7 +149,7 @@ function renderOptions(state) {
                 <span class="panel-meta">${sorted.length} unique</span>
             </div>
             <div class="panel-body panel-body--flush">
-                ${sorted.map(([k, v]) => {
+                ${paged.items.map(([k, v]) => {
                     const reels = reelMap[k] ? reelMap[k].size : 0;
                     return `
                         <div class="intel-row">
@@ -160,13 +164,18 @@ function renderOptions(state) {
                             </div>
                         </div>
                     `;
-                }).join('')}
+                                }).join('')}
             </div>
+            <div class="pagination" id="optionsPagination" hidden></div>
         </div>
     `;
 
-    createDonutChart('optDonut', donutLabels, donutData, PALETTE);
+    renderPagination('optionsPagination', paged.page, paged.totalPages, (p) => {
+        optionsPage = p;
+        renderOptions(window.__auditState);
+    });
 
+    createDonutChart('optDonut', donutLabels, donutData, PALETTE);
     createBarChart('optBar',
         top.map(([k]) => k.slice(0, 20)),
         [{
