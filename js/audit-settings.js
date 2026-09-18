@@ -148,6 +148,7 @@ async function loadPrefs() {
             const refresh = document.getElementById('prefRefresh');
             if (theme && p.theme) theme.value = p.theme;
             if (refresh && p.refreshMs) refresh.value = p.refreshMs;
+            if (p.theme) applyTheme(p.theme);
         }
     } catch (err) { /* silent */ }
 }
@@ -157,6 +158,7 @@ async function savePrefs() {
     const refreshMs = Number(document.getElementById('prefRefresh')?.value || 120);
     try {
         await set(ref(db, 'adminSettings/prefs'), { theme, refreshMs });
+        applyTheme(theme);
         alert('Preferences saved');
     } catch (err) {
         alert('Save failed: ' + err.message);
