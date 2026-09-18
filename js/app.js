@@ -276,6 +276,22 @@ function closeLogoutModal() {
 async function performLogout() {
     closeLogoutModal();
     try {
+        const u = auth.currentUser;
+        if (u) {
+            const { db: __db } = await import('./firebase.js');
+            const { ref: __ref, push: __push, set: __set } = await import("firebase/database");
+            const entryRef = __push(__ref(__db, 'auditLog'));
+            await __set(entryRef, {
+                ts: Date.now(),
+                action: 'logout',
+                module: 'auth',
+                target: u.uid,
+                user: u.email || '',
+                before: '', after: ''
+            }).catch(() => {});
+        }
+    } catch (e) { /* silent */ }
+    try {
         await signOut(auth);
         if (loginEmail) loginEmail.value = '';
         if (loginPassword) loginPassword.value = '';
@@ -312,8 +328,22 @@ if (loginForm) {
         loginLabel.textContent = 'Signing in…';
         const btn = loginForm.querySelector('button[type="submit"]');
         btn.disabled = true;
-        try {
+                try {
             await signInWithEmailAndPassword(auth, email, password);
+            const u = auth.currentUser;
+            if (u) {
+                const { db: __db } = await import('./firebase.js');
+                const { ref: __ref, push: __push, set: __set } = await import("firebase/database");
+                const entryRef = __push(__ref(__db, 'auditLog'));
+                __set(entryRef, {
+                    ts: Date.now(),
+                    action: 'login',
+                    module: 'auth',
+                    target: u.uid,
+                    user: u.email || '',
+                    before: '', after: ''
+                }).catch(() => {});
+            }
         } catch (err) {
             console.error('Login error:', err);
             let msg = 'Invalid email or password.';
