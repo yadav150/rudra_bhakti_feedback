@@ -166,15 +166,17 @@ async function savePrefs() {
 async function checkFirebaseStatus() {
     const el = document.getElementById('fbStatus');
     if (!el) return;
+    el.innerHTML = `<div style="font-size:13px;color:var(--muted);">Testing…</div>`;
     try {
         const t0 = performance.now();
-        const snap = await get(ref(db, '.info/connected'));
+        const snap = await get(ref(db, 'reels'));
         const ms = Math.round(performance.now() - t0);
-        const connected = snap.val() === true;
+        const count = snap.size;
         el.innerHTML = `
             <div style="display:grid;gap:8px;font-size:13px;">
-                <div style="display:flex;gap:12px;"><span style="color:var(--muted);min-width:140px;">Connection</span><span style="color:${connected ? '#1d7a3d' : '#b03030'};">${connected ? '✓ Connected' : '✗ Offline'}</span></div>
+                <div style="display:flex;gap:12px;"><span style="color:var(--muted);min-width:140px;">Connection</span><span style="color:#1d7a3d;">✓ Reachable</span></div>
                 <div style="display:flex;gap:12px;"><span style="color:var(--muted);min-width:140px;">Read Latency</span><span>${ms}ms</span></div>
+                <div style="display:flex;gap:12px;"><span style="color:var(--muted);min-width:140px;">Reels Node</span><span>${count} entries</span></div>
             </div>
         `;
     } catch (err) {
