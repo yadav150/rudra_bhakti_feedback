@@ -131,10 +131,11 @@ async function renderRoute(page, params = {}) {
         return;
     }
 
-    __currentPage = page;
+       __currentPage = page;
     hideAllSections();
     showSection(page);
     setActiveNav(page);
+    window.__auditState = state;
 
     const mod = await loadModule(page);
     if (!mod) return;
