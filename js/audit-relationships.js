@@ -3,10 +3,12 @@
    Trace: Reel → Feedback → Fields → Options
    ============================================================ */
 import {
-    escapeHTML, emptyBlock
+    escapeHTML, emptyBlock,
+    paginate, renderPagination
 } from './audit-charts.js';
 
 let selectedReelId = null;
+let relPage = 1;
 
 export function init(state) {}
 
@@ -55,8 +57,9 @@ function renderReelChips(state) {
     `).join('');
 
     container.querySelectorAll('.compare-chip').forEach(btn => {
-        btn.addEventListener('click', () => {
+                btn.addEventListener('click', () => {
             selectedReelId = btn.dataset.id;
+            relPage = 1;
             renderReelChips(window.__auditState);
             renderTree(window.__auditState);
         });
@@ -82,9 +85,10 @@ function renderTree(state) {
     }
 
     const items = feedback.filter(f => f.reelId === selectedReelId);
+    const paged = paginate(items, relPage, 5);
 
     /* ---- Trace each feedback ---- */
-    const treeHTML = items.length ? items.map((f, idx) => {
+    const treeHTML = items.length ? paged.items.map((f, idx) => {
         const fields = ['feeling','more','rating','wantMore','engageAgain','message'];
         const nonEmpty = fields.filter(k => {
             const v = f[k];
@@ -138,6 +142,12 @@ function renderTree(state) {
                 </div>
             </div>
         </div>
-        ${treeHTML}
+                ${treeHTML}
+        <div class="pagination" id="relPagination" hidden></div>
     `;
+
+    renderPagination('relPagination', paged.page, paged.totalPages, (p) => {
+        relPage = p;
+        renderTree(window.__auditState);
+    });
 }
