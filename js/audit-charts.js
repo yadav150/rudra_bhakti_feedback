@@ -196,3 +196,32 @@ export function escapeHTML(v) {
 export function emptyBlock(text) {
     return `<div class="chart-empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-5"/></svg><p>${escapeHTML(text)}</p></div>`;
 }
+/* ============================================================
+   PAGINATION HELPERS
+   ============================================================ */
+export function paginate(list, currentPage, perPage) {
+    const totalPages = Math.max(1, Math.ceil(list.length / perPage));
+    const page = Math.max(1, Math.min(currentPage, totalPages));
+    const start = (page - 1) * perPage;
+    return {
+        items: list.slice(start, start + perPage),
+        page,
+        totalPages
+    };
+}
+
+export function renderPagination(containerId, current, total, onChange) {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    if (total <= 1) { c.hidden = true; c.innerHTML = ''; return; }
+    c.hidden = false;
+    c.innerHTML = `
+        <button type="button" class="pg-btn" data-pg="prev" ${current === 1 ? 'disabled' : ''}>Prev</button>
+        <span class="pg-info">Page ${current} of ${total}</span>
+        <button type="button" class="pg-btn" data-pg="next" ${current === total ? 'disabled' : ''}>Next</button>
+    `;
+    const prev = c.querySelector('[data-pg="prev"]');
+    const next = c.querySelector('[data-pg="next"]');
+    if (prev) prev.addEventListener('click', () => onChange(current - 1));
+    if (next) next.addEventListener('click', () => onChange(current + 1));
+}
