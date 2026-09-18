@@ -4,10 +4,12 @@
    ============================================================ */
 import {
     createLineChart,
-    escapeHTML, emptyBlock, COLORS
+    escapeHTML, emptyBlock, COLORS,
+    paginate, renderPagination
 } from './audit-charts.js';
 
 let filterAction = 'all';
+let trailPage = 1;
 
 export function init(state) {}
 
@@ -41,6 +43,7 @@ export function render(state) {
         sel.value = filterAction;
         sel.addEventListener('change', () => {
             filterAction = sel.value;
+            trailPage = 1;
             renderTrail(window.__auditState);
         });
     }
@@ -58,6 +61,8 @@ function renderTrail(state) {
     if (filterAction !== 'all') {
         filtered = log.filter(e => (e.action || '').toLowerCase() === filterAction);
     }
+
+    const paged = paginate(filtered, trailPage, 5);
 
     if (!log.length) {
         container.innerHTML = `
@@ -147,7 +152,7 @@ function renderTrail(state) {
                 <span class="panel-meta">${filtered.length} entries</span>
             </div>
             <div class="panel-body panel-body--flush">
-                ${filtered.slice(0, 100).map(e => `
+                ${paged.items.map(e => `
                     <div class="intel-row">
                         <div class="intel-head">
                             <span class="intel-id">${escapeHTML(e.action || '—')}</span>
@@ -167,8 +172,14 @@ function renderTrail(state) {
                     </div>
                 `).join('')}
             </div>
+            <div class="pagination" id="trailPagination" hidden></div>
         </div>
     `;
+
+    renderPagination('trailPagination', paged.page, paged.totalPages, (p) => {
+        trailPage = p;
+        renderTrail(window.__auditState);
+    });
 
     createLineChart('trailChart', days.map(d => d.label), [{
         label: 'Events',
