@@ -624,7 +624,21 @@ async function handleSaveReel() {
             thumbnail: thumbEl ? (thumbEl.value.trim() || '') : '',
             createdAt: Date.now()
         };
-        await set(ref(db, 'reels/' + reelId), record);
+                await set(ref(db, 'reels/' + reelId), record);
+        try {
+            const { auth: __auth } = await import('./firebase.js');
+            const { ref: __ref, push: __push, set: __set } = await import("firebase/database");
+            const entryRef = __push(__ref(db, 'auditLog'));
+            await __set(entryRef, {
+                ts: Date.now(),
+                action: 'create',
+                module: 'reels',
+                target: reelId,
+                before: '',
+                after: (record.title || '').slice(0, 200),
+                user: __auth.currentUser?.email || 'admin'
+            });
+        } catch (e) { /* silent */ }
         closeAddReelModal();
     } catch (err) {
         console.error('Save reel error:', err);
