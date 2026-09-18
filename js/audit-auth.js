@@ -4,8 +4,11 @@
    ============================================================ */
 import { auth, ADMIN_UID } from './firebase.js';
 import {
-    escapeHTML, emptyBlock
+    escapeHTML, emptyBlock,
+    paginate, renderPagination
 } from './audit-charts.js';
+
+let authPage = 1;
 
 export function init(state) {}
 
@@ -22,6 +25,7 @@ export function render(state) {
         const a = (e.action || '').toLowerCase();
         return a === 'login' || a === 'logout';
     });
+    const paged = paginate(authEvents, authPage, 5);
 
     el.innerHTML = `
         <div class="section-head">
@@ -91,7 +95,7 @@ export function render(state) {
                 <span class="panel-meta">${authEvents.length} logged</span>
             </div>
             <div class="panel-body panel-body--flush">
-                ${authEvents.length ? authEvents.slice(0, 30).map(e => `
+                ${authEvents.length ? paged.items.map(e => `
                     <div class="intel-row">
                         <div class="intel-head">
                             <span class="intel-label intel-label--${(e.action || '').toLowerCase() === 'login' ? 'high' : 'attention'}">${escapeHTML((e.action || '').toUpperCase())}</span>
@@ -101,8 +105,14 @@ export function render(state) {
                             <div class="intel-metric"><div class="intel-metric-label">Time</div><div class="intel-metric-value">${e.ts ? new Date(e.ts).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}</div></div>
                         </div>
                     </div>
-                `).join('') : emptyBlock('No auth events logged yet (write-hooks activate in Batch 7)')}
+                `).join('') : emptyBlock('No auth events logged yet')}
             </div>
+            <div class="pagination" id="authPagination" hidden></div>
         </div>
     `;
+
+    renderPagination('authPagination', paged.page, paged.totalPages, (p) => {
+        authPage = p;
+        render(state);
+    });
 }
