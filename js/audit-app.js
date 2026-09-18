@@ -318,6 +318,17 @@ onAuthStateChanged(auth, (user) => {
     if (emailEl) emailEl.textContent = user.email || 'Administrator';
     $('dash').hidden = false;
 
+    /* Apply saved theme on startup */
+    (async () => {
+        try {
+            const { ref, get } = await import("firebase/database");
+            const snap = await get(ref(db, 'adminSettings/prefs'));
+            if (snap.exists() && snap.val().theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        } catch (e) { /* silent */ }
+    })();
+
     startListeners();
     onHashChange();
 });
