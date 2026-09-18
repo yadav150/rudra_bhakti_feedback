@@ -98,7 +98,7 @@ html[data-theme="dark"] {
     --muted: #909090;
     --border: #2e2e2e;
     --soft: #262626;
-    --dark: #ececec;
+    /* --dark stays #202020 for buttons, pills, badges */
 }
 html[data-theme="dark"] body {
     background: var(--bg);
@@ -122,4 +122,41 @@ html[data-theme="dark"] .search:focus-within {
 }
 html[data-theme="dark"] .page-loader {
     background: rgba(20, 20, 20, 0.55);
+}
+
+/* Fix text colors that use --dark as foreground */
+html[data-theme="dark"] .link-btn { color: var(--text); }
+html[data-theme="dark"] .link-btn:hover { background: #2a2a2a; }
+
+/* Fix light-grey backgrounds that break in dark */
+html[data-theme="dark"] .stat-icon,
+html[data-theme="dark"] .exec-icon,
+html[data-theme="dark"] .perception-icon,
+html[data-theme="dark"] .empty-state-icon,
+html[data-theme="dark"] .notif-icon,
+html[data-theme="dark"] .confirm-icon {
+    background: #2a2a2a;
+    color: var(--text);
+}
+html[data-theme="dark"] .row-anon,
+html[data-theme="dark"] .drawer-link.is-active,
+html[data-theme="dark"] .compare-chip:hover,
+html[data-theme="dark"] .ask-btn:hover,
+html[data-theme="dark"] .dash-nav-link:hover,
+html[data-theme="dark"] .drawer-link:hover {
+    background: #2a2a2a;
+    color: var(--text);
+}
+html[data-theme="dark"] .dist-track,
+html[data-theme="dark"] .segment-bar,
+html[data-theme="dark"] .funnel-track,
+html[data-theme="dark"] .recommendation-lock-bar {
+    background: #2a2a2a;
+}
+html[data-theme="dark"] .btn-ghost {
+    background: var(--card);
+    color: var(--text);
+}
+html[data-theme="dark"] .dash-nav-link.is-active {
+    border: 1px solid var(--border);
 }
